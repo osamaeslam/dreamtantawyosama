@@ -260,6 +260,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                           ),
                           const Divider(),
                           ...cart.items.values.map((item) {
+                            final hasVariant = item.variantId != null || item.color != null;
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Row(
@@ -268,9 +269,32 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(item.productName, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13)),
+                                        Row(
+                                          children: [
+                                            Text(item.productName, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13)),
+                                            if (hasVariant) ...[
+                                              const SizedBox(width: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.darkSlate,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  item.productCode,
+                                                  style: GoogleFonts.cairo(fontSize: 9, color: AppTheme.secondaryGold, fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        if (item.color != null)
+                                          Text(
+                                            'لون: ${item.color}',
+                                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                                          ),
                                         Text(
-                                          '${item.cartons} كرتونة × ${item.cartonPrice} ج.م = ${item.totalPrice.toStringAsFixed(1)} ج.م',
+                                          '${item.cartons} كرتونة × ${item.cartonPrice.toStringAsFixed(0)} ج.م = ${item.totalPrice.toStringAsFixed(1)} ج.م',
                                           style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade600),
                                         ),
                                       ],
@@ -278,7 +302,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                                    onPressed: () => cart.removeItem(item.productId),
+                                    onPressed: () => cart.removeItem(item.productId + (item.variantId != null ? '_${item.variantId}' : '')),
                                   ),
                                 ],
                               ),

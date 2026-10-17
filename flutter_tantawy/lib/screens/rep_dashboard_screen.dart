@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import 'catalog_screen.dart';
 import 'invoices_screen.dart';
 import 'order_builder_screen.dart';
+import 'returns_screen.dart';
 import 'visits_screen.dart';
 
 class RepDashboardScreen extends StatelessWidget {
@@ -181,7 +182,7 @@ class RepDashboardScreen extends StatelessWidget {
                 ),
                 _buildQuickAction(
                   context,
-                  title: 'الفواتير والطباعة',
+                  title: 'المبيعات والفواتير',
                   subtitle: 'طباعة حرارية وتصدير',
                   icon: Icons.receipt_long_outlined,
                   color: const Color(0xFF3B82F6),
@@ -189,6 +190,19 @@ class RepDashboardScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => InvoicesScreen(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'المرتجعات',
+                  subtitle: 'إذن مرتجع مبيعات',
+                  icon: Icons.assignment_return_outlined,
+                  color: const Color(0xFFEC4899),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ReturnsScreen(currentUser: currentUser)),
                     );
                   },
                 ),

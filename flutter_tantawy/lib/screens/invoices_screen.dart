@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../services/pdf_invoice_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import 'returns_screen.dart';
 
 class InvoicesScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -162,24 +163,45 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                               'الإجمالي: ${inv.totalAmount.toStringAsFixed(2)} ج.م',
                               style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF0F766E)),
                             ),
-                            Row(
-                              children: [
-                                OutlinedButton.icon(
-                                  icon: const Icon(Icons.print_outlined, size: 16),
-                                  label: Text('طباعة حرارية', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppTheme.darkSlate,
-                                    side: const BorderSide(color: AppTheme.darkSlate),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  ),
-                                  onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: true),
-                                ),
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.red),
-                                  tooltip: 'تصدير A4 PDF',
-                                  onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: false),
-                                ),
+                             Row(
+                               children: [
+                                 OutlinedButton.icon(
+                                   icon: const Icon(Icons.print_outlined, size: 16),
+                                   label: Text('طباعة حرارية', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
+                                   style: OutlinedButton.styleFrom(
+                                     foregroundColor: AppTheme.darkSlate,
+                                     side: const BorderSide(color: AppTheme.darkSlate),
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                   ),
+                                   onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: true),
+                                 ),
+                                 const SizedBox(width: 8),
+                                 OutlinedButton.icon(
+                                   icon: const Icon(Icons.assignment_return_outlined, size: 16, color: AppTheme.roseRed),
+                                   label: Text('مرتجع', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.roseRed)),
+                                   style: OutlinedButton.styleFrom(
+                                     foregroundColor: AppTheme.roseRed,
+                                     side: const BorderSide(color: AppTheme.roseRed),
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                   ),
+                                   onPressed: () async {
+                                     final result = await Navigator.push<bool>(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (context) => ReturnsScreen(currentUser: widget.currentUser, invoice: inv),
+                                       ),
+                                     );
+                                     if (result == true && mounted) {
+                                       _fetchInvoices();
+                                     }
+                                   },
+                                 ),
+                                 const SizedBox(width: 8),
+                                 IconButton(
+                                   icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.red),
+                                   tooltip: 'تصدير A4 PDF',
+                                   onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: false),
+                                 ),
                               ],
                             ),
                           ],

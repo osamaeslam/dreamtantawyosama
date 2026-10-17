@@ -149,10 +149,10 @@ class SupabaseService {
   }
 
   // ===================== الفروع (Branches) =====================
-  Future<List<Map<String, dynamic>>> fetchBranches() async {
+  Future<List<Branch>> fetchBranches() async {
     try {
       final data = await client.from('branches').select();
-      return (data as List<dynamic>).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      return (data as List<dynamic>).map((e) => Branch.fromJson(e as Map<String, dynamic>)).toList();
     } catch (e) {
       debugPrint('Error fetching branches: $e');
       return [];
@@ -287,4 +287,296 @@ class SupabaseService {
         )
         .subscribe();
   }
+
+  // ===================== معلومات الشركة (Company Info) =====================
+  Future<CompanyInfo?> fetchCompanyInfo() async {
+    try {
+      final data = await client.from('company_info').select().maybeSingle();
+      if (data == null) return null;
+      return CompanyInfo.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error fetching company info: $e');
+      return null;
+    }
+  }
+
+  // ===================== الأهداف والتارجت (Targets) =====================
+  Future<List<TargetRecord>> fetchTargets({
+    String? repName,
+    String? branchName,
+    int? month,
+    int? year,
+  }) async {
+    try {
+      var query = client.from('targets').select();
+      if (repName != null && repName.isNotEmpty) {
+        query = query.eq('rep_name', repName);
+      }
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (month != null) {
+        query = query.eq('month', month);
+      }
+      if (year != null) {
+        query = query.eq('year', year);
+      }
+      final data = await query.order('date', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => TargetRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching targets: $e');
+      return [];
+    }
+  }
+
+  // ===================== ملاحظات العملاء (Customer Comments) =====================
+  Future<List<CustomerCommentRecord>> fetchCustomerComments({
+    String? customerId,
+    String? customerCode,
+    String? branchName,
+  }) async {
+    try {
+      var query = client.from('customer_comments').select();
+      if (customerId != null && customerId.isNotEmpty) {
+        query = query.eq('customer_id', customerId);
+      }
+      if (customerCode != null && customerCode.isNotEmpty) {
+        query = query.eq('customer_code', customerCode);
+      }
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      final data = await query.order('created_at', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => CustomerCommentRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching customer comments: $e');
+      return [];
+    }
+  }
+
+  Future<bool> addCustomerComment(CustomerCommentRecord comment) async {
+    try {
+      await client.from('customer_comments').insert(comment.toJson());
+      return true;
+    } catch (e) {
+      debugPrint('Error saving customer comment: $e');
+      return false;
+    }
+  }
+
+  // ===================== المعاملات المخزنية (Inventory Transactions) =====================
+  Future<List<InventoryTransaction>> fetchInventoryTransactions({
+    String? productId,
+    String? branchName,
+    String? date,
+  }) async {
+    try {
+      var query = client.from('inventory_transactions').select();
+      if (productId != null && productId.isNotEmpty) {
+        query = query.eq('product_id', productId);
+      }
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (date != null && date.isNotEmpty) {
+        query = query.eq('date', date);
+      }
+      final data = await query.order('timestamp', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => InventoryTransaction.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching inventory transactions: $e');
+      return [];
+    }
+  }
+
+  // ===================== الشيتات والعروض الترويجية (Promotions) =====================
+
+  // ===================== المرتجعات (Returns) =====================
+  Future<List<ReturnRecord>> fetchReturns({
+    String? repName,
+    String? branchName,
+    String? invoiceNumber,
+  }) async {
+    try {
+      var query = client.from('returns').select();
+      if (repName != null && repName.isNotEmpty) {
+        query = query.eq('rep_name', repName);
+      }
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (invoiceNumber != null && invoiceNumber.isNotEmpty) {
+        query = query.eq('invoice_number', invoiceNumber);
+      }
+      final data = await query.order('date', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => ReturnRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching returns: $e');
+      return [];
+    }
+  }
+
+  Future<bool> createReturnRecord(ReturnRecord record) async {
+    try {
+      await client.from('returns').insert(record.toJson());
+      return true;
+    } catch (e) {
+      debugPrint('Error saving return record: $e');
+      return false;
+    }
+  }
+
+  // ===================== التوقعات/التوقعات الأسبوعية (Forecasts) =====================
+  Future<List<CollectionForecastRecord>> fetchForecasts({
+    String? repName,
+    String? monthKey,
+    ForecastStatusType? status,
+  }) async {
+    try {
+      var query = client.from('forecasts').select();
+      if (repName != null && repName.isNotEmpty) {
+        query = query.eq('rep_name', repName);
+      }
+      if (monthKey != null && monthKey.isNotEmpty) {
+        query = query.eq('month_key', monthKey);
+      }
+      if (status != null) {
+        query = query.eq('status', _forecastStatusToString(status));
+      }
+      final data = await query.order('month_key', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => CollectionForecastRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching forecasts: $e');
+      return [];
+    }
+  }
+
+  Future<ForecastMonthPlan?> fetchForecastMonthPlan(String monthKey) async {
+    try {
+      final data = await client
+          .from('forecast_month_plans')
+          .select()
+          .eq('id', monthKey)
+          .maybeSingle();
+      if (data == null) return null;
+      return ForecastMonthPlan.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error fetching forecast month plan: $e');
+      return null;
+    }
+  }
+
+  Future<bool> saveForecast(CollectionForecastRecord record) async {
+    try {
+      await client.from('forecasts').upsert(record.toJson());
+      return true;
+    } catch (e) {
+      debugPrint('Error saving forecast: $e');
+      return false;
+    }
+  }
+
+  // ===================== سجلات التدقيق (Audit Logs) =====================
+  Future<List<AuditLog>> fetchAuditLogs({
+    String? userName,
+    AuditActionType? action,
+    String? invoiceId,
+  }) async {
+    try {
+      var query = client.from('audit_log').select();
+      if (userName != null && userName.isNotEmpty) {
+        query = query.eq('user_name', userName);
+      }
+      if (action != null) {
+        query = query.eq('action', _auditActionTypeToString(action));
+      }
+      if (invoiceId != null && invoiceId.isNotEmpty) {
+        query = query.eq('invoice_id', invoiceId);
+      }
+      final data = await query.order('timestamp', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => AuditLog.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching audit logs: $e');
+      return [];
+    }
+  }
+
+  // ===================== أداء المندوبين (Rep Performance) =====================
+  Future<List<RepPerformance>> fetchRepPerformance({
+    String? branchName,
+    int? month,
+    int? year,
+  }) async {
+    try {
+      var query = client.from('rep_performance').select();
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (month != null) {
+        query = query.eq('month', month);
+      }
+      if (year != null) {
+        query = query.eq('year', year);
+      }
+      final data = await query.order('sales_achieved', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => RepPerformance.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching rep performance: $e');
+      return [];
+    }
+  }
+
+  // ===================== تحليلات العملاء (Customer Analytics) =====================
+  Future<List<CustomerAnalytics>> fetchCustomerAnalytics({
+    String? branchName,
+    String? repName,
+    String? tier,
+  }) async {
+    try {
+      var query = client.from('customer_analytics').select();
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (repName != null && repName.isNotEmpty) {
+        query = query.eq('rep_name', repName);
+      }
+      if (tier != null && tier.isNotEmpty) {
+        query = query.eq('tier', tier);
+      }
+      final data = await query.order('total_sales', ascending: false);
+      return (data as List<dynamic>)
+          .map((e) => CustomerAnalytics.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('Error fetching customer analytics: $e');
+      return [];
+    }
+  }
+
+  
+  // ===================== إعدادات Cloudinary =====================
+  Future<CloudinaryConfig?> fetchCloudinaryConfig() async {
+    try {
+      final data = await client.from('cloudinary_config').select().maybeSingle();
+      if (data == null) return null;
+      return CloudinaryConfig.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error fetching cloudinary config: $e');
+      return null;
+    }
+   }
 }

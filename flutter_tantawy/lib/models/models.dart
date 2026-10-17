@@ -1397,3 +1397,1451 @@ class PromotionOffer {
         'source_sheet': sourceSheet,
       };
 }
+
+// ============================================================
+// === أنواع مساعدة وـ Enums إضافية ===
+// ============================================================
+
+enum UserApprovalStatus { active, pendingApproval, rejected }
+
+enum CustomerTier { premier, raqi, medium, regular }
+
+enum CustomerVisitStatus { scheduled, executed, canceled, notDone }
+
+enum VisitReviewStatus { pending, approved, needsFix }
+
+enum OrderStatus {
+  draft,
+  pendingSupervisorReview,
+  pendingBranchApproval,
+  inReview,
+  approvedAndDispatched,
+  approved,
+  preparing,
+  preparingProducts,
+  productsArrived,
+  shipping,
+  delivered,
+  closed,
+  returned,
+  partialReturn,
+  rejectedCancelled,
+  cancelled,
+}
+
+enum PaymentMethod {
+  cash,
+  credit30Days,
+  credit60Days,
+  bankTransfer,
+  cheque,
+}
+
+enum AuditActionType {
+  createInvoice,
+  updateInvoiceStatus,
+  approveInvoice,
+  cancelInvoice,
+  returnInvoice,
+  deleteInvoice,
+  importProducts,
+  stockAdjustment,
+  userLogin,
+  createUser,
+  updateUser,
+}
+
+enum ForecastStatusType { draft, submitted, approved, changeRequested }
+
+enum SyncStatus { synced, pendingSync, localOnly }
+
+String formatOrderStatus(OrderStatus status) {
+  switch (status) {
+    case OrderStatus.draft:
+      return 'مسودة';
+    case OrderStatus.pendingSupervisorReview:
+      return 'قيد مراجعة المشرف';
+    case OrderStatus.pendingBranchApproval:
+      return 'معلقة بانتظار اعتماد الفرع';
+    case OrderStatus.inReview:
+      return 'قيد المراجعة';
+    case OrderStatus.approvedAndDispatched:
+      return 'معتمدة ومصروفة من المخزن';
+    case OrderStatus.approved:
+      return 'معتمدة';
+    case OrderStatus.preparing:
+      return 'جاري التحضير';
+    case OrderStatus.preparingProducts:
+      return 'جاري تحضير المنتجات';
+    case OrderStatus.productsArrived:
+      return 'تم وصول المنتجات';
+    case OrderStatus.shipping:
+      return 'قيد التوصيل';
+    case OrderStatus.delivered:
+      return 'تم التسليم';
+    case OrderStatus.closed:
+      return 'إغلاق الطلبية';
+    case OrderStatus.returned:
+      return 'مرتجع';
+    case OrderStatus.partialReturn:
+      return 'مرتجع جزئي';
+    case OrderStatus.rejectedCancelled:
+      return 'مرفوضة / ملغاة';
+    case OrderStatus.cancelled:
+      return 'ملغاة';
+  }
+}
+
+String formatPaymentMethod(PaymentMethod method) {
+  switch (method) {
+    case PaymentMethod.cash:
+      return 'نقدي (كاش)';
+    case PaymentMethod.credit30Days:
+      return 'آجل (30 يوم)';
+    case PaymentMethod.credit60Days:
+      return 'آجل (60 يوم)';
+    case PaymentMethod.bankTransfer:
+      return 'تحويل بنكي';
+    case PaymentMethod.cheque:
+      return 'شيك';
+  }
+}
+
+String formatAuditActionType(AuditActionType action) {
+  switch (action) {
+    case AuditActionType.createInvoice:
+      return 'إنشاء فاتورة';
+    case AuditActionType.updateInvoiceStatus:
+      return 'تحديث حالة الفاتورة';
+    case AuditActionType.approveInvoice:
+      return 'اعتماد الفاتورة';
+    case AuditActionType.cancelInvoice:
+      return 'إلغاء الفاتورة';
+    case AuditActionType.returnInvoice:
+      return 'مرتجع فاتورة';
+    case AuditActionType.deleteInvoice:
+      return 'حذف الفاتورة';
+    case AuditActionType.importProducts:
+      return 'استيراد منتجات';
+    case AuditActionType.stockAdjustment:
+      return 'تعديل مخزون';
+    case AuditActionType.userLogin:
+      return 'تسجيل دخول';
+    case AuditActionType.createUser:
+      return 'إنشاء مستخدم';
+    case AuditActionType.updateUser:
+      return 'تحديث مستخدم';
+  }
+}
+
+String formatSyncStatus(SyncStatus status) {
+  switch (status) {
+    case SyncStatus.synced:
+      return 'تم المزامنة';
+    case SyncStatus.pendingSync:
+      return 'معلق المزامنة';
+    case SyncStatus.localOnly:
+      return 'محلي فقط';
+  }
+}
+
+// ============================================================
+// === Branch (فروع) ===
+// ============================================================
+
+class Branch {
+  final String id;
+  final String name;
+  final String code;
+  final String city;
+  final String address;
+  final String managerName;
+  final String phone;
+  final bool? isMainWarehouse;
+  final String? email;
+  final List<String>? notificationEmails;
+
+  Branch({
+    required this.id,
+    required this.name,
+    required this.code,
+    required this.city,
+    required this.address,
+    required this.managerName,
+    required this.phone,
+    this.isMainWarehouse,
+    this.email,
+    this.notificationEmails,
+  });
+
+  factory Branch.fromJson(Map<String, dynamic> json) {
+    return Branch(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      managerName: json['manager_name']?.toString() ?? json['managerName']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      isMainWarehouse: json['is_main_warehouse'] as bool? ?? json['isMainWarehouse'] as bool?,
+      email: json['email']?.toString(),
+      notificationEmails: (json['notification_emails'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'code': code,
+    'city': city,
+    'address': address,
+    'manager_name': managerName,
+    'phone': phone,
+    'is_main_warehouse': isMainWarehouse,
+    'email': email,
+    'notification_emails': notificationEmails,
+  };
+}
+
+// ============================================================
+// === CompanyInfo (معلومات الشركة) ===
+// ============================================================
+
+class CompanyInfo {
+  final String name;
+  final String nameArabic;
+  final String nameEnglish;
+  final String? commercialNameEn;
+  final String taxNumber;
+  final String? taxRegistrationNumber;
+  final String commercialRegister;
+  final String activity;
+  final String address;
+  final String headquarters;
+  final String phone;
+  final String customerService;
+  final String email;
+  final String website;
+  final String? logoLetter;
+  final String? logoUrl;
+  final String? footerNotes;
+  final List<String>? notificationEmails;
+
+  CompanyInfo({
+    required this.name,
+    required this.nameArabic,
+    required this.nameEnglish,
+    this.commercialNameEn,
+    required this.taxNumber,
+    this.taxRegistrationNumber,
+    required this.commercialRegister,
+    required this.activity,
+    required this.address,
+    required this.headquarters,
+    required this.phone,
+    required this.customerService,
+    required this.email,
+    required this.website,
+    this.logoLetter,
+    this.logoUrl,
+    this.footerNotes,
+    this.notificationEmails,
+  });
+
+  factory CompanyInfo.fromJson(Map<String, dynamic> json) {
+    return CompanyInfo(
+      name: json['name']?.toString() ?? '',
+      nameArabic: json['name_arabic']?.toString() ?? json['nameArabic']?.toString() ?? '',
+      nameEnglish: json['name_english']?.toString() ?? json['nameEnglish']?.toString() ?? '',
+      commercialNameEn: json['commercial_name_en']?.toString() ?? json['commercialNameEn']?.toString(),
+      taxNumber: json['tax_number']?.toString() ?? json['taxNumber']?.toString() ?? '',
+      taxRegistrationNumber: json['tax_registration_number']?.toString() ?? json['taxRegistrationNumber']?.toString(),
+      commercialRegister: json['commercial_register']?.toString() ?? json['commercialRegister']?.toString() ?? '',
+      activity: json['activity']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      headquarters: json['headquarters']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      customerService: json['customer_service']?.toString() ?? json['customerService']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      website: json['website']?.toString() ?? '',
+      logoLetter: json['logo_letter']?.toString() ?? json['logoLetter']?.toString(),
+      logoUrl: json['logo_url']?.toString() ?? json['logoUrl']?.toString(),
+      footerNotes: json['footer_notes']?.toString() ?? json['footerNotes']?.toString(),
+      notificationEmails: (json['notification_emails'] as List<dynamic>?)?.map((e) => e.toString()).toList(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'name_arabic': nameArabic,
+    'name_english': nameEnglish,
+    'commercial_name_en': commercialNameEn,
+    'tax_number': taxNumber,
+    'tax_registration_number': taxRegistrationNumber,
+    'commercial_register': commercialRegister,
+    'activity': activity,
+    'address': address,
+    'headquarters': headquarters,
+    'phone': phone,
+    'customer_service': customerService,
+    'email': email,
+    'website': website,
+    'logo_letter': logoLetter,
+    'logo_url': logoUrl,
+    'footer_notes': footerNotes,
+    'notification_emails': notificationEmails,
+  };
+}
+
+// ============================================================
+// === ReturnedItem (صنف مرتجع) ===
+// ============================================================
+
+class ReturnedItem {
+  final String productId;
+  final String productCode;
+  final String productName;
+  final int cartonCount;
+  final int pieceCount;
+  final int cartonQuantity;
+  final int totalPieces;
+  final double pricePerCarton;
+  final double pricePerPiece;
+  final double refundAmount;
+  final String? returnReason;
+  final String? condition;
+
+  ReturnedItem({
+    required this.productId,
+    required this.productCode,
+    required this.productName,
+    required this.cartonCount,
+    required this.pieceCount,
+    required this.cartonQuantity,
+    required this.totalPieces,
+    required this.pricePerCarton,
+    required this.pricePerPiece,
+    required this.refundAmount,
+    this.returnReason,
+    this.condition = 'good_condition',
+  });
+
+  factory ReturnedItem.fromJson(Map<String, dynamic> json) {
+    return ReturnedItem(
+      productId: json['product_id']?.toString() ?? json['productId']?.toString() ?? '',
+      productCode: json['product_code']?.toString() ?? json['productCode']?.toString() ?? '',
+      productName: json['product_name']?.toString() ?? json['productName']?.toString() ?? '',
+      cartonCount: (json['carton_count'] ?? json['cartonCount'] ?? 0).toInt(),
+      pieceCount: (json['piece_count'] ?? json['pieceCount'] ?? 0).toInt(),
+      cartonQuantity: (json['carton_quantity'] ?? json['cartonQuantity'] ?? 1).toInt(),
+      totalPieces: (json['total_pieces'] ?? json['totalPieces'] ?? 0).toInt(),
+      pricePerCarton: _toDouble(json['price_per_carton'] ?? json['pricePerCarton']) ?? 0,
+      pricePerPiece: _toDouble(json['price_per_piece'] ?? json['pricePerPiece']) ?? 0,
+      refundAmount: _toDouble(json['refund_amount'] ?? json['refundAmount']) ?? 0,
+      returnReason: json['return_reason']?.toString() ?? json['returnReason']?.toString(),
+      condition: json['condition']?.toString() ?? 'good_condition',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'product_id': productId,
+    'product_code': productCode,
+    'product_name': productName,
+    'carton_count': cartonCount,
+    'piece_count': pieceCount,
+    'carton_quantity': cartonQuantity,
+    'total_pieces': totalPieces,
+    'price_per_carton': pricePerCarton,
+    'price_per_piece': pricePerPiece,
+    'refund_amount': refundAmount,
+    'return_reason': returnReason,
+    'condition': condition,
+  };
+}
+
+// ============================================================
+// === ReturnRecord (سجل مرتجع) ===
+// ============================================================
+
+class ReturnRecord {
+  final String id;
+  final String returnVoucherNumber;
+  final String invoiceId;
+  final String invoiceNumber;
+  final String customerName;
+  final String? customerCode;
+  final String branchName;
+  final String repName;
+  final String date;
+  final String time;
+  final List<ReturnedItem> returnedItems;
+  final double totalRefundAmount;
+  final int totalReturnedCartons;
+  final int totalReturnedPieces;
+  final String reason;
+  final String handledBy;
+  final bool restockedToInventory;
+  final String? notes;
+
+  ReturnRecord({
+    required this.id,
+    required this.returnVoucherNumber,
+    required this.invoiceId,
+    required this.invoiceNumber,
+    required this.customerName,
+    this.customerCode,
+    required this.branchName,
+    required this.repName,
+    required this.date,
+    required this.time,
+    required this.returnedItems,
+    required this.totalRefundAmount,
+    this.totalReturnedCartons = 0,
+    this.totalReturnedPieces = 0,
+    required this.reason,
+    required this.handledBy,
+    this.restockedToInventory = false,
+    this.notes,
+  });
+
+  factory ReturnRecord.fromJson(Map<String, dynamic> json) {
+    return ReturnRecord(
+      id: json['id']?.toString() ?? '',
+      returnVoucherNumber: json['returnVoucherNumber']?.toString() ?? json['return_voucher_number']?.toString() ?? '',
+      invoiceId: json['invoiceId']?.toString() ?? json['invoice_id']?.toString() ?? '',
+      invoiceNumber: json['invoiceNumber']?.toString() ?? json['invoice_number']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? '',
+      customerCode: json['customer_code']?.toString(),
+      branchName: json['branch_name']?.toString() ?? '',
+      repName: json['rep_name']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      time: json['time']?.toString() ?? '',
+      returnedItems: (json['returned_items'] as List<dynamic>? ?? []).map((e) => ReturnedItem.fromJson(e as Map<String, dynamic>)).toList(),
+      totalRefundAmount: _toDouble(json['total_refund_amount'] ?? json['totalRefundAmount']) ?? 0,
+      totalReturnedCartons: (json['total_returned_cartons'] ?? json['totalReturnedCartons'] ?? 0).toInt(),
+      totalReturnedPieces: (json['total_returned_pieces'] ?? json['totalReturnedPieces'] ?? 0).toInt(),
+      reason: json['reason']?.toString() ?? '',
+      handledBy: json['handled_by']?.toString() ?? json['handledBy']?.toString() ?? '',
+      restockedToInventory: json['restocked_to_inventory'] as bool? ?? json['restockedToInventory'] as bool? ?? false,
+      notes: json['notes']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'return_voucher_number': returnVoucherNumber,
+    'invoice_id': invoiceId,
+    'invoice_number': invoiceNumber,
+    'customer_name': customerName,
+    'customer_code': customerCode,
+    'branch_name': branchName,
+    'rep_name': repName,
+    'date': date,
+    'time': time,
+    'returned_items': returnedItems.map((i) => i.toJson()).toList(),
+    'total_refund_amount': totalRefundAmount,
+    'total_returned_cartons': totalReturnedCartons,
+    'total_returned_pieces': totalReturnedPieces,
+    'reason': reason,
+    'handled_by': handledBy,
+    'restocked_to_inventory': restockedToInventory,
+    'notes': notes,
+  };
+}
+
+// ============================================================
+// === InventoryTransaction (معاملة مخزون) ===
+// ============================================================
+
+class InventoryTransaction {
+  final String id;
+  final String timestamp;
+  final String date;
+  final String productId;
+  final String productCode;
+  final String productName;
+  final String type;
+  final int quantityPieces;
+  final int branchStockBefore;
+  final int branchStockAfter;
+  final String branchName;
+  final String userName;
+  final String userRole;
+  final String? invoiceId;
+  final String? invoiceNumber;
+  final String? notes;
+
+  InventoryTransaction({
+    required this.id,
+    required this.timestamp,
+    required this.date,
+    required this.productId,
+    required this.productCode,
+    required this.productName,
+    required this.type,
+    required this.quantityPieces,
+    required this.branchStockBefore,
+    required this.branchStockAfter,
+    required this.branchName,
+    required this.userName,
+    required this.userRole,
+    this.invoiceId,
+    this.invoiceNumber,
+    this.notes,
+  });
+
+  factory InventoryTransaction.fromJson(Map<String, dynamic> json) {
+    return InventoryTransaction(
+      id: json['id']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? json['created_at']?.toString() ?? '',
+      date: json['date']?.toString() ?? '',
+      productId: json['product_id']?.toString() ?? json['productId']?.toString() ?? '',
+      productCode: json['product_code']?.toString() ?? json['productCode']?.toString() ?? '',
+      productName: json['product_name']?.toString() ?? json['productName']?.toString() ?? '',
+      type: json['type']?.toString() ?? '',
+      quantityPieces: (json['quantity_pieces'] ?? json['quantityPieces'] ?? 0).toInt(),
+      branchStockBefore: (json['branch_stock_before'] ?? json['branchStockBefore'] ?? 0).toInt(),
+      branchStockAfter: (json['branch_stock_after'] ?? json['branchStockAfter'] ?? 0).toInt(),
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? '',
+      userName: json['user_name']?.toString() ?? json['userName']?.toString() ?? '',
+      userRole: json['user_role']?.toString() ?? json['userRole']?.toString() ?? 'sales_rep',
+      invoiceId: json['invoice_id']?.toString() ?? json['invoiceId']?.toString(),
+      invoiceNumber: json['invoice_number']?.toString() ?? json['invoiceNumber']?.toString(),
+      notes: json['notes']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'timestamp': timestamp,
+    'date': date,
+    'product_id': productId,
+    'product_code': productCode,
+    'product_name': productName,
+    'quantity_pieces': quantityPieces,
+    'branch_stock_before': branchStockBefore,
+    'branch_stock_after': branchStockAfter,
+    'branch_name': branchName,
+    'user_name': userName,
+    'user_role': userRole,
+    'invoice_id': invoiceId,
+    'invoice_number': invoiceNumber,
+    'notes': notes,
+  };
+}
+
+// ============================================================
+// === AuditLog (سجل التدقيق) ===
+// ============================================================
+
+class AuditLog {
+  final String id;
+  final String timestamp;
+  final String formattedTime;
+  final String userId;
+  final String userName;
+  final String userRole;
+  final String branchName;
+  final AuditActionType action;
+  final String actionTitle;
+  final String details;
+  final String? invoiceId;
+  final String? invoiceNumber;
+  final String? ipAddress;
+  final String? badgeType;
+
+  AuditLog({
+    required this.id,
+    required this.timestamp,
+    required this.formattedTime,
+    required this.userId,
+    required this.userName,
+    required this.userRole,
+    required this.branchName,
+    required this.action,
+    required this.actionTitle,
+    required this.details,
+    this.invoiceId,
+    this.invoiceNumber,
+    this.ipAddress,
+    this.badgeType,
+  });
+
+  factory AuditLog.fromJson(Map<String, dynamic> json) {
+    final actionStr = json['action']?.toString() ?? '';
+    return AuditLog(
+      id: json['id']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? '',
+      formattedTime: json['formatted_time']?.toString() ?? json['formattedTime']?.toString() ?? '',
+      userId: json['user_id']?.toString() ?? json['userId']?.toString() ?? '',
+      userName: json['user_name']?.toString() ?? json['userName']?.toString() ?? '',
+      userRole: json['user_role']?.toString() ?? json['userRole']?.toString() ?? 'sales_rep',
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? '',
+      action: _parseAuditActionType(actionStr),
+      actionTitle: json['action_title']?.toString() ?? json['actionTitle']?.toString() ?? '',
+      details: json['details']?.toString() ?? '',
+      invoiceId: json['invoice_id']?.toString() ?? json['invoiceId']?.toString(),
+      invoiceNumber: json['invoice_number']?.toString() ?? json['invoiceNumber']?.toString(),
+      ipAddress: json['ip_address']?.toString() ?? json['ipAddress']?.toString(),
+      badgeType: json['badge_type']?.toString() ?? json['badgeType']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'timestamp': timestamp,
+    'formatted_time': formattedTime,
+    'user_id': userId,
+    'user_name': userName,
+    'user_role': userRole,
+    'branch_name': branchName,
+    'action': _auditActionTypeToString(action),
+    'action_title': actionTitle,
+    'details': details,
+    'invoice_id': invoiceId,
+    'invoice_number': invoiceNumber,
+    'ip_address': ipAddress,
+    'badge_type': badgeType,
+  };
+}
+
+AuditActionType _parseAuditActionType(String s) {
+  switch (s) {
+    case 'create_invoice':
+      return AuditActionType.createInvoice;
+    case 'update_invoice_status':
+      return AuditActionType.updateInvoiceStatus;
+    case 'approve_invoice':
+      return AuditActionType.approveInvoice;
+    case 'cancel_invoice':
+      return AuditActionType.cancelInvoice;
+    case 'return_invoice':
+      return AuditActionType.returnInvoice;
+    case 'delete_invoice':
+      return AuditActionType.deleteInvoice;
+    case 'import_products':
+      return AuditActionType.importProducts;
+    case 'stock_adjustment':
+      return AuditActionType.stockAdjustment;
+    case 'user_login':
+      return AuditActionType.userLogin;
+    case 'create_user':
+      return AuditActionType.createUser;
+    case 'update_user':
+      return AuditActionType.updateUser;
+    default:
+      return AuditActionType.userLogin;
+  }
+}
+
+String _auditActionTypeToString(AuditActionType action) {
+  switch (action) {
+    case AuditActionType.createInvoice:
+      return 'create_invoice';
+    case AuditActionType.updateInvoiceStatus:
+      return 'update_invoice_status';
+    case AuditActionType.approveInvoice:
+      return 'approve_invoice';
+    case AuditActionType.cancelInvoice:
+      return 'cancel_invoice';
+    case AuditActionType.returnInvoice:
+      return 'return_invoice';
+    case AuditActionType.deleteInvoice:
+      return 'delete_invoice';
+    case AuditActionType.importProducts:
+      return 'import_products';
+    case AuditActionType.stockAdjustment:
+      return 'stock_adjustment';
+    case AuditActionType.userLogin:
+      return 'user_login';
+    case AuditActionType.createUser:
+      return 'create_user';
+    case AuditActionType.updateUser:
+      return 'update_user';
+  }
+}
+
+// ============================================================
+// === TargetRecord (سجل هدف مبيعات) ===
+// ============================================================
+
+class TargetRecord {
+  final String id;
+  final String branch;
+  final String repName;
+  final double salesTarget;
+  final double salesAchieved;
+  final double salesPercentage;
+  final double collectionTarget;
+  final double collectionAchieved;
+  final double collectionPercentage;
+  final String date;
+  final int month;
+  final int year;
+  final String quarter;
+  final double remainingSales;
+  final double remainingCollection;
+  final String? updatedAt;
+  final String? notes;
+
+  TargetRecord({
+    required this.id,
+    required this.branch,
+    required this.repName,
+    this.salesTarget = 0,
+    this.salesAchieved = 0,
+    this.salesPercentage = 0,
+    this.collectionTarget = 0,
+    this.collectionAchieved = 0,
+    this.collectionPercentage = 0,
+    required this.date,
+    this.month = 0,
+    this.year = 0,
+    this.quarter = 'Q1',
+    this.remainingSales = 0,
+    this.remainingCollection = 0,
+    this.updatedAt,
+    this.notes,
+  });
+
+  factory TargetRecord.fromJson(Map<String, dynamic> json) {
+    return TargetRecord(
+      id: json['id']?.toString() ?? '',
+      branch: json['branch']?.toString() ?? '',
+      repName: json['rep_name']?.toString() ?? json['repName']?.toString() ?? '',
+      salesTarget: _toDouble(json['sales_target'] ?? json['salesTarget']) ?? 0,
+      salesAchieved: _toDouble(json['sales_achieved'] ?? json['salesAchieved']) ?? 0,
+      salesPercentage: _toDouble(json['sales_percentage'] ?? json['salesPercentage']) ?? 0,
+      collectionTarget: _toDouble(json['collection_target'] ?? json['collectionTarget']) ?? 0,
+      collectionAchieved: _toDouble(json['collection_achieved'] ?? json['collectionAchieved']) ?? 0,
+      collectionPercentage: _toDouble(json['collection_percentage'] ?? json['collectionPercentage']) ?? 0,
+      date: json['date']?.toString() ?? '',
+      month: (json['month'] ?? 0).toInt(),
+      year: (json['year'] ?? 0).toInt(),
+      quarter: json['quarter']?.toString() ?? 'Q1',
+      remainingSales: _toDouble(json['remaining_sales'] ?? json['remainingSales']) ?? 0,
+      remainingCollection: _toDouble(json['remaining_collection'] ?? json['remainingCollection']) ?? 0,
+      updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
+      notes: json['notes']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'branch': branch,
+    'rep_name': repName,
+    'sales_target': salesTarget,
+    'sales_achieved': salesAchieved,
+    'sales_percentage': salesPercentage,
+    'collection_target': collectionTarget,
+    'collection_achieved': collectionAchieved,
+    'collection_percentage': collectionPercentage,
+    'date': date,
+    'month': month,
+    'year': year,
+    'quarter': quarter,
+    'remaining_sales': remainingSales,
+    'remaining_collection': remainingCollection,
+    'updated_at': updatedAt,
+    'notes': notes,
+  };
+}
+
+// ============================================================
+// === CustomerCommentRecord (ملاحظة عميل) ===
+// ============================================================
+
+class CustomerCommentRecord {
+  final String id;
+  final String customerId;
+  final String customerCode;
+  final String customerName;
+  final String branchName;
+  final String repName;
+  final String kind;
+  final String body;
+  final String authorName;
+  final String createdAt;
+  final String? updatedAt;
+  final bool? isArchived;
+  final String? archivedAt;
+  final String? archivedBy;
+
+  CustomerCommentRecord({
+    required this.id,
+    required this.customerId,
+    required this.customerCode,
+    required this.customerName,
+    required this.branchName,
+    required this.repName,
+    required this.kind,
+    required this.body,
+    required this.authorName,
+    required this.createdAt,
+    this.updatedAt,
+    this.isArchived,
+    this.archivedAt,
+    this.archivedBy,
+  });
+
+  factory CustomerCommentRecord.fromJson(Map<String, dynamic> json) {
+    return CustomerCommentRecord(
+      id: json['id']?.toString() ?? '',
+      customerId: json['customer_id']?.toString() ?? json['customerId']?.toString() ?? '',
+      customerCode: json['customer_code']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? json['customerName']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? '',
+      repName: json['rep_name']?.toString() ?? json['repName']?.toString() ?? '',
+      kind: json['kind']?.toString() ?? 'note',
+      body: json['body']?.toString() ?? '',
+      authorName: json['author_name']?.toString() ?? json['authorName']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString() ?? '',
+      updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
+      isArchived: json['is_archived'] as bool? ?? json['isArchived'] as bool?,
+      archivedAt: json['archived_at']?.toString() ?? json['archivedAt']?.toString(),
+      archivedBy: json['archived_by']?.toString() ?? json['archivedBy']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'customer_id': customerId,
+    'customer_code': customerCode,
+    'customer_name': customerName,
+    'branch_name': branchName,
+    'rep_name': repName,
+    'kind': kind,
+    'body': body,
+    'author_name': authorName,
+    'created_at': createdAt,
+    'updated_at': updatedAt,
+    'is_archived': isArchived,
+    'archived_at': archivedAt,
+    'archived_by': archivedBy,
+  };
+}
+
+// ============================================================
+// === Forecast Types (توقع التحصيلات) ===
+// ============================================================
+
+class ForecastWeek {
+  final int index;
+  final String start;
+  final String end;
+  final String? label;
+
+  ForecastWeek({
+    required this.index,
+    required this.start,
+    required this.end,
+    this.label,
+  });
+
+  factory ForecastWeek.fromJson(Map<String, dynamic> json) {
+    return ForecastWeek(
+      index: (json['index'] ?? 0).toInt(),
+      start: json['start']?.toString() ?? '',
+      end: json['end']?.toString() ?? '',
+      label: json['label']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'index': index,
+    'start': start,
+    'end': end,
+    'label': label,
+  };
+}
+
+class ForecastMonthPlan {
+  final String id;
+  final int year;
+  final int month;
+  final String monthStart;
+  final String monthEnd;
+  final List<ForecastWeek> weeks;
+  final bool isClosed;
+  final String? createdBy;
+  final String? createdAt;
+  final String? updatedBy;
+  final String? updatedAt;
+
+  ForecastMonthPlan({
+    required this.id,
+    required this.year,
+    required this.month,
+    required this.monthStart,
+    required this.monthEnd,
+    this.weeks = const [],
+    this.isClosed = false,
+    this.createdBy,
+    this.createdAt,
+    this.updatedBy,
+    this.updatedAt,
+  });
+
+  factory ForecastMonthPlan.fromJson(Map<String, dynamic> json) {
+    return ForecastMonthPlan(
+      id: json['id']?.toString() ?? '',
+      year: (json['year'] ?? 0).toInt(),
+      month: (json['month'] ?? 0).toInt(),
+      monthStart: json['month_start']?.toString() ?? json['monthStart']?.toString() ?? '',
+      monthEnd: json['month_end']?.toString() ?? json['monthEnd']?.toString() ?? '',
+      weeks: (json['weeks'] as List<dynamic>? ?? []).map((e) => ForecastWeek.fromJson(e as Map<String, dynamic>)).toList(),
+      isClosed: json['is_closed'] as bool? ?? json['isClosed'] as bool? ?? false,
+      createdBy: json['created_by']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      updatedBy: json['updated_by']?.toString(),
+      updatedAt: json['updated_at']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'year': year,
+    'month': month,
+    'month_start': monthStart,
+    'month_end': monthEnd,
+    'weeks': weeks.map((w) => w.toJson()).toList(),
+    'is_closed': isClosed,
+    'created_by': createdBy,
+    'created_at': createdAt,
+    'updated_by': updatedBy,
+    'updated_at': updatedAt,
+  };
+}
+
+class CollectionForecastRecord {
+  final String id;
+  final String monthKey;
+  final int weekIndex;
+  final String repId;
+  final String repName;
+  final String branchName;
+  final String customerId;
+  final String customerCode;
+  final String customerName;
+  final double collectionForecast;
+  final double salesForecast;
+  final ForecastStatusType status;
+  final String? submittedAt;
+  final String? approvedBy;
+  final String? approvedAt;
+  final String? changeRequestNote;
+  final String? changeRequestedBy;
+  final String? changeRequestedAt;
+  final String? updatedBy;
+  final String? updatedAt;
+
+  CollectionForecastRecord({
+    required this.id,
+    required this.monthKey,
+    this.weekIndex = 0,
+    required this.repId,
+    required this.repName,
+    required this.branchName,
+    required this.customerId,
+    required this.customerCode,
+    required this.customerName,
+    this.collectionForecast = 0,
+    this.salesForecast = 0,
+    this.status = ForecastStatusType.draft,
+    this.submittedAt,
+    this.approvedBy,
+    this.approvedAt,
+    this.changeRequestNote,
+    this.changeRequestedBy,
+    this.changeRequestedAt,
+    this.updatedBy,
+    this.updatedAt,
+  });
+
+  factory CollectionForecastRecord.fromJson(Map<String, dynamic> json) {
+    return CollectionForecastRecord(
+      id: json['id']?.toString() ?? '',
+      monthKey: json['month_key']?.toString() ?? json['monthKey']?.toString() ?? '',
+      weekIndex: (json['week_index'] ?? json['weekIndex'] ?? 0).toInt(),
+      repId: json['rep_id']?.toString() ?? '',
+      repName: json['rep_name']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? '',
+      customerId: json['customer_id']?.toString() ?? '',
+      customerCode: json['customer_code']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? '',
+      collectionForecast: _toDouble(json['collection_forecast'] ?? json['collectionForecast']) ?? 0,
+      salesForecast: _toDouble(json['sales_forecast'] ?? json['salesForecast']) ?? 0,
+      status: _parseForecastStatus(json['status']?.toString() ?? 'draft'),
+      submittedAt: json['submitted_at']?.toString() ?? json['submittedAt']?.toString(),
+      approvedBy: json['approved_by']?.toString() ?? json['approvedBy']?.toString(),
+      approvedAt: json['approved_at']?.toString() ?? json['approvedAt']?.toString(),
+      changeRequestNote: json['change_request_note']?.toString() ?? json['changeRequestNote']?.toString(),
+      changeRequestedBy: json['change_requested_by']?.toString() ?? json['changeRequestedBy']?.toString(),
+      changeRequestedAt: json['change_requested_at']?.toString() ?? json['changeRequestedAt']?.toString(),
+      updatedBy: json['updated_by']?.toString() ?? json['updatedBy']?.toString(),
+      updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'month_key': monthKey,
+    'week_index': weekIndex,
+    'rep_id': repId,
+    'rep_name': repName,
+    'branch_name': branchName,
+    'customer_id': customerId,
+    'customer_code': customerCode,
+    'customer_name': customerName,
+    'collection_forecast': collectionForecast,
+    'sales_forecast': salesForecast,
+    'status': _forecastStatusToString(status),
+    'submitted_at': submittedAt,
+    'approved_by': approvedBy,
+    'approved_at': approvedAt,
+    'change_request_note': changeRequestNote,
+    'change_requested_by': changeRequestedBy,
+    'change_requested_at': changeRequestedAt,
+    'updated_by': updatedBy,
+    'updated_at': updatedAt,
+  };
+}
+
+ForecastStatusType _parseForecastStatus(String s) {
+  switch (s) {
+    case 'submitted':
+      return ForecastStatusType.submitted;
+    case 'approved':
+      return ForecastStatusType.approved;
+    case 'change_requested':
+      return ForecastStatusType.changeRequested;
+    case 'draft':
+    default:
+      return ForecastStatusType.draft;
+  }
+}
+
+String _forecastStatusToString(ForecastStatusType status) {
+  switch (status) {
+    case ForecastStatusType.draft:
+      return 'draft';
+    case ForecastStatusType.submitted:
+      return 'submitted';
+    case ForecastStatusType.approved:
+      return 'approved';
+    case ForecastStatusType.changeRequested:
+      return 'change_requested';
+  }
+}
+
+// ============================================================
+// === CloudinaryConfig (إعدادات Cloudinary) ===
+// ============================================================
+
+class CloudinaryConfig {
+  final String cloudName;
+  final String folderPrefix;
+  final String defaultTransformation;
+  final String matchingPattern;
+  final String fileExtension;
+  final String baseUrlPattern;
+
+  CloudinaryConfig({
+    required this.cloudName,
+    required this.folderPrefix,
+    required this.defaultTransformation,
+    required this.matchingPattern,
+    required this.fileExtension,
+    required this.baseUrlPattern,
+  });
+
+  factory CloudinaryConfig.fromJson(Map<String, dynamic> json) {
+    return CloudinaryConfig(
+      cloudName: json['cloud_name']?.toString() ?? json['cloudName']?.toString() ?? '',
+      folderPrefix: json['folder_prefix']?.toString() ?? json['folderPrefix']?.toString() ?? '',
+      defaultTransformation: json['default_transformation']?.toString() ?? json['defaultTransformation']?.toString() ?? '',
+      matchingPattern: json['matching_pattern']?.toString() ?? json['matchingPattern']?.toString() ?? 'auto',
+      fileExtension: json['file_extension']?.toString() ?? json['fileExtension']?.toString() ?? 'jpg',
+      baseUrlPattern: json['base_url_pattern']?.toString() ?? json['baseUrlPattern']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'cloud_name': cloudName,
+    'folder_prefix': folderPrefix,
+    'default_transformation': defaultTransformation,
+    'matching_pattern': matchingPattern,
+    'file_extension': fileExtension,
+    'base_url_pattern': baseUrlPattern,
+  };
+}
+
+// ============================================================
+// === ExcelColumnMapping ===
+// ============================================================
+
+class ExcelColumnMapping {
+  final String code;
+  final String name;
+  final String salesPriority;
+  final String category;
+  final String status;
+  final String cartonQuantity;
+  final String size;
+  final String color;
+  final String branchStockActual;
+  final String branchStockReserved;
+  final String mainWarehouseActual;
+  final String mainWarehouseReserved;
+  final String department;
+  final String classification;
+  final String promoPrice;
+  final String piecePrice;
+  final String cartonPrice;
+  final String branchName;
+  final String? imageUrl;
+
+  ExcelColumnMapping({
+    required this.code,
+    required this.name,
+    required this.salesPriority,
+    required this.category,
+    required this.status,
+    required this.cartonQuantity,
+    required this.size,
+    required this.color,
+    required this.branchStockActual,
+    required this.branchStockReserved,
+    required this.mainWarehouseActual,
+    required this.mainWarehouseReserved,
+    required this.department,
+    required this.classification,
+    required this.promoPrice,
+    required this.piecePrice,
+    required this.cartonPrice,
+    required this.branchName,
+    this.imageUrl,
+  });
+
+  factory ExcelColumnMapping.fromJson(Map<String, dynamic> json) {
+    return ExcelColumnMapping(
+      code: json['code']?.toString() ?? 'A',
+      name: json['name']?.toString() ?? 'B',
+      salesPriority: json['sales_priority']?.toString() ?? json['salesPriority']?.toString() ?? 'C',
+      category: json['category']?.toString() ?? 'D',
+      status: json['status']?.toString() ?? 'E',
+      cartonQuantity: json['carton_quantity']?.toString() ?? json['cartonQuantity']?.toString() ?? 'F',
+      size: json['size']?.toString() ?? 'G',
+      color: json['color']?.toString() ?? 'H',
+      branchStockActual: json['branch_stock_actual']?.toString() ?? json['branchStockActual']?.toString() ?? 'I',
+      branchStockReserved: json['branch_stock_reserved']?.toString() ?? json['branchStockReserved']?.toString() ?? 'J',
+      mainWarehouseActual: json['main_warehouse_actual']?.toString() ?? json['mainWarehouseActual']?.toString() ?? 'K',
+      mainWarehouseReserved: json['main_warehouse_reserved']?.toString() ?? json['mainWarehouseReserved']?.toString() ?? 'L',
+      department: json['department']?.toString() ?? 'M',
+      classification: json['classification']?.toString() ?? 'N',
+      promoPrice: json['promo_price']?.toString() ?? json['promoPrice']?.toString() ?? 'O',
+      piecePrice: json['piece_price']?.toString() ?? json['piecePrice']?.toString() ?? 'P',
+      cartonPrice: json['carton_price']?.toString() ?? json['cartonPrice']?.toString() ?? 'Q',
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? 'R',
+      imageUrl: json['image_url']?.toString() ?? json['imageUrl']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'code': code,
+    'name': name,
+    'sales_priority': salesPriority,
+    'category': category,
+    'status': status,
+    'carton_quantity': cartonQuantity,
+    'size': size,
+    'color': color,
+    'branch_stock_actual': branchStockActual,
+    'branch_stock_reserved': branchStockReserved,
+    'main_warehouse_actual': mainWarehouseActual,
+    'main_warehouse_reserved': mainWarehouseReserved,
+    'department': department,
+    'classification': classification,
+    'promo_price': promoPrice,
+    'piece_price': piecePrice,
+    'carton_price': cartonPrice,
+    'branch_name': branchName,
+    'image_url': imageUrl,
+  };
+}
+
+// ============================================================
+// === AccountingSyncLog (سجل مزامنة المحاسبة) ===
+// ============================================================
+
+class AccountingSyncLog {
+  final String id;
+  final String timestamp;
+  final String invoiceNumber;
+  final String status;
+  final String systemName;
+  final String responseMessage;
+
+  AccountingSyncLog({
+    required this.id,
+    required this.timestamp,
+    required this.invoiceNumber,
+    required this.status,
+    required this.systemName,
+    required this.responseMessage,
+  });
+
+  factory AccountingSyncLog.fromJson(Map<String, dynamic> json) {
+    return AccountingSyncLog(
+      id: json['id']?.toString() ?? '',
+      timestamp: json['timestamp']?.toString() ?? '',
+      invoiceNumber: json['invoice_number']?.toString() ?? json['invoiceNumber']?.toString() ?? '',
+      status: json['status']?.toString() ?? 'pending',
+      systemName: json['system_name']?.toString() ?? json['systemName']?.toString() ?? '',
+      responseMessage: json['response_message']?.toString() ?? json['responseMessage']?.toString() ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'timestamp': timestamp,
+    'invoice_number': invoiceNumber,
+    'status': status,
+    'system_name': systemName,
+    'response_message': responseMessage,
+  };
+}
+
+// ============================================================
+// === CartItem (عنصر سلة) ===
+// ============================================================
+
+class CartItem {
+  final Product product;
+  final String? unifiedCode;
+  final String orderType;
+  final int cartonCount;
+  final int pieceCount;
+  final int? cartonQuantity;
+  final int totalPieces;
+  final double unitPrice;
+  final double? pricePerPiece;
+  final double totalPrice;
+  final String? quantityDescription;
+  final String? notes;
+  final bool? fulfillFromMainWarehouse;
+
+  CartItem({
+    required this.product,
+    this.unifiedCode,
+    this.orderType = 'carton',
+    this.cartonCount = 0,
+    this.pieceCount = 0,
+    this.cartonQuantity,
+    required this.totalPieces,
+    required this.unitPrice,
+    this.pricePerPiece,
+    required this.totalPrice,
+    this.quantityDescription,
+    this.notes,
+    this.fulfillFromMainWarehouse,
+  });
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+      product: Product.fromJson(json['product'] as Map<String, dynamic>),
+      unifiedCode: json['unified_code']?.toString() ?? json['unifiedCode']?.toString(),
+      orderType: json['order_type']?.toString() ?? json['orderType']?.toString() ?? 'carton',
+      cartonCount: (json['carton_count'] ?? json['cartonCount'] ?? 0).toInt(),
+      pieceCount: (json['piece_count'] ?? json['pieceCount'] ?? 0).toInt(),
+      cartonQuantity: _toInt(json['carton_quantity'] ?? json['cartonQuantity']),
+      totalPieces: (json['total_pieces'] ?? json['totalPieces'] ?? 0).toInt(),
+      unitPrice: _toDouble(json['unit_price'] ?? json['unitPrice']) ?? 0,
+      pricePerPiece: _toDouble(json['price_per_piece'] ?? json['pricePerPiece']),
+      totalPrice: _toDouble(json['total_price'] ?? json['totalPrice']) ?? 0,
+      quantityDescription: json['quantity_description']?.toString() ?? json['quantityDescription']?.toString(),
+      notes: json['notes']?.toString(),
+      fulfillFromMainWarehouse: json['fulfill_from_main_warehouse'] as bool? ?? json['fulfillFromMainWarehouse'] as bool?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'product': product.toJson(),
+    'unified_code': unifiedCode,
+    'order_type': orderType,
+    'carton_count': cartonCount,
+    'piece_count': pieceCount,
+    'carton_quantity': cartonQuantity,
+    'total_pieces': totalPieces,
+    'unit_price': unitPrice,
+    'price_per_piece': pricePerPiece,
+    'total_price': totalPrice,
+    'quantity_description': quantityDescription,
+    'notes': notes,
+    'fulfill_from_main_warehouse': fulfillFromMainWarehouse,
+  };
+}
+
+// ============================================================
+// === RepPerformance (أداء المندوب) — لاستخدامه في لوحة المشرف ===
+// ============================================================
+
+class RepPerformance {
+  final String repId;
+  final String repName;
+  final String branchName;
+  final double sales2026;
+  final double collections2026;
+  final double salesTarget;
+  final double collectionTarget;
+  final double salesAchieved;
+  final double collectionAchieved;
+  final int ordersCount;
+  final int visitsCount;
+  final int returnsCount;
+  final double creditLimitExceededCount;
+  final String performanceGrade;
+
+  RepPerformance({
+    required this.repId,
+    required this.repName,
+    required this.branchName,
+    this.sales2026 = 0,
+    this.collections2026 = 0,
+    this.salesTarget = 0,
+    this.collectionTarget = 0,
+    this.salesAchieved = 0,
+    this.collectionAchieved = 0,
+    this.ordersCount = 0,
+    this.visitsCount = 0,
+    this.returnsCount = 0,
+    this.creditLimitExceededCount = 0,
+    this.performanceGrade = 'متوسط',
+  });
+
+  factory RepPerformance.fromJson(Map<String, dynamic> json) {
+    return RepPerformance(
+      repId: json['rep_id']?.toString() ?? json['repId']?.toString() ?? '',
+      repName: json['rep_name']?.toString() ?? json['repName']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? '',
+      sales2026: _toDouble(json['sales_2026'] ?? json['sales2026']) ?? 0,
+      collections2026: _toDouble(json['collections_2026'] ?? json['collections2026']) ?? 0,
+      salesTarget: _toDouble(json['sales_target'] ?? json['salesTarget']) ?? 0,
+      collectionTarget: _toDouble(json['collection_target'] ?? json['collectionTarget']) ?? 0,
+      salesAchieved: _toDouble(json['sales_achieved'] ?? json['salesAchieved']) ?? 0,
+      collectionAchieved: _toDouble(json['collection_achieved'] ?? json['collectionAchieved']) ?? 0,
+      ordersCount: (json['orders_count'] ?? json['ordersCount'] ?? 0).toInt(),
+      visitsCount: (json['visits_count'] ?? json['visitsCount'] ?? 0).toInt(),
+      returnsCount: (json['returns_count'] ?? json['returnsCount'] ?? 0).toInt(),
+      creditLimitExceededCount: (_toDouble(json['credit_limit_exceeded_count'] ?? json['creditLimitExceededCount']) ?? 0).toDouble(),
+      performanceGrade: json['performance_grade']?.toString() ?? json['performanceGrade']?.toString() ?? 'متوسط',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'rep_id': repId,
+    'rep_name': repName,
+    'branch_name': branchName,
+    'sales_2026': sales2026,
+    'collections_2026': collections2026,
+    'sales_target': salesTarget,
+    'collection_target': collectionTarget,
+    'sales_achieved': salesAchieved,
+    'collection_achieved': collectionAchieved,
+    'orders_count': ordersCount,
+    'visits_count': visitsCount,
+    'returns_count': returnsCount,
+    'credit_limit_exceeded_count': creditLimitExceededCount,
+    'performance_grade': performanceGrade,
+  };
+}
+
+// ============================================================
+// === CustomerAnalytics (تحليلات عملاء) ===
+// ============================================================
+
+class CustomerAnalytics {
+  final String customerId;
+  final String customerName;
+  final String customerCode;
+  final String branchName;
+  final double totalSales;
+  final double totalCollections;
+  final double balance;
+  final double overdueBalance;
+  final int ordersCount;
+  final int visitsCount;
+  final int returnsCount;
+  final String lastOrderDate;
+  final String lastVisitDate;
+  final String? tier;
+  final String? status2026;
+  final bool hasDealtIn2026;
+  final double? annualTarget;
+  final double? targetAchievementPercentage;
+
+  CustomerAnalytics({
+    required this.customerId,
+    required this.customerName,
+    required this.customerCode,
+    required this.branchName,
+    this.totalSales = 0,
+    this.totalCollections = 0,
+    this.balance = 0,
+    this.overdueBalance = 0,
+    this.ordersCount = 0,
+    this.visitsCount = 0,
+    this.returnsCount = 0,
+    this.lastOrderDate = '',
+    this.lastVisitDate = '',
+    this.tier,
+    this.status2026,
+    this.hasDealtIn2026 = false,
+    this.annualTarget,
+    this.targetAchievementPercentage,
+  });
+
+  factory CustomerAnalytics.fromJson(Map<String, dynamic> json) {
+    return CustomerAnalytics(
+      customerId: json['customer_id']?.toString() ?? json['customerId']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? json['customerName']?.toString() ?? '',
+      customerCode: json['customer_code']?.toString() ?? json['customerCode']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString() ?? '',
+      totalSales: _toDouble(json['total_sales'] ?? json['totalSales']) ?? 0,
+      totalCollections: _toDouble(json['total_collections'] ?? json['totalCollections']) ?? 0,
+      balance: _toDouble(json['balance']) ?? 0,
+      overdueBalance: _toDouble(json['overdue_balance'] ?? json['overdueBalance']) ?? 0,
+      ordersCount: (json['orders_count'] ?? json['ordersCount'] ?? 0).toInt(),
+      visitsCount: (json['visits_count'] ?? json['visitsCount'] ?? 0).toInt(),
+      returnsCount: (json['returns_count'] ?? json['returnsCount'] ?? 0).toInt(),
+      lastOrderDate: json['last_order_date']?.toString() ?? json['lastOrderDate']?.toString() ?? '',
+      lastVisitDate: json['last_visit_date']?.toString() ?? json['lastVisitDate']?.toString() ?? '',
+      tier: json['tier']?.toString(),
+      status2026: json['status_2026']?.toString() ?? json['status2026']?.toString(),
+      hasDealtIn2026: json['has_dealt_in_2026'] as bool? ?? json['hasDealtIn2026'] as bool? ?? false,
+      annualTarget: _toDouble(json['annual_target'] ?? json['annualTarget']),
+      targetAchievementPercentage: _toDouble(json['target_achievement_percentage'] ?? json['targetAchievementPercentage']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'customer_id': customerId,
+    'customer_name': customerName,
+    'customer_code': customerCode,
+    'branch_name': branchName,
+    'total_sales': totalSales,
+    'total_collections': totalCollections,
+    'balance': balance,
+    'overdue_balance': overdueBalance,
+    'orders_count': ordersCount,
+    'visits_count': visitsCount,
+    'returns_count': returnsCount,
+    'last_order_date': lastOrderDate,
+    'last_visit_date': lastVisitDate,
+    'tier': tier,
+    'status_2026': status2026,
+    'has_dealt_in_2026': hasDealtIn2026,
+    'annual_target': annualTarget,
+    'target_achievement_percentage': targetAchievementPercentage,
+  };
+}
