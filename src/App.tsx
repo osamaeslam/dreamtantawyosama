@@ -13,13 +13,16 @@ import {
   ShoppingCart,
   Users,
   Wifi,
-  WifiOff
+  WifiOff,
+  Smartphone,
+  Monitor
 } from 'lucide-react';
 import React, { Component, ErrorInfo, lazy, Suspense, useState, useEffect } from 'react';
 import { LoginPage } from './components/LoginPage';
 import { Navbar } from './components/Navbar';
 import { AppProvider, useApp } from './context/AppContext';
 import { Customer, Invoice } from './types';
+import { FlutterAppExperience } from './components/FlutterAppExperience';
 
 // Only the shell (login, navbar, app context) ships in the first chunk. Every
 // section below is loaded on demand so reps on mobile don't download the
@@ -70,21 +73,17 @@ const TabLoadingSkeleton = () => {
 const MainLayout: React.FC = () => {
   const { cart, invoices, isOffline, currentUser, isAuthenticated, getCartSummary, editPendingOrder } = useApp();
 
-  // First screen on launch: reps land on their visits, managers/supervisors
-  // land on their analytics dashboard, admin on management.
+  // First screen on launch: defaults to the new unified Flutter App experience
   const [activeTab, setActiveTab] = useState<string>(() => {
     try {
       const saved = localStorage.getItem('dream8_landing_tab');
-      if (saved === 'visits' || saved === 'all_customers' || saved === 'catalog' || saved === 'rep_home' || saved === 'management' || saved === 'supervisor' || saved === 'command') return saved;
+      if (saved) return saved;
     } catch { /* ignore */ }
-    return currentUser?.role === 'admin' ? 'command'
-      : currentUser?.role === 'developer' ? 'command'
-      : currentUser?.role === 'branch_manager' ? 'command'
-      : currentUser?.role === 'supervisor' ? 'command'
-      : currentUser?.role === 'sales_rep' ? 'rep_home' : 'all_customers';
+    return 'flutter_app';
   });
   const [visitedTabs, setVisitedTabs] = useState<Record<string, boolean>>(() => ({
     [activeTab]: true,
+    flutter_app: true,
   }));
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [orderInitialCustomer, setOrderInitialCustomer] = useState<Customer | null>(null);
@@ -106,23 +105,6 @@ const MainLayout: React.FC = () => {
   useEffect(() => {
     setVisitedTabs((prev) => (prev[activeTab] ? prev : { ...prev, [activeTab]: true }));
   }, [activeTab]);
-
-  // Reps open on rep_home; supervisors, branch managers, admin and dev open
-  // on their dedicated dashboards. Re-evaluated once the user is known.
-  const isRep = currentUser?.role === 'sales_rep';
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('dream8_landing_tab');
-      const desired = saved === 'catalog' ? 'catalog'
-        : isRep ? 'rep_home'
-        : currentUser?.role === 'admin' ? 'command'
-        : currentUser?.role === 'developer' ? 'command'
-        : currentUser?.role === 'branch_manager' ? 'command'
-        : currentUser?.role === 'supervisor' ? 'command'
-        : 'all_customers';
-      setActiveTab((cur) => (cur === 'catalog' ? desired : cur));
-    } catch { /* ignore */ }
-  }, [isRep, currentUser?.role]);
 
   useEffect(() => {
     if (
@@ -187,11 +169,55 @@ const MainLayout: React.FC = () => {
         onOpenCart={() => setIsOrderModalOpen(true)}
       />
 
+      {/* Floating/Prominent Experience Switcher Bar */}
+      <div className="bg-slate-900 border-b border-amber-500/40 px-3 sm:px-6 py-2.5 text-white shadow-md">
+        <div className="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="font-black text-amber-400">تطبيق Flutter & Dart الموحد (Web / Android / iOS)</span>
+            <span className="hidden sm:inline text-slate-500">|</span>
+            <span className="text-slate-300 hidden md:inline">موصول مباشرة بقاعدة بيانات Supabase بدون أي تغيير في الجداول</span>
+          </div>
+
+          <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-700">
+            <button
+              onClick={() => handleTabChange('flutter_app')}
+              className={`px-3 py-1.5 rounded-lg font-black text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                activeTab === 'flutter_app'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md ring-2 ring-amber-400/50'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Smartphone className="w-4 h-4 text-slate-950" />
+              <span>📱 واجهة تطبيق Flutter (المطلوبة)</span>
+            </button>
+
+            <button
+              onClick={() => handleTabChange('command')}
+              className={`px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1.5 transition cursor-pointer ${
+                activeTab !== 'flutter_app'
+                  ? 'bg-slate-800 text-amber-300 border border-slate-600'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Monitor className="w-4 h-4" />
+              <span>لوحة الإدارة الكلاسيكية (السابقة)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Content Container - Wide, responsive across mobile, tablet, and ultra-wide screens */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto px-2 sm:px-4 lg:px-6 xl:px-8 py-2.5 sm:py-5 pb-24 md:pb-8">
+        
+        {/* واجهة تطبيق Flutter & Dart الموحدة */}
+        {activeTab === 'flutter_app' && (
+          <FlutterAppExperience />
+        )}
+
         <Suspense fallback={<TabLoadingSkeleton />}>
           {/* Rep home: icon-grid launcher */}
-          {currentUser.role === 'sales_rep' && visitedTabs['rep_home'] && (
+          {activeTab !== 'flutter_app' && currentUser.role === 'sales_rep' && visitedTabs['rep_home'] && (
             <div className={activeTab === 'rep_home' ? 'block' : 'hidden'}>
               <MobileRepDashboard
                 onNavigate={handleTabChange}
