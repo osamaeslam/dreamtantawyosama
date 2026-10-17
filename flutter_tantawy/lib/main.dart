@@ -5,6 +5,7 @@ import 'screens/adaptive_home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/cart_service.dart';
 import 'services/supabase_service.dart';
+import 'services/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'models/models.dart';
 
@@ -24,6 +25,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartService()),
+        ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
       ],
       child: const TantawyGroupApp(),
     ),
@@ -44,28 +46,30 @@ class TantawyGroupApp extends StatelessWidget {
       phone: '01012345678',
     );
 
-    return MaterialApp(
-      title: 'مجموعة الطنطاوي للتجارة والتوزيع',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme(),
-      darkTheme: AppTheme.darkTheme(),
-      themeMode: ThemeMode.light,
-
-      locale: const Locale('ar', 'EG'),
-      supportedLocales: const [
-        Locale('ar', 'EG'),
-        Locale('en', 'US'),
-      ],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-
-      home: Directionality(
-        textDirection: TextDirection.rtl,
-        child: AdaptiveHomeScreen(currentUser: defaultUser),
-      ),
+    return Consumer<ThemeModeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'مجموعة الطنطاوي للتجارة والتوزيع',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme(),
+          darkTheme: AppTheme.darkTheme(),
+          themeMode: themeProvider.themeMode,
+          locale: const Locale('ar', 'EG'),
+          supportedLocales: const [
+            Locale('ar', 'EG'),
+            Locale('en', 'US'),
+          ],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Directionality(
+            textDirection: TextDirection.rtl,
+            child: AdaptiveHomeScreen(currentUser: defaultUser),
+          ),
+        );
+      },
     );
   }
 }

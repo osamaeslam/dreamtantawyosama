@@ -3,15 +3,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
+import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_layout.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
+import 'all_customers_analytics_view.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_dashboard_screen.dart';
 import 'target_performance_screen.dart';
+import 'management_dashboard.dart';
 import 'returns_screen.dart';
 import 'visits_screen.dart';
 
@@ -39,6 +42,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
+    final themeProvider = context.watch<ThemeModeProvider>();
 
     return ResponsiveLayout(
       // 1. مظهر الموبايل (Phone < 650px): شريط سفلي متجاوب

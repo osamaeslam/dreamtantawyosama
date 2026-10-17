@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import 'role_access_controller.dart';
 
 class SupabaseService {
   static final SupabaseService instance = SupabaseService._internal();
@@ -212,9 +213,12 @@ class SupabaseService {
   }
 
   // ===================== الطلبيات والفواتير (Orders & Invoices) =====================
-  Future<List<OrderInvoice>> fetchInvoices({String? repName, String? status}) async {
+  Future<List<OrderInvoice>> fetchInvoices({String? repName, String? status, String? branchName}) async {
     try {
       var query = client.from('invoices').select();
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
       if (repName != null && repName.isNotEmpty) {
         query = query.eq('rep_name', repName);
       }

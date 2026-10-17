@@ -20,6 +20,14 @@ class AppTheme {
   static const Color borderColor = Color(0xFFE2E8F0); // Slate 200
   static const Color infoBlue = Color(0xFF3B82F6);
 
+  // === Dark theme palette ===
+  static const Color darkBackground = Color(0xFF0F172A);
+  static const Color darkCard = Color(0xFF1E293B);
+  static const Color darkBorder = Color(0xFF334155);
+  static const Color darkText = Color(0xE0FFFFFF);
+  static const Color darkTextMuted = Color(0xFF94A3B8);
+  static const Color darkGoldGlow = Color(0xFFFCD34D);
+
   static ThemeData lightTheme() {
     final baseFont = GoogleFonts.cairoTextTheme();
     return ThemeData(
@@ -75,30 +83,33 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       primaryColor: primaryGold,
-      scaffoldBackgroundColor: darkSlate,
+      scaffoldBackgroundColor: darkBackground,
       colorScheme: ColorScheme.dark(
         primary: primaryGold,
         secondary: secondaryGold,
-        surface: cardSlate,
-        background: darkSlate,
+        surface: darkCard,
+        background: darkBackground,
+        onBackground: darkText,
+        onSurface: darkText,
       ),
       textTheme: GoogleFonts.cairoTextTheme(ThemeData.dark().textTheme),
       appBarTheme: AppBarTheme(
-        backgroundColor: darkSlate,
-        foregroundColor: Colors.white,
+        backgroundColor: darkCard,
+        foregroundColor: darkText,
         elevation: 0,
         titleTextStyle: GoogleFonts.cairo(
           fontSize: 18,
           fontWeight: FontWeight.bold,
           color: secondaryGold,
         ),
+        iconTheme: const IconThemeData(color: darkText),
       ),
       cardTheme: CardTheme(
-        color: cardSlate,
+        color: darkCard,
         elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: borderSlate),
+          side: const BorderSide(color: darkBorder),
         ),
       ),
     );

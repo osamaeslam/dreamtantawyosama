@@ -28,7 +28,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
   void _fetchInvoices() async {
     setState(() => _isLoading = true);
-    final data = await SupabaseService.instance.fetchInvoices(repName: widget.currentUser.name);
+    final data = await SupabaseService.instance.fetchInvoices(
+      repName: widget.currentUser.name,
+      branchName: widget.currentUser.branchName,
+    );
     if (data.isEmpty) {
       _invoices = [
         OrderInvoice(

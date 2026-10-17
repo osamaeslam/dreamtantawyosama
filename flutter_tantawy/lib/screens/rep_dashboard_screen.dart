@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
+import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
@@ -10,10 +11,10 @@ import 'all_customers_analytics_view.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
-import 'management_dashboard.dart';
 import 'rep_performance_screen.dart';
-import 'returns_screen.dart';
 import 'target_performance_screen.dart';
+import 'management_dashboard.dart';
+import 'returns_screen.dart';
 import 'visits_screen.dart';
 
 class RepDashboardScreen extends StatelessWidget {
@@ -77,7 +78,7 @@ class RepDashboardScreen extends StatelessWidget {
                   right: 8,
                   child: Container(
                     padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppTheme.primaryGold,
                       shape: BoxShape.circle,
                     ),
@@ -90,6 +91,17 @@ class RepDashboardScreen extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+          // Dark mode toggle
+          IconButton(
+            icon: Icon(
+              context.watch<ThemeModeProvider>().isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+              color: Colors.white70,
+            ),
+            onPressed: () {
+              context.read<ThemeModeProvider>().toggleTheme();
+            },
+            tooltip: 'تبديل الوضع الليلي',
           ),
         ],
       ),
