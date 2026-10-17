@@ -14,8 +14,10 @@ void main() async {
 
   try {
     await SupabaseService.initialize(
-      supabaseUrl: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://demo-tantawy.supabase.co'),
-      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'demo-anon-key'),
+      supabaseUrl: const String.fromEnvironment('SUPABASE_URL',
+          defaultValue: 'https://rxthpgmlcsfckstpqhqf.supabase.co'),
+      anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY',
+          defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4dGhQZ21sY3NmY2tzdHBxaHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDIwMzgsImV4cCI6MjEwMzIxODAzOH0.2v4eRUKQjLM0xDomaE9HAiy_qTJ6NoijNuwC3JV1ZUA'),
     );
   } catch (e) {
     debugPrint('Supabase offline or initialized in mock mode: $e');
