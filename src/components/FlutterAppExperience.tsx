@@ -53,7 +53,8 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../services/invoiceService';
-import { FlutterProjectViewerModal } from './FlutterProjectViewerModal';
+import { ProductLightboxModal } from './ProductLightboxModal';
+import { ApkDistributionModal } from './ApkDistributionModal';
 
 // دالة تطبيع الحروف العربية للبحث الذكي الفائق (Fuzzy Arabic Normalizer)
 const normalizeArabic = (text: string): string => {
@@ -75,8 +76,10 @@ export const FlutterAppExperience: React.FC = () => {
     invoices,
     currentUser,
     branches,
+    users,
     triggerInstallPrompt,
-    installPromptEvent
+    installPromptEvent,
+    createOrder,
   } = useApp();
 
   // Mode: android | ios | tablet | web
@@ -91,7 +94,7 @@ export const FlutterAppExperience: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('الكل');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'recommended' | 'price_low' | 'price_high' | 'discount'>('recommended');
-  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isApkModalOpen, setIsApkModalOpen] = useState(false);
   const [selectedProductDetails, setSelectedProductDetails] = useState<any | null>(null);
 
   // In-app Flutter Cart state
@@ -240,12 +243,65 @@ export const FlutterAppExperience: React.FC = () => {
 
   const handleConfirmOrder = () => {
     if (!selectedCustomer || cartItemsCount === 0) return;
-    setOrderSuccessMessage(`تم ترحيل وحجز طلبية العميل (${selectedCustomer.name}) بنجاح بقيمة ${formatCurrency(cartSubtotal)} ومزامنتها لحظياً مع Supabase!`);
+    
+    const newInvoiceId = `inv-${Date.now()}`;
+    const invNum = `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const nowStr = new Date().toISOString();
+
+    const invoiceItems = Object.values(flutterCart).map(item => {
+      const p = item.product;
+      const cartonPrice = p.promoPrice || p.cartonPrice || 1000;
+      const factor = p.cartonQuantity || p.factor || 12;
+      return {
+        productId: p.id,
+        productCode: p.code,
+        productName: p.name,
+        category: p.department || p.category || 'عام',
+        cartonQuantity: factor,
+        cartons: item.quantity,
+        cartonCount: item.quantity,
+        pieces: 0,
+        pieceCount: 0,
+        totalPieces: item.quantity * factor,
+        cartonPrice: cartonPrice,
+        unitPrice: cartonPrice,
+        totalPrice: item.quantity * cartonPrice,
+      };
+    });
+
+    createOrder({
+      id: newInvoiceId,
+      invoiceNumber: invNum,
+      customerName: selectedCustomer.name,
+      customerCode: selectedCustomer.code,
+      customerPhone: selectedCustomer.phone || '',
+      customerAddress: selectedCustomer.address || selectedCustomer.region || '',
+      customerTaxNumber: selectedCustomer.taxNumber || '',
+      date: nowStr.slice(0, 10),
+      time: nowStr.slice(11, 19),
+      repId: currentUser?.id || 'u-rep',
+      repName: currentUser?.name || 'مندوب المبيعات',
+      supervisorName: currentUser?.supervisorId ? (users.find(u => u.id === currentUser.supervisorId)?.name || 'مشرف المناديب') : 'مشرف المناديب',
+      branchName: currentUser?.branchName || selectedCustomer.branchName || 'الفرع الرئيسي',
+      items: invoiceItems as any,
+      totalCartons: cartItemsCount,
+      totalPieces: invoiceItems.reduce((sum, it) => sum + it.totalPieces, 0),
+      subtotal: cartSubtotal,
+      discountPercentage: 0,
+      discountAmount: 0,
+      estimatedGrandTotal: cartSubtotal,
+      paymentMethod: paymentType === 'نقدي' ? 'نقدي (كاش)' : 'آجل (30 يوم)',
+      status: 'قيد مراجعة المشرف',
+      notes: orderNotes ? `${orderNotes} (حفظ وتحويل للمراجعة من كتالوج الموبايل)` : 'طلبية مسجلة من كتالوج الموبايل (حفظ وتحويل للمراجعة)',
+      syncedToAccounting: false,
+    });
+
+    setOrderSuccessMessage(`تم حفظ وتحويل الطلبية للمراجعة بنجاح برقم (${invNum}) للعميل (${selectedCustomer.name}) بقيمة ${formatCurrency(cartSubtotal)}! ووصلت فوراً لمشرفك للاعتماد.`);
     setFlutterCart({});
     setTimeout(() => {
       setOrderSuccessMessage(null);
       setActiveFlutterTab('invoices');
-    }, 2200);
+    }, 2500);
   };
 
   const copyAppInstallLink = () => {
@@ -1276,10 +1332,10 @@ export const FlutterAppExperience: React.FC = () => {
 
                       <button
                         onClick={handleConfirmOrder}
-                        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow transition active:scale-98 cursor-pointer border border-amber-500/40"
+                        className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-3 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition active:scale-98 cursor-pointer border border-amber-500/40"
                       >
                         <CheckCircle2 className="w-5 h-5" />
-                        <span>ترحيل وتأكيد الطلبية في Supabase فوراً 🚀</span>
+                        <span>حفظ وتحويل للمراجعة 📋</span>
                       </button>
                     </div>
                   )}
@@ -1505,16 +1561,27 @@ export const FlutterAppExperience: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* زر استعراض وتنزيل كود Flutter المصدري */}
+                  {/* زر مركز تجهيز وتنزيل ملفات APK للمناديب */}
                   <button
-                    onClick={() => setIsCodeModalOpen(true)}
-                    className="w-full p-4 rounded-2xl bg-slate-900 hover:bg-slate-850 text-white font-bold text-xs flex items-center justify-between border border-slate-700 shadow-md cursor-pointer transition"
+                    onClick={() => setIsApkModalOpen(true)}
+                    className="w-full p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-850 to-amber-950 hover:to-amber-900 text-white font-bold text-xs flex items-center justify-between border-2 border-amber-500/40 shadow-lg cursor-pointer transition"
                   >
-                    <div className="flex items-center gap-2">
-                      <Code2 className="w-5 h-5 text-amber-400" />
-                      <span>استعراض وتنزيل حزمة كود فلاتر ودارت (flutter_tantawy)</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-black">
+                        <Smartphone className="w-5 h-5" />
+                      </div>
+                      <div className="text-right">
+                        <span className="font-black text-sm text-amber-300 block">
+                          مركز تجهيز وتنزيل ملفات APK وتشغيلها للمناديب 📲
+                        </span>
+                        <span className="text-[11px] text-slate-300">
+                          تحميل ملف الـ APK المباشر، رابط التثبيت لواتساب، ودليل تشغيل المندوب
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-amber-400 font-black">تصفح الكود ➔</span>
+                    <span className="bg-amber-400 text-slate-950 font-black px-3 py-1.5 rounded-xl text-xs shrink-0 mr-2">
+                      فتح المركز ➔
+                    </span>
                   </button>
                 </div>
               )}
@@ -1692,7 +1759,7 @@ export const FlutterAppExperience: React.FC = () => {
                       className="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow transition cursor-pointer border border-amber-500/30"
                     >
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>ترحيل الفاتورة لـ Supabase</span>
+                      <span>حفظ وتحويل للمراجعة 📋</span>
                     </button>
                   </div>
                 )}
@@ -1908,10 +1975,22 @@ export const FlutterAppExperience: React.FC = () => {
         </div>
       )}
 
-      {/* 5. نافذة استعراض كود فلاتر ودارت الكامل */}
-      <FlutterProjectViewerModal
-        isOpen={isCodeModalOpen}
-        onClose={() => setIsCodeModalOpen(false)}
+      {/* 3. نافذة تفاصيل وتكبير صورة الصنف عالية الدقة بأسلوب أمازون */}
+      <ProductLightboxModal
+        product={selectedProductDetails}
+        isOpen={!!selectedProductDetails}
+        onClose={() => setSelectedProductDetails(null)}
+        onAddToCart={(prod, qty) => {
+          handleAddToCart(prod, qty);
+          setSelectedProductDetails(null);
+        }}
+        currentCartQty={selectedProductDetails ? (flutterCart[selectedProductDetails.id]?.quantity || 0) : 0}
+      />
+
+      {/* 4. نافذة مركز تجهيز وتنزيل ملفات الـ APK للأندرويد وتشغيلها للمناديب */}
+      <ApkDistributionModal
+        isOpen={isApkModalOpen}
+        onClose={() => setIsApkModalOpen(false)}
       />
     </div>
   );
