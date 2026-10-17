@@ -1,0 +1,92 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    font-family: 'Cairo', 'Tajawal', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans Arabic', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+}
+
+/* Mobile & Touch Performance Optimization */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fast smooth transitions and hardware acceleration for modals */
+.animate-in {
+  will-change: transform, opacity;
+}
+
+/* Invoice output: print exactly two clean copies, without the app shell. */
+@media print {
+  @page { size: A4 portrait; margin: 8mm; }
+  html, body { background: #fff !important; }
+  body > *:not(#invoice-print-root):not(#visits-print-root) { display: none !important; }
+  #invoice-print-root {
+    display: block !important;
+    width: 100% !important;
+    color: #0f172a !important;
+    background: #fff !important;
+  }
+  /* Visits report. Same isolated-root approach as the invoice, so printing a filtered
+     visit list never disturbs invoice printing and never needs the on-screen chrome. */
+  #visits-print-root {
+    display: block !important;
+    width: 100% !important;
+    color: #0f172a !important;
+    background: #fff !important;
+    direction: rtl;
+    font-size: 10pt;
+  }
+  #visits-print-root table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  #visits-print-root th,
+  #visits-print-root td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 4px 6px !important;
+    text-align: right !important;
+    font-size: 9pt;
+  }
+  #visits-print-root thead { display: table-header-group; }
+  #visits-print-root tr { page-break-inside: avoid; }
+
+  #invoice-print-root .invoice-print-copy {
+    display: block !important;
+    width: 100% !important;
+    min-height: 265mm;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+    break-after: page;
+    page-break-after: always;
+  }
+  #invoice-print-root .invoice-print-copy:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  #invoice-print-root .invoice-print-copy::before {
+    content: attr(data-copy-label);
+    display: block;
+    margin-bottom: 5mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid #cbd5e1;
+    color: #475569;
+    font-size: 10pt;
+    font-weight: 700;
+    text-align: right;
+  }
+  #invoice-print-root .overflow-y-auto { overflow: visible !important; }
+}
+
+@media screen {
+  #invoice-print-root,
+  #visits-print-root { display: none; }
+}
