@@ -651,38 +651,6 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, onOpenC
           </div>
         </div>
 
-        {/* Navigation Tabs Bar (Desktop and Tablets Only - Hidden on Mobile to prevent overcrowding) */}
-        <div className="hidden md:block bg-slate-950/60 border-t border-slate-800/80 px-2 sm:px-4 lg:px-6 overflow-x-auto no-scrollbar">
-          <div className="max-w-[1600px] w-full mx-auto flex items-center gap-1 sm:gap-2 py-1.5">
-            {filteredNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = getPrimaryNavId(activeTab) === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap cursor-pointer ${
-                    isActive
-                      ? 'bg-amber-500 text-slate-950 shadow-sm font-bold'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-slate-950' : 'text-amber-400'}`} />
-                  <span>{item.label}</span>
-                  {item.badge && item.badge > 0 ? (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                        isActive ? 'bg-slate-950 text-amber-300' : 'bg-rose-600 text-white'
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </header>
 
       {/* Mobile Slide-in Drawer Menu (Accessible via Hamburger Icon ☰) */}
@@ -825,79 +793,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, onOpenC
         </div>
       )}
 
-      {/* Mobile Bottom Navigation Bar (Smartphones & Small Screens - High Contrast & Large Touch Targets) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/98 backdrop-blur border-t border-slate-800 flex items-center justify-around py-1.5 px-2 shadow-2xl safe-area-inset-bottom">
-        {/* Hub 1: الرئيسية / القيادة */}
-        <button
-          onClick={() => setActiveTab(currentUser.role === 'sales_rep' ? 'rep_home' : 'command')}
-          className={`flex flex-col items-center justify-center min-w-[50px] min-h-[50px] px-1 rounded-xl transition active:scale-95 cursor-pointer ${
-            ['rep_home', 'command', 'dashboard', 'management', 'supervisor', 'home'].includes(activeTab)
-              ? 'text-amber-400 font-black'
-              : 'text-slate-300 hover:text-white font-bold'
-          }`}
-        >
-          {currentUser.role === 'sales_rep' ? (
-            <Home className={`w-5 h-5 ${['rep_home', 'dashboard', 'home'].includes(activeTab) ? 'text-amber-400 stroke-[2.5]' : 'text-slate-300'}`} />
-          ) : (
-            <Gauge className={`w-5 h-5 ${['command', 'dashboard', 'management', 'supervisor', 'home'].includes(activeTab) ? 'text-amber-400 stroke-[2.5]' : 'text-slate-300'}`} />
-          )}
-          <span className="text-[10.5px] mt-0.5 font-bold">
-            {currentUser.role === 'sales_rep' ? 'الرئيسية' : 'القيادة'}
-          </span>
-        </button>
 
-        {/* Hub 2: الكتالوج والمخزون */}
-        <button
-          onClick={() => setActiveTab('catalog')}
-          className={`flex flex-col items-center justify-center min-w-[50px] min-h-[50px] px-1 rounded-xl transition active:scale-95 cursor-pointer ${
-            ['catalog', 'inventory', 'offers'].includes(activeTab)
-              ? 'text-amber-400 font-black'
-              : 'text-slate-300 hover:text-white font-bold'
-          }`}
-        >
-          <Boxes className={`w-5 h-5 ${['catalog', 'inventory', 'offers'].includes(activeTab) ? 'text-amber-400 stroke-[2.5]' : 'text-slate-300'}`} />
-          <span className="text-[10.5px] mt-0.5 font-bold">الأصناف</span>
-        </button>
-
-        {/* Center Cart Trigger (High Prominence & Large Touch Area) */}
-        <button
-          onClick={onOpenCart}
-          className="relative -top-3.5 bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 text-slate-950 w-13 h-13 rounded-2xl shadow-xl shadow-amber-500/40 flex items-center justify-center transform active:scale-90 transition border-2 border-slate-950 cursor-pointer shrink-0"
-          aria-label="فتح سلة الطلبية"
-        >
-          <ShoppingCart className="w-6 h-6 stroke-[2.5]" />
-          {cartSummary.itemCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white text-[11px] px-1.5 py-0.5 rounded-full font-black min-w-[20px] text-center border-2 border-white shadow-sm">
-              {cartSummary.itemCount}
-            </span>
-          )}
-        </button>
-
-        {/* Hub 3: الفواتير */}
-        <button
-          onClick={() => setActiveTab('invoices')}
-          className={`relative flex flex-col items-center justify-center min-w-[50px] min-h-[50px] px-1 rounded-xl transition active:scale-95 cursor-pointer ${
-            activeTab === 'invoices' ? 'text-amber-400 font-black' : 'text-slate-300 hover:text-white font-bold'
-          }`}
-        >
-          <Receipt className={`w-5 h-5 ${activeTab === 'invoices' ? 'text-amber-400 stroke-[2.5]' : 'text-slate-300'}`} />
-          <span className="text-[10.5px] mt-0.5 font-bold">الفواتير</span>
-          {pendingOrdersCount > 0 && (
-            <span className="absolute top-1 right-2 w-2.5 h-2.5 bg-amber-400 rounded-full border border-slate-950"></span>
-          )}
-        </button>
-
-        {/* Hub 4: العملاء والزيارات */}
-        <button
-          onClick={() => setActiveTab('all_customers')}
-          className={`relative flex flex-col items-center justify-center min-w-[50px] min-h-[50px] px-1 rounded-xl transition active:scale-95 cursor-pointer ${
-            ['all_customers', 'customers', 'visits'].includes(activeTab) ? 'text-amber-400 font-black' : 'text-slate-300 hover:text-white font-bold'
-          }`}
-        >
-          <Users className={`w-5 h-5 ${['all_customers', 'customers', 'visits'].includes(activeTab) ? 'text-amber-400 stroke-[2.5]' : 'text-slate-300'}`} />
-          <span className="text-[10.5px] mt-0.5 font-bold">العملاء</span>
-        </button>
-      </div>
 
       {/* PWA Install Modal */}
       <InstallAppModal

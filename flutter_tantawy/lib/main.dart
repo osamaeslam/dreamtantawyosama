@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'screens/adaptive_home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/cart_service.dart';
 import 'services/supabase_service.dart';
 import 'theme/app_theme.dart';
+import 'models/models.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // تهيئة Supabase - يمكنك وضع نفس الـ URL والـ Anon Key الخاصين بمشروعك هنا
-  // سيستخدم السيرفر الافتراضي أو المحلي في حال عدم توفر الإنترنت
   try {
     await SupabaseService.initialize(
       supabaseUrl: const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://demo-tantawy.supabase.co'),
@@ -35,6 +35,15 @@ class TantawyGroupApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final defaultUser = AppUser(
+      id: 'usr_001',
+      name: 'مندوب الطنطاوي',
+      username: 'rep_tantawy',
+      role: 'sales_rep',
+      branchName: 'فرع القاهرة الكبرى',
+      phone: '01012345678',
+    );
+
     return MaterialApp(
       title: 'مجموعة الطنطاوي للتجارة والتوزيع',
       debugShowCheckedModeBanner: false,
@@ -42,7 +51,6 @@ class TantawyGroupApp extends StatelessWidget {
       darkTheme: AppTheme.darkTheme(),
       themeMode: ThemeMode.light,
 
-      // إعدادات اللغة العربية والـ RTL
       locale: const Locale('ar', 'EG'),
       supportedLocales: const [
         Locale('ar', 'EG'),
@@ -54,9 +62,9 @@ class TantawyGroupApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      home: const Directionality(
+      home: Directionality(
         textDirection: TextDirection.rtl,
-        child: LoginScreen(),
+        child: AdaptiveHomeScreen(currentUser: defaultUser),
       ),
     );
   }
