@@ -13,6 +13,11 @@ class AppTheme {
   static const Color textMuted = Color(0xFF64748B);
   static const Color emeraldGreen = Color(0xFF10B981);
   static const Color roseRed = Color(0xFFF43F5E);
+  static const Color errorRed = Color(0xFFEF4444); // Red 500
+  static const Color warningAmber = Color(0xFFF59E0B); // Amber 500
+  static const Color silver = Color(0xFF94A3B8); // Slate 400
+  static const Color copper = Color(0xFFCD7F32); // Copper
+  static const Color borderColor = Color(0xFFE2E8F0); // Slate 200
   static const Color infoBlue = Color(0xFF3B82F6);
 
   static ThemeData lightTheme() {

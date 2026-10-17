@@ -6,9 +6,13 @@ import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/responsive_layout.dart';
 import 'catalog_screen.dart';
+import 'collection_forecast_view.dart';
 import 'invoices_screen.dart';
+import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_dashboard_screen.dart';
+import 'target_performance_screen.dart';
+import 'returns_screen.dart';
 import 'visits_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
@@ -28,6 +32,8 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
     'الطلبيات وسلة الحجز',
     'الفواتير والطباعة',
     'الزيارات وخط السير',
+    'حركة المخزون',
+    'توقعات التحصيل',
   ];
 
   @override
@@ -57,6 +63,8 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
             ),
             const NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'الفواتير'),
             const NavigationDestination(icon: Icon(Icons.location_on_outlined), selectedIcon: Icon(Icons.location_on), label: 'الزيارات'),
+            const NavigationDestination(icon: Icon(Icons.warehouse_outlined), selectedIcon: Icon(Icons.warehouse), label: 'المخزون'),
+            const NavigationDestination(icon: Icon(Icons.energy_saver), selectedIcon: Icon(Icons.energy_saver_outlined), label: 'التوقعات'),
           ],
         ),
       ),
@@ -104,6 +112,8 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
                 ),
                 const NavigationRailDestination(icon: Icon(Icons.receipt_long_outlined, color: Colors.white), selectedIcon: Icon(Icons.receipt_long, color: AppTheme.darkSlate), label: Text('الفواتير')),
                 const NavigationRailDestination(icon: Icon(Icons.location_on_outlined, color: Colors.white), selectedIcon: Icon(Icons.location_on, color: AppTheme.darkSlate), label: Text('الزيارات')),
+                const NavigationRailDestination(icon: Icon(Icons.warehouse_outlined, color: Colors.white), selectedIcon: Icon(Icons.warehouse, color: AppTheme.darkSlate), label: Text('المخزون')),
+                const NavigationRailDestination(icon: Icon(Icons.energy_saver, color: Colors.white), selectedIcon: Icon(Icons.energy_saver_outlined, color: AppTheme.darkSlate), label: Text('التوقعات')),
               ],
             ),
             const VerticalDivider(thickness: 1, width: 1, color: Color(0xFF334155)),
@@ -130,6 +140,10 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
         return InvoicesScreen(currentUser: widget.currentUser);
       case 4:
         return VisitsScreen(currentUser: widget.currentUser);
+      case 5:
+        return InventoryScreen(currentUser: widget.currentUser);
+      case 6:
+        return CollectionForecastView(currentUser: widget.currentUser);
       default:
         return RepDashboardScreen(currentUser: widget.currentUser);
     }

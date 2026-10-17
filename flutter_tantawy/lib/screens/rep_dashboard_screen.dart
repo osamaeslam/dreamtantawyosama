@@ -5,9 +5,15 @@ import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 import 'catalog_screen.dart';
+import 'collection_forecast_view.dart';
+import 'all_customers_analytics_view.dart';
 import 'invoices_screen.dart';
+import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
+import 'management_dashboard.dart';
+import 'rep_performance_screen.dart';
 import 'returns_screen.dart';
+import 'target_performance_screen.dart';
 import 'visits_screen.dart';
 
 class RepDashboardScreen extends StatelessWidget {
@@ -203,6 +209,84 @@ class RepDashboardScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => ReturnsScreen(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'لوحة الإدارة',
+                  subtitle: 'نظرة تنفيذية كاملة',
+                  icon: Icons.dashboard_outlined,
+                  color: const Color(0xFF06B6D4),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ManagementDashboard(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'أهداف وإنجاز',
+                  subtitle: 'الهدف والمحقق',
+                  icon: Icons.track_changes_outlined,
+                  color: const Color(0xFF8B5CF8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => TargetPerformanceScreen(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'حركة المخزون',
+                  subtitle: 'المعاملات اليومية',
+                  icon: Icons.warehouse_outlined,
+                  color: const Color(0xFF14B8A8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => InventoryScreen(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'أدائي وأهدافي',
+                  subtitle: 'تفاصيل الهدف الشخصي',
+                  icon: Icons.track_changes_outlined,
+                  color: const Color(0xFF8B5CF8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RepPerformanceScreen(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'توقعات التحصيل',
+                  subtitle: 'توقعات الأسبوع',
+                  icon: Icons.energy_saver,
+                  color: const Color(0xFF0EA5E9),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => CollectionForecastView(currentUser: currentUser)),
+                    );
+                  },
+                ),
+                _buildQuickAction(
+                  context,
+                  title: 'تحليلات العملاء',
+                  subtitle: 'أداء العملاء والأرصدة',
+                  icon: Icons.analytics_outlined,
+                  color: const Color(0xFF8B5CF8),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => AllCustomersAnalyticsView(currentUser: currentUser)),
                     );
                   },
                 ),
