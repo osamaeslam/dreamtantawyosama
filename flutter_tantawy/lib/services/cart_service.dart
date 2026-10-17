@@ -5,12 +5,14 @@ import 'supabase_service.dart';
 class CartService extends ChangeNotifier {
   final Map<String, OrderItem> _items = {};
   Customer? _selectedCustomer;
+  ProductVariant? _selectedVariant;
   double _extraDiscount = 0.0;
   String _paymentType = 'آجل';
   String? _notes;
 
   Map<String, OrderItem> get items => _items;
   Customer? get selectedCustomer => _selectedCustomer;
+  ProductVariant? get selectedVariant => _selectedVariant;
   double get extraDiscount => _extraDiscount;
   String get paymentType => _paymentType;
   String? get notes => _notes;
@@ -23,6 +25,11 @@ class CartService extends ChangeNotifier {
 
   void selectCustomer(Customer? customer) {
     _selectedCustomer = customer;
+    notifyListeners();
+  }
+
+  void selectVariant(ProductVariant? variant) {
+    _selectedVariant = variant;
     notifyListeners();
   }
 
@@ -41,32 +48,81 @@ class CartService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // إضافة صنف أو تعديل كميته بالسلة
+  /// إضافة صنف أو تعديل كميته بالسلة — يدعم الآن المتغيّرات (Variants/Colors)
+  /// إذا تم تمرير [variant] يتم استخدام رصيد وسعر الـ Variant بدلاً من الأصل
   void addOrUpdateProduct({
     required Product product,
     required int cartons,
     int pieces = 0,
     double discount = 0,
+    ProductVariant? variant,
   }) {
+    final key = variant != null ? '${product.id}_${variant.id}' : product.id;
     if (cartons <= 0 && pieces <= 0) {
-      _items.remove(product.id);
+      _items.remove(key);
     } else {
-      _items[product.id] = OrderItem(
+      final effectiveProduct = variant?.rawProduct ?? product;
+      _items[key] = OrderItem(
         productId: product.id,
-        productCode: product.code,
-        productName: product.name,
+        productCode: variant?.code ?? product.code,
+        productName: variant?.name ?? product.name,
         cartons: cartons,
         pieces: pieces,
-        cartonPrice: product.promoPrice ?? product.cartonPrice,
-        piecePrice: product.piecePrice,
+        cartonPrice: variant?.effectiveCartonPrice ?? product.promoPrice ?? product.cartonPrice,
+        piecePrice: variant?.piecePrice ?? product.piecePrice,
         discount: discount,
+        variantId: variant?.id,
+        unifiedCode: variant?.unifiedCode ?? product.unifiedCode,
+        color: variant?.color,
+        branchStockAtOrder: variant?.availableStock,
+        octoberStockAtOrder: variant?.mainWarehouseActual,
+        branchName: product.branchStockActual > 0 ? 'الفرع الحالي' : 'مخزن أكتوبر',
+        fulfillFromMainWarehouse: variant != null && (variant.availableStock < cartons),
+      );
+    }
+    notifyListeners();
+  }
+
+  /// نسخة مخصصة لإضافة متغيّر (Variant) مباشرة بدلاً من المنتج الأصلي
+  void addOrUpdateVariant({
+    required ProductVariant variant,
+    required int cartons,
+    int pieces = 0,
+    double discount = 0,
+  }) {
+    final key = '${variant.productId}_${variant.id}';
+    if (cartons <= 0 && pieces <= 0) {
+      _items.remove(key);
+    } else {
+      _items[key] = OrderItem(
+        productId: variant.productId,
+        productCode: variant.code,
+        productName: variant.name,
+        cartons: cartons,
+        pieces: pieces,
+        cartonPrice: variant.effectiveCartonPrice,
+        piecePrice: variant.piecePrice,
+        discount: discount,
+        variantId: variant.id,
+        unifiedCode: variant.unifiedCode,
+        color: variant.color,
+        branchStockAtOrder: variant.availableStock,
+        octoberStockAtOrder: variant.mainWarehouseActual,
+        isShortage: variant.availableStock < cartons,
+        needsOctoberSupply: variant.availableStock < cartons && variant.mainWarehouseActual > 0,
       );
     }
     notifyListeners();
   }
 
   void removeItem(String productId) {
-    _items.remove(productId);
+    // Remove by exact key OR by product prefix (تدعم المتغيّرات)
+    if (_items.containsKey(productId)) {
+      _items.remove(productId);
+    } else {
+      // Remove all variants of this product
+      _items.removeWhere((key, _) => key.startsWith('${productId}_'));
+    }
     notifyListeners();
   }
 
@@ -75,6 +131,7 @@ class CartService extends ChangeNotifier {
     _selectedCustomer = null;
     _extraDiscount = 0.0;
     _notes = null;
+    _selectedVariant = null;
     notifyListeners();
   }
 
@@ -102,6 +159,8 @@ class CartService extends ChangeNotifier {
       status: 'جديد',
       paymentType: _paymentType,
       notes: _notes,
+      customerPhone: _selectedCustomer!.phone,
+      supervisorName: currentUser.supervisorName,
     );
 
     final success = await SupabaseService.instance.createInvoice(invoice);
