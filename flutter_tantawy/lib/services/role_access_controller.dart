@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 
 /// Centralized Role-Based Access Control (RBAC) for the Flutter app
@@ -99,6 +98,36 @@ class RoleAccessController {
     }).toList();
   }
 
+  /// Client-side filter for [Customer] accounts (used by order building /
+  /// customer selection screens). Mirrors [filterCustomers] but for the
+  /// account model instead of the analytics projection.
+  List<Customer> filterCustomerAccounts(List<Customer> customers) {
+    if (customers.isEmpty) return [];
+    return customers.where((c) {
+      if (isAdmin) return true;
+
+      final branchOk = canViewBranch(c.branchName);
+      if (!branchOk) return false;
+
+      if (isSalesRep) {
+        return c.repName != null &&
+            _matchesName(c.repName!, currentUser.name);
+      }
+
+      if (isSupervisor) {
+        final isSelf = c.repName != null &&
+            _matchesName(c.repName!, currentUser.name);
+        return isSelf || _isSupervisedRep(c.repName);
+      }
+
+      if (isBranchManager) {
+        return true;
+      }
+
+      return false;
+    }).toList();
+  }
+
   List<TargetRecord> filterTargets(List<TargetRecord> targets) {
     if (targets.isEmpty) return [];
     return targets.where((t) {
@@ -150,6 +179,66 @@ class RoleAccessController {
       if (isAdmin) return true;
       if (isBranchManager || isSupervisor || isSalesRep) {
         return _matchesBranch(tx.branchName ?? '');
+      }
+      return false;
+    }).toList();
+  }
+
+  // ===================== أداء المندوبين (Rep Performance) =====================
+  List<RepPerformance> filterRepPerformance(
+      List<RepPerformance> performances) {
+    if (performances.isEmpty) return [];
+    return performances.where((p) {
+      if (isAdmin) return true;
+      if (isSalesRep) {
+        final isSelf = _matchesName(p.repName, currentUser.name);
+        return isSelf;
+      }
+      if (isSupervisor) {
+        final isSelf = _matchesName(p.repName, currentUser.name);
+        return isSelf || _isSupervisedRep(p.repName);
+      }
+      if (isBranchManager) {
+        return _matchesBranch(p.branchName);
+      }
+      return false;
+    }).toList();
+  }
+
+  // ===================== الزيارات الميدانية (Visits) =====================
+  List<CustomerVisit> filterVisits(List<CustomerVisit> visits) {
+    if (visits.isEmpty) return [];
+    return visits.where((v) {
+      if (isAdmin) return true;
+      if (isSalesRep) {
+        return v.repName.isNotEmpty && _matchesName(v.repName, currentUser.name);
+      }
+      if (isSupervisor) {
+        final isSelf = v.repName.isNotEmpty &&
+            _matchesName(v.repName, currentUser.name);
+        return isSelf || _isSupervisedRep(v.repName);
+      }
+      if (isBranchManager) {
+        return _matchesBranch(v.branchName);
+      }
+      return false;
+    }).toList();
+  }
+
+  // ===================== المرتجعات (Returns) =====================
+  List<ReturnRecord> filterReturns(List<ReturnRecord> returns) {
+    if (returns.isEmpty) return [];
+    return returns.where((r) {
+      if (isAdmin) return true;
+      if (isSalesRep) {
+        return _matchesName(r.repName, currentUser.name);
+      }
+      if (isSupervisor) {
+        final isSelf = _matchesName(r.repName, currentUser.name);
+        return isSelf || _isSupervisedRep(r.repName);
+      }
+      if (isBranchManager) {
+        return _matchesBranch(r.branchName);
       }
       return false;
     }).toList();

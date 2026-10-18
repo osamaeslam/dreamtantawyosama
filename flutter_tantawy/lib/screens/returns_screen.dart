@@ -36,7 +36,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
   void initState() {
     super.initState();
     if (widget.invoice != null) {
-      WidgetsBinding.instance.addPostFrameFrameCall(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         _initializeReturns(widget.invoice!);
       });
     }
@@ -54,24 +54,21 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     }
   }
 
-  Map<String, {int cartons, int pieces, double amount}> _calculatePreviouslyReturned(OrderInvoice invoice) {
-    final map = <String, {int cartons, int pieces, double amount}>{};
+  Map<String, ({int cartons, int pieces, double amount})> _calculatePreviouslyReturned(OrderInvoice invoice) {
+    final map = <String, ({int cartons, int pieces, double amount})>{};
     final records = invoice.returnRecords;
     if (records == null) return map;
 
     for (final rec in records) {
-      final parsedItems = rec is Map<String, dynamic>
-          ? (rec['returned_items'] as List<dynamic>? ?? []).map((e) => ReturnedItem.fromJson(e as Map<String, dynamic>)).toList()
-          : rec.returnedItems;
+      final record = ReturnRecord.fromJson(rec as Map<String, dynamic>);
 
-      for (final it in parsedItems) {
-        if (!map.containsKey(it.productId)) {
-          map[it.productId] = {cartons: 0, pieces: 0, amount: 0};
-        }
-        final entry = map[it.productId]!;
-        entry.cartons += it.cartonCount;
-        entry.pieces += it.totalPieces;
-        entry.amount += it.refundAmount;
+      for (final it in record.returnedItems) {
+        final existing = map[it.productId];
+        map[it.productId] = (
+          cartons: (existing?.cartons ?? 0) + it.cartonCount,
+          pieces: (existing?.pieces ?? 0) + it.totalPieces,
+          amount: (existing?.amount ?? 0) + it.refundAmount,
+        );
       }
     }
     return map;
@@ -82,9 +79,9 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     final items = <ReturnedItem>[];
 
     for (final item in invoice.items) {
-      final prev = previouslyReturned[item.productId] ?? {cartons: 0, pieces: 0, amount: 0};
+      final prev = previouslyReturned[item.productId] ?? (cartons: 0, pieces: 0, amount: 0);
       final remainingCartons = (item.cartons - prev.cartons).clamp(0, item.cartons);
-      final remainingPieces = ((item.pieces ?? 0) - prev.pieces).clamp(0, item.pieces ?? 0);
+      final remainingPieces = (item.pieces - prev.pieces).clamp(0, item.pieces);
 
       final state = _itemReturns[item.productId] ?? _ReturnItemData(
         returnCartons: 0,
@@ -98,7 +95,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
 
       if (retCartons == 0 && retPieces == 0) continue;
 
-      final cartonQty = item.cartons > 0 ? cartonQty : 1;
+      final cartonQty = item.cartonQuantity ?? 0;
       final pricePerCarton = item.appliedPrice ?? item.cartonPrice;
       final pricePerPiece = item.unitPrice ?? (cartonQty > 0 ? pricePerCarton / cartonQty : 0);
       final totalPieces = retCartons * cartonQty + retPieces;
@@ -164,9 +161,9 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     final previouslyReturned = _calculatePreviouslyReturned(invoice);
 
     for (final item in invoice.items) {
-      final prev = previouslyReturned[item.productId] ?? {cartons: 0, pieces: 0, amount: 0};
+      final prev = previouslyReturned[item.productId] ?? (cartons: 0, pieces: 0, amount: 0);
       final remainingCartons = (item.cartons - prev.cartons).clamp(0, item.cartons);
-      final remainingPieces = ((item.pieces ?? 0) - prev.pieces).clamp(0, item.pieces ?? 0);
+      final remainingPieces = (item.pieces - prev.pieces).clamp(0, item.pieces);
       _itemReturns[item.productId] = _ReturnItemData(
         returnCartons: remainingCartons,
         returnPieces: remainingPieces,
@@ -492,7 +489,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     );
   }
 
-  Widget _buildReturnHistory(OrderInvoice invoice, Map<String, {int cartons, int pieces, double amount}> previouslyReturned) {
+  Widget _buildReturnHistory(OrderInvoice invoice, Map<String, ({int cartons, int pieces, double amount})> previouslyReturned) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
       padding: const EdgeInsets.all(12),
@@ -522,7 +519,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
           ),
           if (_showHistory)
             ...invoice.returnRecords!.map((rec) {
-              final record = rec is ReturnRecord ? rec : ReturnRecord.fromJson(rec is Map<String, dynamic> ? rec : rec as Map<String, dynamic>);
+              final record = ReturnRecord.fromJson(rec as Map<String, dynamic>);
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Column(
@@ -557,7 +554,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     );
   }
 
-  Widget _buildItemsTable(OrderInvoice invoice, List<ReturnedItem> items, Map<String, {int cartons, int pieces, double amount}> previouslyReturned) {
+  Widget _buildItemsTable(OrderInvoice invoice, List<ReturnedItem> items, Map<String, ({int cartons, int pieces, double amount})> previouslyReturned) {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.symmetric(horizontal: 12),
@@ -585,12 +582,12 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
                   DataColumn(label: Text('قيمة الإرجاع', style: TextStyle(fontSize: 9))),
                 ],
                 rows: invoice.items.map((item) {
-                  final prev = previouslyReturned[item.productId] ?? {cartons: 0, pieces: 0, amount: 0};
+                  final prev = previouslyReturned[item.productId] ?? (cartons: 0, pieces: 0, amount: 0);
                   final remainingCartons = (item.cartons - prev.cartons).clamp(0, item.cartons);
-                  final remainingPieces = ((item.pieces ?? 0) - prev.pieces).clamp(0, item.pieces ?? 0);
+                  final remainingPieces = (item.pieces - prev.pieces).clamp(0, item.pieces);
                   final currentReturn = _itemReturns[item.productId]!;
                   final isFullyReturned = remainingCartons == 0 && remainingPieces == 0;
-                  final cartonQty = item.cartons > 0 ? item.cartons : 1;
+                  final cartonQty = item.cartonQuantity ?? 0;
                   final pricePerCarton = item.appliedPrice ?? item.cartonPrice;
                   final pricePerPiece = item.unitPrice ?? (cartonQty > 0 ? pricePerCarton / cartonQty : 0);
 

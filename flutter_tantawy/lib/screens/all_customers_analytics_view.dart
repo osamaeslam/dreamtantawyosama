@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -25,6 +26,8 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
   final List<String> _tiers = ['الكل', 'الذهب', 'الفضة', 'البرونز', 'جديد', 'متوقف'];
   final List<String> _sortFields = ['total_sales', 'total_collections', 'balance', 'orders_count', 'visits_count', 'returns_count'];
 
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
+
   @override
   void initState() {
     super.initState();
@@ -34,11 +37,12 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
   void _loadCustomers() async {
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchCustomerAnalytics(
-      branchName: widget.currentUser.branchName,
+      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
     );
+    final visible = rbac.filterCustomers(data);
 
     if (data.isNotEmpty) {
-      _customers = data;
+      _customers = visible;
     } else {
       _customers = _generateMockCustomers();
     }

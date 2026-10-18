@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../services/pdf_invoice_service.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -20,6 +21,8 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
   bool _isLoadingCustomers = true;
   bool _isSubmitting = false;
 
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +30,11 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
   }
 
   void _fetchCustomers() async {
-    final data = await SupabaseService.instance.fetchCustomers();
+    final data = await SupabaseService.instance.fetchCustomers(
+      repName: rbac.isSalesRep ? widget.currentUser.name : null,
+      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+    );
+
     if (data.isEmpty) {
       // عملاء تجريبيين
       _customers = [
@@ -69,7 +76,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
         ),
       ];
     } else {
-      _customers = data;
+      _customers = rbac.filterCustomerAccounts(data);
     }
     if (mounted) setState(() => _isLoadingCustomers = false);
   }

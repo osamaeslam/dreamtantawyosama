@@ -4,8 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/responsive_layout.dart';
 
 class VisitsScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -21,6 +23,8 @@ class _VisitsScreenState extends State<VisitsScreen> {
   bool _isOffline = false;
   static const String _cacheKey = 'visits_cache_${"USER"}';
 
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
+
   @override
   void initState() {
     super.initState();
@@ -31,9 +35,11 @@ class _VisitsScreenState extends State<VisitsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final data = await SupabaseService.instance.fetchVisits(repName: widget.currentUser.name);
+      final data = await SupabaseService.instance.fetchVisits(
+        repName: rbac.isSalesRep ? widget.currentUser.name : null,
+      );
       if (data.isNotEmpty) {
-        _visits = data;
+        _visits = rbac.filterVisits(data);
         await _saveCache(data);
       } else {
         _visits = await _loadCache();
@@ -46,7 +52,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
       });
       final cached = await _loadCache();
       if (cached.isNotEmpty) {
-        setState(() => _visits = cached);
+        setState(() => _visits = rbac.filterVisits(cached));
       }
     }
 
@@ -113,8 +119,8 @@ class _VisitsScreenState extends State<VisitsScreen> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
           child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F172A),
+               decoration: BoxDecoration(
+               color: AppTheme.darkSlate,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -139,15 +145,15 @@ class _VisitsScreenState extends State<VisitsScreen> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: visitType,
-                        dropdownColor: const Color(0xFF1E293B),
+                        dropdownColor: AppTheme.cardSlate,
                         style: GoogleFonts.cairo(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'غرض الزيارة',
                           labelStyle: GoogleFonts.cairo(color: Colors.grey.shade400),
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF334155))),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF334155))),
+                                borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.darkBorder)),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.darkBorder)),
                         ),
                         items: [
                           DropdownMenuItem(
@@ -225,11 +231,11 @@ class _VisitsScreenState extends State<VisitsScreen> {
         prefixIcon: Icon(icon, color: AppTheme.primaryGold, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFF334155))),
+            borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.darkBorder)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primaryGold)),
         filled: true,
-        fillColor: const Color(0xFF1E293B),
+         fillColor: AppTheme.cardSlate,
       ),
     );
   }
@@ -237,7 +243,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppTheme.darkSlate,
       appBar: AppBar(
         backgroundColor: AppTheme.darkSlate,
         title: Text('سجل الزيارات والتحصيلات',
@@ -265,82 +271,94 @@ class _VisitsScreenState extends State<VisitsScreen> {
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGold))
           : _visits.isEmpty
               ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(14),
-                  itemCount: _visits.length,
-                  itemBuilder: (context, index) {
-                    final v = _visits[index];
-                    return Dismissible(
-                      key: Key(v.id),
-                      background: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade900,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        alignment: Alignment.centerEnd,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete_rounded, color: Colors.white),
-                      ),
-                      onDismissed: (direction) async {
-                        setState(() => _visits.removeAt(index));
-                      },
-                      child: Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        color: const Color(0xFF1E293B),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(v.customerName,
-                                        style: GoogleFonts.cairo(
-                                            fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-                                  ),
-                                  Text(DateFormat('yyyy-MM-dd\nHH:mm').format(v.date),
-                                      style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey.shade400)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                        color: const Color(0xFF334155), borderRadius: BorderRadius.circular(6)),
-                                    child: Text(v.type,
-                                        style: GoogleFonts.cairo(fontSize: 11, color: Colors.blue.shade300)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  if (v.collectedAmount > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(
-                                          color: const Color(0xFF064E35), borderRadius: BorderRadius.circular(6)),
-                                      child: Text('محصل: ${v.collectedAmount.toStringAsFixed(0)} ج.م',
-                                          style: GoogleFonts.cairo(
-                                              fontSize: 11,
-                                              color: Colors.green.shade300,
-                                              fontWeight: FontWeight.bold)),
-                                    ),
-                                ],
-                              ),
-                              if (v.notes != null && v.notes!.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Text('ملاحظة: ${v.notes!}',
-                                    style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade400)),
-                              ],
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
+              : ResponsiveLayout(
+                  mobile: _buildVisitsList(),
+                  desktop: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      child: _buildVisitsList(),
+                    ),
+                  ),
                 ),
+    );
+  }
+
+  Widget _buildVisitsList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(14),
+      itemCount: _visits.length,
+      itemBuilder: (context, index) {
+        final v = _visits[index];
+        return Dismissible(
+          key: Key(v.id),
+          background: Container(
+            decoration: BoxDecoration(
+              color: Colors.red.shade900,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: const Icon(Icons.delete_rounded, color: Colors.white),
+          ),
+          onDismissed: (direction) async {
+            setState(() => _visits.removeAt(index));
+          },
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            color: AppTheme.cardSlate,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(v.customerName,
+                            style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                      ),
+                      Text(DateFormat('yyyy-MM-dd\nHH:mm').format(v.date),
+                          style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey.shade400)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                            color: AppTheme.darkBorder, borderRadius: BorderRadius.circular(6)),
+                        child: Text(v.type,
+                            style: GoogleFonts.cairo(fontSize: 11, color: Colors.blue.shade300)),
+                      ),
+                      const SizedBox(width: 8),
+                      if (v.collectedAmount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                              color: AppTheme.emeraldGreen, borderRadius: BorderRadius.circular(6)),
+                          child: Text('محصل: ${v.collectedAmount.toStringAsFixed(0)} ج.م',
+                              style: GoogleFonts.cairo(
+                                  fontSize: 11,
+                                  color: Colors.green.shade300,
+                                  fontWeight: FontWeight.bold)),
+                        ),
+                    ],
+                  ),
+                  if (v.notes != null && v.notes!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text('ملاحظة: ${v.notes!}',
+                        style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade400)),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

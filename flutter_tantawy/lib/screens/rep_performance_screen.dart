@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -24,6 +25,8 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
     'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
   ];
 
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
+
   @override
   void initState() {
     super.initState();
@@ -33,15 +36,16 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
   void _loadTargets() async {
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchTargets(
-      repName: widget.currentUser.name,
-      branchName: widget.currentUser.branchName,
+      repName: rbac.isSalesRep ? widget.currentUser.name : null,
+      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
       year: int.tryParse(_selectedPeriod),
     );
+    final visible = rbac.filterTargets(data);
 
     if (data.isEmpty) {
       _targets = _generateMockTargets();
     } else {
-      _targets = data;
+      _targets = visible;
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -112,7 +116,7 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: AppTheme.darkSlate,
         title: Text('أداءي وأهدافي', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 17)),
@@ -180,7 +184,7 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
     final isCollectionBehind = collectionPct < 80;
 
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -200,7 +204,7 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
                         style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.darkSlate),
                       ),
                       Text(
-                        '${target.branchName} • ${target.quarter}',
+                        '${target.branch} • ${target.quarter}',
                         style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted),
                       ),
                     ],

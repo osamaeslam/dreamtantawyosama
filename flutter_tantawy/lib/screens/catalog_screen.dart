@@ -12,18 +12,11 @@ class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key, required this.currentUser});
 
   @override
-  State<CatalogScreen> createState() => _CatalogScreenState();
+  State<CatalogScreen> createState() => _CatalogViewState();
 }
 
 enum CatalogViewMode { grid, list }
-enum SortBy { recommended, priceLow, priceHigh, discount }
-
-class _CatalogSortOption {
-  final SortBy value;
-  final String label;
-  final IconData icon;
-  const _CatalogSortOption(this.value, this.label, this.icon);
-}
+enum SortBy { recommended, priceLow, priceHigh, discount, stockAvailability }
 
 class _CatalogViewState extends State<CatalogScreen>
     with SingleTickerProviderStateMixin {
@@ -464,7 +457,7 @@ class _CatalogViewState extends State<CatalogScreen>
       }).toList();
 
       // تطبيق الترتيب
-      switch (_sortBy) {
+       switch (_sortBy) {
         case SortBy.priceLow:
           _filteredProducts.sort((a, b) => _comparePrice(a, b, true));
           break;
@@ -479,9 +472,21 @@ class _CatalogViewState extends State<CatalogScreen>
             return discountB.compareTo(discountA);
           });
           break;
-        case SortBy.recommended:
-        default:
+        case SortBy.stockAvailability:
           _filteredProducts.sort((a, b) {
+            final tierA = _stockTier(a);
+            final tierB = _stockTier(b);
+            if (tierA != tierB) return tierA.compareTo(tierB);
+            final stockA = (a.defaultVariant?.availableStock ?? 0) + a.totalOctoberStock;
+            final stockB = (b.defaultVariant?.availableStock ?? 0) + b.totalOctoberStock;
+            return stockB.compareTo(stockA);
+          });
+          break;
+        case SortBy.recommended:
+          _filteredProducts.sort((a, b) {
+            final tierA = _stockTier(a);
+            final tierB = _stockTier(b);
+            if (tierA != tierB) return tierA.compareTo(tierB);
             final priorityOrder = {'مرتفع': 0, 'متوسط': 1, 'عادي': 2, 'منخفض': 3};
             final pa = priorityOrder[a.salesPriority] ?? 2;
             final pb = priorityOrder[b.salesPriority] ?? 2;
@@ -507,6 +512,25 @@ class _CatalogViewState extends State<CatalogScreen>
     final original = v.cartonPrice;
     if (original <= 0) return 0;
     return (((original - v.promoPrice!) / original) * 100).round();
+  }
+
+  int _stockTier(ParentProduct p) {
+    final v = p.defaultVariant;
+    final totalVariantStock =
+        (v?.branchStockActual ?? 0) - (v?.branchStockReserved ?? 0) +
+        (v?.mainWarehouseActual ?? 0);
+    if (v == null) {
+      return p.totalBranchStock > 0
+          ? 0
+          : p.totalOctoberStock > 0
+              ? 1
+              : 2;
+    }
+    if (totalVariantStock <= 0 && v.branchStockActual <= 0 && v.mainWarehouseActual <= 0) {
+      return 2;
+    }
+    if (v.branchStockActual - v.branchStockReserved > 0) return 0;
+    return v.mainWarehouseActual > 0 ? 1 : 2;
   }
 
   void _showVariantSelector(ParentProduct product) {
@@ -738,14 +762,18 @@ class _CatalogViewState extends State<CatalogScreen>
                   );
                 }),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
   Widget _buildProductImage(String? imageUrl, double width, double height) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final imageSurface = Theme.of(context).brightness == Brightness.dark
+        ? AppTheme.darkBackground
+        : const Color(0xFFF1F5F9);
+
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -758,7 +786,7 @@ class _CatalogViewState extends State<CatalogScreen>
             width: width,
             height: height,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
+              color: imageSurface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
@@ -772,9 +800,9 @@ class _CatalogViewState extends State<CatalogScreen>
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: imageSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
+        border: Border.all(color: colorScheme.outlineVariant),
       ),
       child: const Center(
         child: Icon(Icons.inventory_2_outlined, color: AppTheme.primaryGold, size: 32),
@@ -784,8 +812,14 @@ class _CatalogViewState extends State<CatalogScreen>
 
   Widget _buildGridView(List<ParentProduct> products) {
     final cart = context.watch<CartService>();
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
-    final crossAxisCount = isDesktop ? 4 : 2;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 1100;
+    final isCompact = screenWidth < 380;
+    final crossAxisCount = isDesktop ? 4 : screenWidth >= 650 ? 3 : 2;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final imageSurface = isDark ? AppTheme.darkBackground : AppTheme.backgroundLight;
+    final footerSurface = isDark ? AppTheme.darkBackground : AppTheme.backgroundLight;
 
     return GridView.builder(
       padding: const EdgeInsets.all(12),
@@ -793,7 +827,7 @@ class _CatalogViewState extends State<CatalogScreen>
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: isDesktop ? 0.75 : 0.62,
+        childAspectRatio: isDesktop ? 0.78 : isCompact ? 0.50 : 0.58,
       ),
       itemCount: products.length,
       itemBuilder: (context, index) {
@@ -806,21 +840,14 @@ class _CatalogViewState extends State<CatalogScreen>
         final effectivePrice = variant.effectiveCartonPrice;
 
         return Card(
-          elevation: 1,
-          color: Colors.white,
-          shadowColor: Colors.black12,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
-          ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // صورة أو أيقونة الصنف مع شارات
               Container(
-                height: 140,
-                color: const Color(0xFFF8FAFC),
+                height: isCompact ? 112 : 128,
+                color: imageSurface,
                 child: Stack(
                   children: [
                     Center(
@@ -863,6 +890,36 @@ class _CatalogViewState extends State<CatalogScreen>
                         ),
                       ),
                     ),
+                    // شارة مستوى المخزون
+                    if (product.defaultVariant != null)
+                      Positioned(
+                        top: 8,
+                        right: isCompact ? 50 : 52,
+                        child: Builder(builder: (context) {
+                          final tier = _stockTier(product);
+                          final color = tier == 0
+                              ? AppTheme.emeraldGreen
+                              : tier == 1
+                                  ? AppTheme.primaryGold
+                                  : AppTheme.roseRed;
+                          final label = tier == 0
+                              ? 'فرع'
+                              : tier == 1
+                                  ? 'مخزن'
+                                  : 'نفاد';
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.85),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              label,
+                              style: GoogleFonts.cairo(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        }),
+                      ),
                     // شارة الكود الموحد
                     if (product.unifiedCode != null)
                       Positioned(
@@ -908,7 +965,9 @@ class _CatalogViewState extends State<CatalogScreen>
                           const SizedBox(width: 6),
                           Text(
                             product.category,
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -930,12 +989,12 @@ class _CatalogViewState extends State<CatalogScreen>
                             style: GoogleFonts.cairo(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
-                              color: const Color(0xFF0F766E),
+                              color: AppTheme.emeraldGreen,
                             ),
                           ),
                           Text(
                             ' / كرتونة',
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                            style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                           if (hasPromo)
                             Padding(
@@ -971,7 +1030,7 @@ class _CatalogViewState extends State<CatalogScreen>
                                 decoration: BoxDecoration(
                                   color: colorVal,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 1),
+                                  border: Border.all(color: colorScheme.surface, width: 1),
                                   boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 1)],
                                 ),
                               );
@@ -985,9 +1044,9 @@ class _CatalogViewState extends State<CatalogScreen>
               // الأزرار: إضافة للسلة + اختيار شاكل
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                decoration: BoxDecoration(
+                  color: footerSurface,
+                  border: Border(top: BorderSide(color: colorScheme.outlineVariant)),
                 ),
                 child: Row(
                   children: [
@@ -1003,7 +1062,7 @@ class _CatalogViewState extends State<CatalogScreen>
                           onPressed: () => _showVariantSelector(product),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 6),
-                            foregroundColor: AppTheme.darkSlate,
+                            foregroundColor: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -1032,6 +1091,7 @@ class _CatalogViewState extends State<CatalogScreen>
   }
 
   Widget _buildCartCounter(ParentProduct product, ProductVariant variant, CartService cart) {
+    final colorScheme = Theme.of(context).colorScheme;
     final key = '${product.id}_${variant.id}';
     final itemInCart = cart.items[key];
     final currentQty = itemInCart?.cartons ?? 0;
@@ -1061,7 +1121,14 @@ class _CatalogViewState extends State<CatalogScreen>
                 }
               },
             ),
-            Text('$currentQty', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.darkSlate)),
+            Text(
+              '$currentQty',
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: colorScheme.onSurface,
+              ),
+            ),
             IconButton(
               icon: const Icon(Icons.add, size: 18),
               padding: const EdgeInsets.all(6),
@@ -1078,7 +1145,7 @@ class _CatalogViewState extends State<CatalogScreen>
                   : null,
             ),
           ],
-        )),
+        ),
       );
     }
 
@@ -1127,6 +1194,7 @@ class _CatalogViewState extends State<CatalogScreen>
 
   Widget _buildListView(List<ParentProduct> products) {
     final cart = context.watch<CartService>();
+    final colorScheme = Theme.of(context).colorScheme;
 
     return ListView.builder(
       padding: const EdgeInsets.all(12),
@@ -1141,15 +1209,6 @@ class _CatalogViewState extends State<CatalogScreen>
 
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
-          elevation: 1,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: const Color(0xFFE2E8F0),
-              width: 1,
-            ),
-          ),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -1176,7 +1235,9 @@ class _CatalogViewState extends State<CatalogScreen>
                           const SizedBox(width: 6),
                           Text(
                             product.category,
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -1200,19 +1261,19 @@ class _CatalogViewState extends State<CatalogScreen>
                         children: [
                           Text(
                             '${variant.effectiveCartonPrice.toStringAsFixed(0)} ج.م',
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13, color: const Color(0xFF0F766E)),
+                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13, color: AppTheme.emeraldGreen),
                           ),
                           if (hasPromo)
                             Padding(
                               padding: const EdgeInsets.only(left: 6),
                               child: Text(
                                 '${variant.cartonPrice.toStringAsFixed(0)} ج.م',
-                                style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted, decoration: TextDecoration.lineThrough),
+                                style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant, decoration: TextDecoration.lineThrough),
                               ),
                             ),
                           Text(
                             ' / (${variant.cartonQuantity} قطعة)',
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                            style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -1227,7 +1288,7 @@ class _CatalogViewState extends State<CatalogScreen>
                           const SizedBox(width: 2),
                           Text(
                             'فرع: ${variant.availableStock} كرتونة',
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                            style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(width: 8),
                           Icon(
@@ -1238,14 +1299,43 @@ class _CatalogViewState extends State<CatalogScreen>
                           const SizedBox(width: 2),
                           Text(
                             'أكتوبر: ${variant.mainWarehouseActual}',
-                            style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                            style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-                _buildCartCounter(product, variant, cart),
+                      Builder(builder: (context) {
+                        final tier = _stockTier(product);
+                        final tierColor = tier == 0
+                            ? AppTheme.emeraldGreen
+                            : tier == 1
+                                ? AppTheme.primaryGold
+                                : AppTheme.roseRed;
+                        final tierLabel = tier == 0
+                            ? 'متوفر في الفرع'
+                            : tier == 1
+                                ? 'من المخزن الرئيسي'
+                                : 'غير متوفر حالياً';
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 4,
+                                backgroundColor: tierColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                tierLabel,
+                                style: GoogleFonts.cairo(fontSize: 10, color: tierColor, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                     ],
+                   ),
+                 ),
+                 _buildCartCounter(product, variant, cart),
               ],
             ),
           ),
@@ -1257,37 +1347,44 @@ class _CatalogViewState extends State<CatalogScreen>
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final controlSurface = colorScheme.surface;
+    final searchSurface =
+        isDark ? AppTheme.darkBackground : const Color(0xFFF1F5F9);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkSlate,
         title: Text(
           'كتالوج المنتجات والأسعار',
           style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 17),
         ),
         actions: [
-          // زر تبديل العرض (شبكة / قائمة)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ToggleButtons(
-              isSelected: [_viewMode == CatalogViewMode.grid, _viewMode == CatalogViewMode.list],
-              isSelectedFillColor: AppTheme.primaryGold,
-              borderColor: Colors.grey.shade600,
-              selectedBorderColor: AppTheme.primaryGold,
-              fillColor: AppTheme.primaryGold.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-              onPressed: (index) {
-                setState(() {
-                  _viewMode = index == 0 ? CatalogViewMode.grid : CatalogViewMode.list;
-                });
-              },
-              children: const [
-                Icon(Icons.grid_view_outlined, size: 18, color: Colors.white70),
-                Icon(Icons.list_outlined, size: 18, color: Colors.white70),
-              ],
-            ),
-          ),
+           // زر تبديل العرض (شبكة / قائمة)
+           Padding(
+             padding: const EdgeInsets.symmetric(horizontal: 4),
+             child: ToggleButtonsTheme(
+                data: ToggleButtonsThemeData(
+                  borderColor: Colors.grey.shade600,
+                 selectedBorderColor: AppTheme.primaryGold,
+                 fillColor: AppTheme.primaryGold.withValues(alpha: 0.2),
+                 borderRadius: BorderRadius.circular(8),
+               ),
+               child: ToggleButtons(
+                 isSelected: [_viewMode == CatalogViewMode.grid, _viewMode == CatalogViewMode.list],
+                 onPressed: (index) {
+                   setState(() {
+                     _viewMode = index == 0 ? CatalogViewMode.grid : CatalogViewMode.list;
+                   });
+                 },
+                 children: const [
+                   Icon(Icons.grid_view_outlined, size: 18, color: Colors.white70),
+                   Icon(Icons.list_outlined, size: 18, color: Colors.white70),
+                 ],
+               ),
+             ),
+           ),
           // زر الترتيب
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -1298,24 +1395,28 @@ class _CatalogViewState extends State<CatalogScreen>
               },
               icon: const Icon(Icons.sort_outlined, size: 20, color: Colors.white70),
               tooltip: 'ترتيب حسب',
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  value: SortBy.recommended,
-                  child: Text('الموصى به', style: GoogleFonts.cairo()),
-                ),
-                PopupMenuItem(
-                  value: SortBy.priceLow,
-                  child: Text('السعر: من الأقل للأعلى', style: GoogleFonts.cairo()),
-                ),
-                PopupMenuItem(
-                  value: SortBy.priceHigh,
-                  child: Text('السعر: من الأعلى للأقل', style: GoogleFonts.cairo()),
-                ),
-                PopupMenuItem(
-                  value: SortBy.discount,
-                  child: Text('أكبر نسبة خصم', style: GoogleFonts.cairo()),
-                ),
-              ],
+               itemBuilder: (context) => [
+                 PopupMenuItem(
+                   value: SortBy.recommended,
+                   child: Text('الموصى به', style: GoogleFonts.cairo()),
+                 ),
+                 PopupMenuItem(
+                   value: SortBy.stockAvailability,
+                   child: Text('المخزون: الفرع أولاً، ثم المخزن', style: GoogleFonts.cairo()),
+                 ),
+                 PopupMenuItem(
+                   value: SortBy.priceLow,
+                   child: Text('السعر: من الأقل للأعلى', style: GoogleFonts.cairo()),
+                 ),
+                 PopupMenuItem(
+                   value: SortBy.priceHigh,
+                   child: Text('السعر: من الأعلى للأقل', style: GoogleFonts.cairo()),
+                 ),
+                 PopupMenuItem(
+                   value: SortBy.discount,
+                   child: Text('أكبر نسبة خصم', style: GoogleFonts.cairo()),
+                 ),
+               ],
             ),
           ),
           IconButton(
@@ -1329,14 +1430,14 @@ class _CatalogViewState extends State<CatalogScreen>
         children: [
           // شريط البحث الذكي
           Container(
-            color: Colors.white,
+            color: controlSurface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: TextField(
               controller: _searchController,
               onChanged: (_) => _applyFilter(),
               decoration: InputDecoration(
                 hintText: 'ابحث بالاسم، الكود الموحد (#)، أو اللون...',
-                hintStyle: GoogleFonts.cairo(fontSize: 13, color: Colors.grey.shade500),
+                hintStyle: GoogleFonts.cairo(fontSize: 13, color: colorScheme.onSurfaceVariant),
                 prefixIcon: const Icon(Icons.search, color: AppTheme.primaryGold),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -1349,10 +1450,10 @@ class _CatalogViewState extends State<CatalogScreen>
                     : null,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
                 filled: true,
-                fillColor: const Color(0xFFF1F5F9),
+                fillColor: searchSurface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: colorScheme.outlineVariant),
                 ),
               ),
             ),
@@ -1360,14 +1461,14 @@ class _CatalogViewState extends State<CatalogScreen>
 
           // شريط الأقسام (Tab bar)
           Container(
-            color: Colors.white,
+            color: controlSurface,
             child: TabBar(
               controller: _tabController,
               onTap: (index) {},
               isScrollable: true,
               indicatorColor: AppTheme.primaryGold,
-              labelColor: AppTheme.darkSlate,
-              unselectedLabelColor: AppTheme.textMuted,
+              labelColor: colorScheme.onSurface,
+              unselectedLabelColor: colorScheme.onSurfaceVariant,
               padding: const EdgeInsets.symmetric(horizontal: 8),
               labelPadding: const EdgeInsets.symmetric(horizontal: 12),
               tabAlignment: TabAlignment.start,
@@ -1378,16 +1479,16 @@ class _CatalogViewState extends State<CatalogScreen>
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.primaryGold : const Color(0xFFF1F5F9),
+                      color: isSelected ? AppTheme.primaryGold : searchSurface,
                       borderRadius: BorderRadius.circular(20),
-                      border: isSelected ? null : Border.all(color: const Color(0xFFE2E8F0)),
+                      border: isSelected ? null : Border.all(color: colorScheme.outlineVariant),
                     ),
                     child: Text(
                       dept == 'عروض ترويجية' ? '🔥 عروض ترويجية' : dept,
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected ? AppTheme.darkSlate : AppTheme.textMuted,
+                        color: isSelected ? AppTheme.darkSlate : colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -1395,24 +1496,24 @@ class _CatalogViewState extends State<CatalogScreen>
               }).toList(),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          Divider(height: 1, color: colorScheme.outlineVariant),
 
           // العداد السريع: عدد النتائج
           Container(
-            color: Colors.white,
+            color: controlSurface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   '${_filteredProducts.length} صنف متاح للطلب',
-                  style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textMuted, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.cairo(fontSize: 12, color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
                 ),
                 if (cart.items.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGold.withOpacity(0.15),
+                      color: AppTheme.primaryGold.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1421,7 +1522,7 @@ class _CatalogViewState extends State<CatalogScreen>
                         const SizedBox(width: 4),
                         Text(
                           '${cart.items.length} أصناف',
-                          style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.darkSlate, fontWeight: FontWeight.bold),
+                          style: GoogleFonts.cairo(fontSize: 11, color: colorScheme.onSurface, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
@@ -1443,7 +1544,7 @@ class _CatalogViewState extends State<CatalogScreen>
                             const SizedBox(height: 12),
                             Text(
                               'لا توجد أصناف مطابقة للبحث',
-                              style: GoogleFonts.cairo(fontSize: 14, color: AppTheme.textMuted),
+                              style: GoogleFonts.cairo(fontSize: 14, color: colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -1451,16 +1552,24 @@ class _CatalogViewState extends State<CatalogScreen>
                     : _viewMode == CatalogViewMode.grid
                         ? _buildGridView(_filteredProducts)
                         : _buildListView(_filteredProducts),
-          ),
-      ),
+                      ),
+                    ],
+                  ),
+
 
       // زر الذهاب للسلة وتأكيد الطلبية
       bottomNavigationBar: cart.items.isNotEmpty
           ? Container(
               padding: const EdgeInsets.all(14),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -3))],
+              decoration: BoxDecoration(
+                color: controlSurface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
               ),
               child: SafeArea(
                 child: Row(
@@ -1472,19 +1581,19 @@ class _CatalogViewState extends State<CatalogScreen>
                         children: [
                           Text(
                             'السلة: ${cart.totalCartons} كرتونة • ${cart.items.length} أصناف',
-                            style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textMuted),
+                            style: GoogleFonts.cairo(fontSize: 12, color: colorScheme.onSurfaceVariant),
                           ),
                           Text(
                             'الإجمالي: ${cart.netTotal.toStringAsFixed(2)} ج.م',
-                            style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.darkSlate),
+                            style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                           ),
                         ],
                       ),
                     ),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.darkSlate,
-                        foregroundColor: AppTheme.secondaryGold,
+                        backgroundColor: AppTheme.primaryGold,
+                        foregroundColor: AppTheme.darkSlate,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                       ),
                       icon: const Icon(Icons.shopping_bag_outlined),

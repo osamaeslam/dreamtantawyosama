@@ -461,6 +461,7 @@ class OrderItem {
   final String? totalPriceAlias;   // totalPrice alias للتوافق
   final String? fulfilledFrom;     // branch | main_warehouse | mixed
   final bool? fulfillFromMainWarehouse;
+  final int? cartonQuantity;
   final int? totalUnits;
   final int? branchStockAtOrder;
   final int? octoberStockAtOrder;
@@ -497,6 +498,7 @@ class OrderItem {
     this.totalPriceAlias,
     this.fulfilledFrom,
     this.fulfillFromMainWarehouse,
+    this.cartonQuantity,
     this.totalUnits,
     this.branchStockAtOrder,
     this.octoberStockAtOrder,
@@ -521,6 +523,7 @@ class OrderItem {
       pieces: (json['pieces'] ?? 0).toInt(),
       cartonPrice: _toDouble(json['cartonPrice'] ?? json['carton_price'] ?? 0) ?? 0,
       piecePrice: _toDouble(json['piecePrice'] ?? json['piece_price'] ?? 0) ?? 0,
+      cartonQuantity: (json['cartonQuantity'] ?? json['carton_quantity'] ?? json['factor'] ?? 1).toInt(),
       discount: _toDouble(json['discount'] ?? 0) ?? 0,
       variantId: json['variantId']?.toString() ?? json['variant_id']?.toString(),
       unifiedCode: json['unifiedCode']?.toString() ?? json['unified_code']?.toString(),
@@ -557,6 +560,7 @@ class OrderItem {
         'pieces': pieces,
         'carton_price': cartonPrice,
         'piece_price': piecePrice,
+        'carton_quantity': cartonQuantity,
         'discount': discount,
         'total_price': totalPrice,
         'variant_id': variantId,
@@ -867,6 +871,7 @@ class OrderInvoice {
         'customer_tax_number': customerTaxNumber,
         'return_records': returnRecords,
       };
+}
 
 class CustomerVisit {
   final String id;
@@ -992,8 +997,8 @@ class CustomerVisit {
       outcome: json['outcome']?.toString() ?? 'متابعة فقط',
       collectedAmount: (json['collectedAmount'] ?? json['collected_amount'] ?? 0).toDouble(),
       notes: json['notes']?.toString(),
-      latitude: location?['latitude'] != null ? (location['latitude'] as num).toDouble() : null,
-      longitude: location?['longitude'] != null ? (location['longitude'] as num).toDouble() : null,
+      latitude: _toDouble(location?['latitude']),
+      longitude: _toDouble(location?['longitude']),
       customerCode: json['customerCode']?.toString() ?? json['customer_code']?.toString(),
       repId: json['repId']?.toString() ?? json['rep_id']?.toString(),
       branchName: json['branchName']?.toString() ?? json['branch_name']?.toString(),
@@ -1094,8 +1099,7 @@ class CustomerVisit {
         'updated_at': updatedAt,
         'duplicate_of_visit_id': duplicateOfVisitId,
         'allow_same_day_second_visit': allowSameDaySecondVisit,
-      };
-  }
+  };
 }
 
 // ============================================================

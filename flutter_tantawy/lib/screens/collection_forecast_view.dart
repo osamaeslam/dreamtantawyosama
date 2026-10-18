@@ -233,7 +233,7 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.energy_saver, size: 48, color: Colors.grey),
+                              const Icon(Icons.energy_savings_leaf, size: 48, color: Colors.grey),
                               const SizedBox(height: 12),
                               Text('لا توجد توقعات للعرض',
                                   style: GoogleFonts.cairo(fontSize: 13, color: AppTheme.textMuted)),

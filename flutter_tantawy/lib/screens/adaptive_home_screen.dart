@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
-import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_navigation.dart';
 import '../widgets/responsive_layout.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
@@ -14,8 +13,6 @@ import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_dashboard_screen.dart';
 import 'target_performance_screen.dart';
-import 'management_dashboard.dart';
-import 'returns_screen.dart';
 import 'visits_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
@@ -29,100 +26,51 @@ class AdaptiveHomeScreen extends StatefulWidget {
 class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
   int _selectedIndex = 0;
 
-  final List<String> _titles = [
-    'الرئيسية والمبيعات',
-    'كتالوج الأصناف والأسعار',
-    'الطلبيات وسلة الحجز',
-    'الفواتير والطباعة',
-    'الزيارات وخط السير',
-    'حركة المخزون',
-    'توقعات التحصيل',
-  ];
+  void _selectSecondaryDestination(int index) {
+    setState(() => _selectedIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
-    final themeProvider = context.watch<ThemeModeProvider>();
+    final colorScheme = Theme.of(context).colorScheme;
+    final cartCount = cart.items.length;
 
     return ResponsiveLayout(
       // 1. مظهر الموبايل (Phone < 650px): شريط سفلي متجاوب
       mobile: Scaffold(
-        body: _buildSelectedScreen(_selectedIndex),
+        body: _selectedIndex == AppNavigation.moreIndex
+            ? _buildMoreScreen(context)
+            : _buildSelectedScreen(_selectedIndex),
         bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex,
-          backgroundColor: AppTheme.darkSlate,
-          indicatorColor: AppTheme.primaryGold,
-          onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+          selectedIndex: _selectedIndex < 3 ? _selectedIndex : 3,
+          backgroundColor: colorScheme.surface,
+          indicatorColor: AppTheme.primaryGold.withOpacity(0.22),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          onDestinationSelected: (index) {
+            setState(() => _selectedIndex =
+                index == 3 ? AppNavigation.moreIndex : index);
+          },
           destinations: [
-            const NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'الرئيسية'),
-            const NavigationDestination(icon: Icon(Icons.inventory_2_outlined), selectedIcon: Icon(Icons.inventory_2), label: 'الكتالوج'),
-            NavigationDestination(
-              icon: Badge(
-                label: Text('${cart.items.length}'),
-                isLabelVisible: cart.items.isNotEmpty,
-                child: const Icon(Icons.shopping_bag_outlined),
-              ),
-              selectedIcon: const Icon(Icons.shopping_bag),
-              label: 'الطلبية',
-            ),
-            const NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long), label: 'الفواتير'),
-            const NavigationDestination(icon: Icon(Icons.location_on_outlined), selectedIcon: Icon(Icons.location_on), label: 'الزيارات'),
-            const NavigationDestination(icon: Icon(Icons.warehouse_outlined), selectedIcon: Icon(Icons.warehouse), label: 'المخزون'),
-            const NavigationDestination(icon: Icon(Icons.energy_saver), selectedIcon: Icon(Icons.energy_saver_outlined), label: 'التوقعات'),
+            AppNavigation.buildMobileDestination(0, cartCount),
+            AppNavigation.buildMobileDestination(1, cartCount),
+            AppNavigation.buildMobileDestination(2, cartCount),
+            AppNavigation.buildMobileDestination(AppNavigation.moreIndex, cartCount),
           ],
         ),
       ),
 
-      // 2. مظهر التابلت والويب (Tablet & Web Desktop >= 650px): NavigationRail جانبي وشاشة موسعة Master-Detail
+      // 2. مظهر التابلت والويب (Tablet & Web Desktop >= 650px): NavigationRail جانبي
       desktop: Scaffold(
         body: Row(
           children: [
-            // القائمة الجانبية في الويب (NavigationRail)
-            NavigationRail(
+            AppNavigationRail(
               selectedIndex: _selectedIndex,
-              backgroundColor: AppTheme.darkSlate,
-              indicatorColor: AppTheme.primaryGold,
-              useIndicator: true,
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.primaryGold, width: 2),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.storefront_rounded, color: AppTheme.darkSlate, size: 24),
-                  ),
-                ),
-              ),
-              onDestinationSelected: (index) => setState(() => _selectedIndex = index),
-              selectedLabelTextStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: AppTheme.secondaryGold, fontSize: 11),
-              unselectedLabelTextStyle: GoogleFonts.cairo(color: Colors.grey.shade400, fontSize: 10),
-              destinations: [
-                const NavigationRailDestination(icon: Icon(Icons.dashboard_outlined, color: Colors.white), selectedIcon: Icon(Icons.dashboard, color: AppTheme.darkSlate), label: Text('الرئيسية')),
-                const NavigationRailDestination(icon: Icon(Icons.inventory_2_outlined, color: Colors.white), selectedIcon: Icon(Icons.inventory_2, color: AppTheme.darkSlate), label: Text('الكتالوج')),
-                NavigationRailDestination(
-                  icon: Badge(
-                    label: Text('${cart.items.length}'),
-                    isLabelVisible: cart.items.isNotEmpty,
-                    child: const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-                  ),
-                  selectedIcon: const Icon(Icons.shopping_bag, color: AppTheme.darkSlate),
-                  label: const Text('الطلبية'),
-                ),
-                const NavigationRailDestination(icon: Icon(Icons.receipt_long_outlined, color: Colors.white), selectedIcon: Icon(Icons.receipt_long, color: AppTheme.darkSlate), label: Text('الفواتير')),
-                const NavigationRailDestination(icon: Icon(Icons.location_on_outlined, color: Colors.white), selectedIcon: Icon(Icons.location_on, color: AppTheme.darkSlate), label: Text('الزيارات')),
-                const NavigationRailDestination(icon: Icon(Icons.warehouse_outlined, color: Colors.white), selectedIcon: Icon(Icons.warehouse, color: AppTheme.darkSlate), label: Text('المخزون')),
-                const NavigationRailDestination(icon: Icon(Icons.energy_saver, color: Colors.white), selectedIcon: Icon(Icons.energy_saver_outlined, color: AppTheme.darkSlate), label: Text('التوقعات')),
-              ],
+              cartItemCount: cartCount,
+              onSelected: (index) => setState(() => _selectedIndex = index),
             ),
-            const VerticalDivider(thickness: 1, width: 1, color: Color(0xFF334155)),
-
-            // مساحة العرض الرئيسية في Flutter Web
+            const VerticalDivider(
+                thickness: 1, width: 1, color: Color(0xFF334155)),
             Expanded(
               child: _buildSelectedScreen(_selectedIndex),
             ),
@@ -151,5 +99,65 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       default:
         return RepDashboardScreen(currentUser: widget.currentUser);
     }
+  }
+
+  Widget _buildMoreScreen(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final items = [
+      (index: 3, title: 'الفواتق والطباعة', subtitle: 'عرض الفواتق ومتابعة المستندات', icon: Icons.receipt_long_outlined),
+      (index: 4, title: 'الزيارات وخط السير', subtitle: 'تسجيل الزيارات ومتابعة التحصيل', icon: Icons.location_on_outlined),
+      (index: 5, title: 'حركة المخزون', subtitle: 'الأرصدة والمعاملات اليومية', icon: Icons.warehouse_outlined),
+      (index: 6, title: 'توقعات التحصيل', subtitle: 'متابعة التوقعات الأسبوعية', icon: Icons.energy_savings_leaf_outlined),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('المزيد من الأقسام')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text(
+            'أدوات العمل',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'يمكنك الوصول إلى الأقسام الإضافية من هنا.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 16),
+          ...items.map(
+            (item) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGold.withOpacity(0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(item.icon, color: AppTheme.darkSlate),
+                ),
+                title: Text(
+                  item.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(item.subtitle),
+                trailing: const Icon(Icons.chevron_left),
+                onTap: () => _selectSecondaryDestination(item.index),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

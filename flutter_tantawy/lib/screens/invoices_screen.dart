@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/pdf_invoice_service.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'returns_screen.dart';
@@ -20,6 +21,8 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   bool _isLoading = true;
   String _selectedStatus = 'الكل';
 
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
+
   @override
   void initState() {
     super.initState();
@@ -29,9 +32,10 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
   void _fetchInvoices() async {
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchInvoices(
-      repName: widget.currentUser.name,
-      branchName: widget.currentUser.branchName,
+      repName: rbac.isSalesRep ? widget.currentUser.name : null,
+      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
     );
+    final visible = rbac.filterInvoices(data);
     if (data.isEmpty) {
       _invoices = [
         OrderInvoice(
@@ -74,7 +78,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         ),
       ];
     } else {
-      _invoices = data;
+      _invoices = visible;
     }
     if (mounted) setState(() => _isLoading = false);
   }

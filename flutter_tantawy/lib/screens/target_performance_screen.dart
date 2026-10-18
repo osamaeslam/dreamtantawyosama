@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -17,7 +18,8 @@ class TargetPerformanceScreen extends StatefulWidget {
   });
 
   @override
-  State<TargetPerformanceScreen> createState() => _TargetPerformanceScreenState();
+  State<TargetPerformanceScreen> createState() =>
+      _TargetPerformanceScreenState();
 }
 
 class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
@@ -26,7 +28,10 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
   int _selectedYear = DateTime.now().year;
   int? _selectedMonth;
 
-  final NumberFormat _currencyFmt = NumberFormat.currency(locale: 'ar_EG', decimalDigits: 0);
+  final NumberFormat _currencyFmt =
+      NumberFormat.currency(locale: 'ar_EG', decimalDigits: 0);
+
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
 
   @override
   void initState() {
@@ -37,13 +42,17 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
   void _loadTargets() async {
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchTargets(
-      branchName: widget.branchName ?? widget.currentUser.branchName,
+      repName: rbac.isSalesRep ? widget.currentUser.name : null,
+      branchName: rbac.isAdmin
+          ? null
+          : (widget.branchName ?? widget.currentUser.branchName),
       year: _selectedYear,
       month: _selectedMonth,
     );
+    final visible = rbac.filterTargets(data);
 
     if (data.isNotEmpty) {
-      _targets = data;
+      _targets = visible;
     } else {
       _targets = _generateMockTargets();
     }
@@ -109,11 +118,16 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
   @override
   Widget build(BuildContext context) {
     final salesTotal = _targets.fold<double>(0, (s, t) => s + t.salesTarget);
-    final salesAchieved = _targets.fold<double>(0, (s, t) => s + t.salesAchieved);
-    final salesPct = salesTotal > 0 ? (salesAchieved / salesTarget) * 100 : 0;
-    final collectionTotal = _targets.fold<double>(0, (s, t) => s + t.collectionTarget);
-    final collectionAchieved = _targets.fold<double>(0, (s, t) => s + t.collectionAchieved);
-    final collectionPct = collectionTotal > 0 ? (collectionAchieved / collectionTotal) * 100 : 0;
+    final salesAchieved =
+        _targets.fold<double>(0, (s, t) => s + t.salesAchieved);
+    final salesPct = salesTotal > 0 ? (salesAchieved / salesTotal) * 100 : 0.0;
+    final collectionTotal =
+        _targets.fold<double>(0, (s, t) => s + t.collectionTarget);
+    final collectionAchieved =
+        _targets.fold<double>(0, (s, t) => s + t.collectionAchieved);
+    final collectionPct = collectionTotal > 0
+        ? (collectionAchieved / collectionTotal) * 100
+        : 0.0;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
@@ -128,10 +142,12 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: DropdownButton<int>(
               value: _selectedYear,
-              items: [2026, 2025, 2024].map((y) => DropdownMenuItem(
-                value: y,
-                child: Text(y.toString(), style: GoogleFonts.cairo()),
-              )).toList(),
+              items: [2026, 2025, 2024]
+                  .map((y) => DropdownMenuItem(
+                        value: y,
+                        child: Text(y.toString(), style: GoogleFonts.cairo()),
+                      ))
+                  .toList(),
               onChanged: (v) {
                 setState(() => _selectedYear = v ?? DateTime.now().year);
                 _loadTargets();
@@ -139,7 +155,8 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
               style: GoogleFonts.cairo(color: Colors.white, fontSize: 14),
               dropdownColor: AppTheme.darkSlate,
               underline: const SizedBox.shrink(),
-              icon: const Icon(Icons.more_vert, color: Colors.white70, size: 18),
+              icon:
+                  const Icon(Icons.more_vert, color: Colors.white70, size: 18),
             ),
           ),
         ],
@@ -158,7 +175,8 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                         widget.isManagerView
                             ? 'ملخص إنجاز الفريق لعام $_selectedYear'
                             : 'ملخص أهدافي لعام $_selectedYear',
-                        style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted),
+                        style: GoogleFonts.cairo(
+                            fontSize: 11, color: AppTheme.textMuted),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -174,14 +192,20 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                                   color: _pctColor(salesPct),
                                 ),
                               ),
-                              Text('مبيعات', style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted)),
+                              Text('مبيعات',
+                                  style: GoogleFonts.cairo(
+                                      fontSize: 11, color: AppTheme.textMuted)),
                               Text(
                                 '${_currencyFmt.format(salesAchieved)} / ${_currencyFmt.format(salesTotal)}',
-                                style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                                style: GoogleFonts.cairo(
+                                    fontSize: 10, color: AppTheme.textMuted),
                               ),
                             ],
                           ),
-                          Container(width: 1, height: 40, color: AppTheme.borderColor),
+                          Container(
+                              width: 1,
+                              height: 40,
+                              color: AppTheme.borderColor),
                           Column(
                             children: [
                               Text(
@@ -192,10 +216,13 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                                   color: _pctColor(collectionPct),
                                 ),
                               ),
-                              Text('تحصيل', style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted)),
+                              Text('تحصيل',
+                                  style: GoogleFonts.cairo(
+                                      fontSize: 11, color: AppTheme.textMuted)),
                               Text(
                                 '${_currencyFmt.format(collectionAchieved)} / ${_currencyFmt.format(collectionTotal)}',
-                                style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                                style: GoogleFonts.cairo(
+                                    fontSize: 10, color: AppTheme.textMuted),
                               ),
                             ],
                           ),
@@ -213,11 +240,13 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.track_changes_outlined, size: 48, color: Colors.grey),
+                              const Icon(Icons.track_changes_outlined,
+                                  size: 48, color: Colors.grey),
                               const SizedBox(height: 12),
                               Text(
                                 'لا توجد أهداف مسجلة لهذه الفترة',
-                                style: GoogleFonts.cairo(fontSize: 13, color: AppTheme.textMuted),
+                                style: GoogleFonts.cairo(
+                                    fontSize: 13, color: AppTheme.textMuted),
                               ),
                             ],
                           ),
@@ -252,8 +281,9 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CircleAvatar(
-                  backgroundColor: AppTheme.primaryGold.withOpacity(0.15),
-                  child: Icon(Icons.person, color: AppTheme.primaryGold, size: 20),
+                  backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.15),
+                  child:
+                      Icon(Icons.person, color: AppTheme.primaryGold, size: 20),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -262,21 +292,24 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                     children: [
                       Text(
                         target.repName,
-                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
+                        style: GoogleFonts.cairo(
+                            fontWeight: FontWeight.bold, fontSize: 13),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         target.quarter,
-                        style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted),
+                        style: GoogleFonts.cairo(
+                            fontSize: 10, color: AppTheme.textMuted),
                       ),
                     ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: salesColor.withOpacity(0.15),
+                    color: salesColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -325,10 +358,15 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('$label:', style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted)),
+            Text('$label:',
+                style:
+                    GoogleFonts.cairo(fontSize: 11, color: AppTheme.textMuted)),
             Text(
               '${_currencyFmt.format(achieved)} / ${_currencyFmt.format(target)}',
-              style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.darkSlate),
+              style: GoogleFonts.cairo(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkSlate),
             ),
           ],
         ),
@@ -394,7 +432,9 @@ class LinearPercentIndicator extends StatelessWidget {
                   color: progressColor,
                   borderRadius: BorderRadius.horizontal(
                     left: Radius.circular(borderRadius),
-                    right: clampedPercent >= 1.0 ? Radius.circular(borderRadius) : Radius.zero,
+                    right: clampedPercent >= 1.0
+                        ? Radius.circular(borderRadius)
+                        : Radius.zero,
                   ),
                 ),
               ),

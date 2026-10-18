@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
+import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 
@@ -17,6 +18,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
   List<InventoryTransaction> _transactions = [];
   bool _isLoading = true;
   String _selectedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  RoleAccessController get rbac => RoleAccessController(widget.currentUser);
 
   final List<String> _transactionTypes = [
     'الكل',
@@ -39,14 +42,15 @@ class _InventoryScreenState extends State<InventoryScreen> {
   void _loadTransactions() async {
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchInventoryTransactions(
-      branchName: widget.currentUser.branchName,
+      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
       date: _selectedDate,
     );
+    final visible = rbac.filterInventory(data);
 
     if (data.isEmpty) {
       _transactions = _generateMockTransactions();
     } else {
-      _transactions = data;
+      _transactions = visible;
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -277,12 +281,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                       children: [
                                         Text(
                                           '${tx.branchStockBefore}',
-                                          style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted, fontFamily: 'monospace'),
+                                          style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted).copyWith(fontFamily: 'monospace'),
                                         ),
                                         Text(' → ', style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.textMuted)),
                                         Text(
                                           '${tx.branchStockAfter}',
-                                          style: GoogleFonts.cairo(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.darkSlate, fontFamily: 'monospace'),
+                                          style: GoogleFonts.cairo(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.darkSlate).copyWith(fontFamily: 'monospace'),
                                         ),
                                       ],
                                     ),
