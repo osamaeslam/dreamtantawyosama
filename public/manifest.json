@@ -1,0 +1,68 @@
+{
+  "id": "/",
+  "name": "مجموعة الطنطاوي للتجارة والتوزيع",
+  "short_name": "الطنطاوي",
+  "description": "تطبيق متكامل لمندوبي المبيعات وإدارة الفواتير والكتالوج الذكي لمجموعة الطنطاوي للأدوات المنزلية",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": [
+    "business",
+    "productivity",
+    "shopping"
+  ],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "الزيارات الميدانية",
+      "short_name": "الزيارات",
+      "description": "تسجيل ومتابعة زيارات العملاء الميدانية",
+      "url": "/?tab=visits",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "كتالوج المنتجات",
+      "short_name": "الكتالوج",
+      "description": "تصفح أصناف الأدوات المنزلية وأسعار الجملة",
+      "url": "/?tab=rep_catalog",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "التارجت والأهداف",
+      "short_name": "التارجت",
+      "description": "متابعة نسبة إنجاز المبيعات والتحصيل",
+      "url": "/?tab=target",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

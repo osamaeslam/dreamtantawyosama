@@ -1,0 +1,66 @@
+name: tantawy_group
+description: "منظومة مجموعة الطنطاوي للتجارة والتوزيع - Flutter Multiplatform (Web, Android, iOS)"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  intl: ^0.20.3
+
+
+
+  # قاعدة البيانات السحابية (نفس قاعدة بياناتك الحالية)
+  supabase_flutter: ^2.8.0
+
+  # إدارة الحالة والخطوط
+  provider: ^6.1.2
+  google_fonts: ^6.2.1
+
+  # صور وشبكة
+  cached_network_image: ^3.3.1
+  http: ^1.2.0
+
+  # أيقونات
+  lucide_icons: ^0.257.0
+
+  # رسوم بيانية تفاعلية
+  fl_chart: ^0.68.0
+
+  # طباعة وتصدير الفواتير PDF وإكسل
+  pdf: ^3.10.8
+  printing: ^5.13.0
+  excel: ^4.0.3
+  share_plus: ^7.2.2
+  cross_file: 0.3.3+8
+
+  # ماسح الباركود بالكاميرا (للمناديب والمخازن)
+  mobile_scanner: ^5.2.0
+
+  # الموقع الجغرافي لتسجيل الحضور في الزيارات
+  geolocator: ^12.0.0
+
+  # التخزين المحلي والأوفلاين
+  shared_preferences: ^2.2.2
+  path_provider: ^2.13.1
+  flutter_secure_storage: ^9.2.2
+
+  # الاتصال والإشعارات
+  connectivity_plus: ^5.0.2
+
+  # البصمة / الخلوص البيومترية
+  local_auth: ^2.3.0
+
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
