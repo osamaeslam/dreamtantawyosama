@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
 import '../services/offline_cache_service.dart';
+<<<<<<< HEAD
 import '../services/connectivity_service.dart';
+=======
+>>>>>>> f8bb073f53d7558c0a5b3e084573d66bdbef98e5
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
 
@@ -77,7 +80,11 @@ class _InvoiceCalendarScreenState extends State<InvoiceCalendarScreen> {
 
     // Sort each group by due date ascending
     for (final entry in groups.entries) {
+<<<<<<< HEAD
       entry.value.sort((a, b) => a.date.compareTo(b.date));
+=======
+      entry.getValue().sort((a, b) => a.date.compareTo(b.date));
+>>>>>>> f8bb073f53d7558c0a5b3e084573d66bdbef98e5
     }
 
     // Sort regions alphabetically

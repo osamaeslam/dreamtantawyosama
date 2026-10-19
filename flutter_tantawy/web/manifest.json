@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
     "name": "tantawy_group",
     "short_name": "tantawy_group",
@@ -33,3 +34,40 @@
         }
     ]
 }
+=======
+{
+    "name": "tantawy_group",
+    "short_name": "tantawy_group",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0175C2",
+    "theme_color": "#0175C2",
+    "description": "A new Flutter project.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
+>>>>>>> f8bb073f53d7558c0a5b3e084573d66bdbef98e5
