@@ -3,13 +3,7 @@
   "builds": [
     {
       "src": "flutter_tantawy/pubspec.yaml",
-      "use": "vercel/flutter",
-      "config": {
-        "output": "build/web"
-      }
+      "use": "vercel/flutter"
     }
-  ],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/flutter_tantawy/build/web/$1" }
   ]
 }
