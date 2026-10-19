@@ -12,6 +12,7 @@ import { DatabaseHubView } from './components/DatabaseHubView';
 import { LuxuryLoginPage } from './components/LuxuryLoginPage';
 import { ProductLightboxModal } from './components/ProductLightboxModal';
 import { DataManagementModal } from './components/DataManagementModal';
+import { ApkDistributionModal } from './components/ApkDistributionModal';
 
 export const AppContent: React.FC = () => {
   const { 

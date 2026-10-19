@@ -142,6 +142,7 @@ export const SalesRepMobileApp: React.FC = () => {
       factor: i.product.cartonQuantity,
       totalPieces: i.quantityCartons * i.product.cartonQuantity + i.quantityPieces,
       subtotal: i.quantityCartons * (i.product.promoPrice || i.product.cartonPrice) + i.quantityPieces * i.product.piecePrice,
+      total: i.quantityCartons * (i.product.promoPrice || i.product.cartonPrice) + i.quantityPieces * i.product.piecePrice,
     }));
 
     const totalCartons = cart.reduce((acc, i) => acc + i.quantityCartons, 0);
