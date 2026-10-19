@@ -67,91 +67,11 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
       setState(() {
         final filteredTargets = rbac.filterTargets(targets);
         final filteredCustomers = rbac.filterCustomers(customers);
-        _targets =
-            filteredTargets.isNotEmpty ? filteredTargets : _mockTargets();
-        _customers =
-            filteredCustomers.isNotEmpty ? filteredCustomers : _mockCustomers();
+        _targets = filteredTargets;
+        _customers = filteredCustomers;
         _isLoading = false;
       });
     }
-  }
-
-  List<TargetRecord> _mockTargets() {
-    return [
-      TargetRecord(
-        id: 't1',
-        branch: 'فرع القاهرة الكبرى',
-        repName: 'محمد على',
-        salesTarget: 500000,
-        salesAchieved: 450000,
-        salesPercentage: 90.0,
-        collectionTarget: 400000,
-        collectionAchieved: 380000,
-        collectionPercentage: 95.0,
-        date: '2026-10-01',
-        month: 10,
-        year: 2026,
-        quarter: 'Q4',
-        remainingSales: 50000,
-        remainingCollection: 20000,
-      ),
-      TargetRecord(
-        id: 't2',
-        branch: 'فرع القاهرة الكبرى',
-        repName: 'أحمد حسن',
-        salesTarget: 450000,
-        salesAchieved: 380000,
-        salesPercentage: 84.4,
-        collectionTarget: 380000,
-        collectionAchieved: 350000,
-        collectionPercentage: 92.1,
-        date: '2026-10-01',
-        month: 10,
-        year: 2026,
-        quarter: 'Q4',
-        remainingSales: 70000,
-        remainingCollection: 30000,
-      ),
-    ];
-  }
-
-  List<CustomerAnalytics> _mockCustomers() {
-    return [
-      CustomerAnalytics(
-        customerId: 'c1',
-        customerName: 'مخازن البتروز',
-        customerCode: 'CUST-001',
-        branchName: widget.currentUser.branchName,
-        totalSales: 125000,
-        totalCollections: 110000,
-        balance: 15000,
-        overdueBalance: 5000,
-        ordersCount: 12,
-        visitsCount: 8,
-        returnsCount: 1,
-        lastOrderDate: '2026-10-15',
-        lastVisitDate: '2026-10-14',
-        tier: 'الذهب',
-        hasDealtIn2026: true,
-      ),
-      CustomerAnalytics(
-        customerId: 'c2',
-        customerName: 'مجموعة السادة الكبرى',
-        customerCode: 'CUST-002',
-        branchName: widget.currentUser.branchName,
-        totalSales: 85000,
-        totalCollections: 85000,
-        balance: 0,
-        overdueBalance: 0,
-        ordersCount: 8,
-        visitsCount: 6,
-        returnsCount: 0,
-        lastOrderDate: '2026-10-10',
-        lastVisitDate: '2026-10-09',
-        tier: 'الفضة',
-        hasDealtIn2026: true,
-      ),
-    ];
   }
 
   @override
@@ -182,7 +102,7 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
         actions: [
           DropdownButton<int>(
             value: _selectedYear,
-            items: [2026, 2025, 2024]
+            items: List.generate(6, (index) => DateTime.now().year - index)
                 .map((y) =>
                     DropdownMenuItem(value: y, child: Text(y.toString())))
                 .toList(),
@@ -204,6 +124,21 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_targets.isEmpty && _customers.isEmpty) ...[
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.infoBlue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          'لا توجد بيانات فعلية للأهداف أو العملاء في النطاق المحدد.',
+                          style: GoogleFonts.cairo(fontSize: 12),
+                        ),
+                      ),
+                    ],
                     Text('ملخص التنفيذي',
                         style: GoogleFonts.cairo(
                             fontSize: 13,

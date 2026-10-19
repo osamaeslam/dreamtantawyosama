@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -6,8 +8,29 @@ import 'package:printing/printing.dart';
 import '../models/models.dart';
 
 class PdfInvoiceService {
-  // توليد وطباعة فاتورة رسمية (حرارية للسيارة أو ورقية A4)
-  static Future<void> printInvoice(OrderInvoice invoice, {bool isThermal = true}) async {
+  static Future<void> printInvoice(
+    OrderInvoice invoice, {
+    bool isThermal = true,
+  }) async {
+    final bytes = await _buildInvoicePdf(invoice, isThermal: isThermal);
+    await Printing.layoutPdf(
+      onLayout: (_) async => bytes,
+      name: 'فاتورة_${invoice.invoiceNumber}.pdf',
+    );
+  }
+
+  static Future<void> shareInvoicePdf(OrderInvoice invoice) async {
+    final bytes = await _buildInvoicePdf(invoice, isThermal: false);
+    await Printing.sharePdf(
+      bytes: bytes,
+      filename: 'فاتورة_${invoice.invoiceNumber}.pdf',
+    );
+  }
+
+  static Future<Uint8List> _buildInvoicePdf(
+    OrderInvoice invoice, {
+    required bool isThermal,
+  }) async {
     final pdf = pw.Document();
     final fontData = await rootBundle.load('assets/fonts/Cairo-Regular.ttf').catchError((_) {
       return rootBundle.load('fonts/Cairo-Regular.ttf');
@@ -15,18 +38,23 @@ class PdfInvoiceService {
     final arabicFont = pw.Font.ttf(fontData);
 
     final pageFormat = isThermal
-        ? const PdfPageFormat(72 * PdfPageFormat.mm, double.infinity, marginAll: 4 * PdfPageFormat.mm)
+        ? PdfPageFormat(
+            72 * PdfPageFormat.mm,
+            300.0 + invoice.items.length * 48.0,
+            marginAll: 4 * PdfPageFormat.mm,
+          )
         : PdfPageFormat.a4;
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: pageFormat,
         textDirection: pw.TextDirection.rtl,
         theme: pw.ThemeData.withFont(base: arabicFont, bold: arabicFont),
         build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
+          return [
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
               // رأس الفاتورة
               pw.Center(
                 child: pw.Text(
@@ -37,7 +65,7 @@ class PdfInvoiceService {
               ),
               pw.Center(
                 child: pw.Text(
-                  'فاتورة إلكترونية - ${invoice.invoiceNumber}',
+                  'فاتورة مبيعات  •  ${invoice.invoiceNumber}',
                   style: pw.TextStyle(fontSize: isThermal ? 10 : 13),
                 ),
               ),
@@ -45,13 +73,22 @@ class PdfInvoiceService {
 
               // بيانات العميل والمندوب
               pw.Text('العميل: ${invoice.customerName} (${invoice.customerCode})', style: const pw.TextStyle(fontSize: 10)),
-              pw.Text('المندوب: ${invoice.repName} | الفرع: ${invoice.branchName}', style: const pw.TextStyle(fontSize: 10)),
+              if (invoice.customerPhone?.isNotEmpty == true)
+                pw.Text('الهاتف: ${invoice.customerPhone}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('المندوب: ${invoice.repName ?? ''} | الفرع: ${invoice.branchName ?? ''}', style: const pw.TextStyle(fontSize: 10)),
               pw.Text('التاريخ: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.date)}', style: const pw.TextStyle(fontSize: 9)),
               pw.Text('طريقة الدفع: ${invoice.paymentType}', style: const pw.TextStyle(fontSize: 9)),
+              pw.Text('حالة الفاتورة: ${invoice.status}', style: const pw.TextStyle(fontSize: 9)),
               pw.Divider(thickness: 0.5),
 
               // جدول الأصناف
               pw.Table(
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(3.2),
+                  1: pw.FlexColumnWidth(1.2),
+                  2: pw.FlexColumnWidth(1.4),
+                  3: pw.FlexColumnWidth(1.5),
+                },
                 border: pw.TableBorder.all(width: 0.5, color: PdfColors.grey400),
                 children: [
                   // الهيدر
@@ -59,8 +96,8 @@ class PdfInvoiceService {
                     decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                     children: [
                       pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('الصنف', style: const pw.TextStyle(fontSize: 9))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('كرتونة', style: const pw.TextStyle(fontSize: 9))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('سعر', style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('الكمية', style: const pw.TextStyle(fontSize: 9))),
+                      pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('سعر الكرتونة', style: const pw.TextStyle(fontSize: 8))),
                       pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('إجمالي', style: const pw.TextStyle(fontSize: 9))),
                     ],
                   ),
@@ -68,10 +105,28 @@ class PdfInvoiceService {
                   ...invoice.items.map((item) {
                     return pw.TableRow(
                       children: [
-                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item.productName, style: const pw.TextStyle(fontSize: 8))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('${item.cartons}', style: const pw.TextStyle(fontSize: 8))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('${item.cartonPrice}', style: const pw.TextStyle(fontSize: 8))),
-                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text('${item.totalPrice.toStringAsFixed(1)}', style: const pw.TextStyle(fontSize: 8))),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(item.productName, style: const pw.TextStyle(fontSize: 8)),
+                              pw.Text(
+                                '${item.productCode}${item.color == null ? '' : ' • ${item.color}'}',
+                                style: const pw.TextStyle(fontSize: 7),
+                              ),
+                            ],
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(3),
+                          child: pw.Text(
+                            '${item.cartons} كرتون\n${item.pieces} قطعة',
+                            style: const pw.TextStyle(fontSize: 8),
+                          ),
+                        ),
+                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item.cartonPrice.toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(3), child: pw.Text(item.totalPrice.toStringAsFixed(2), style: const pw.TextStyle(fontSize: 8))),
                       ],
                     );
                   }),
@@ -107,7 +162,7 @@ class PdfInvoiceService {
               pw.SizedBox(height: 12),
               pw.Center(
                 child: pw.BarcodeWidget(
-                  data: 'https://tantawygroup.com/verify/${invoice.invoiceNumber}',
+                  data: invoice.invoiceNumber,
                   barcode: pw.Barcode.qrCode(),
                   width: 50,
                   height: 50,
@@ -120,16 +175,13 @@ class PdfInvoiceService {
                   textAlign: pw.TextAlign.center,
                 ),
               ),
-            ],
-          );
+              ],
+            ),
+          ];
         },
       ),
     );
 
-    // إرسال أمر الطباعة عبر شاشة الطباعة الأصلية للنظام (بلوتوث أو واي فاي)
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'فاتورة_${invoice.invoiceNumber}.pdf',
-    );
+    return pdf.save();
   }
 }

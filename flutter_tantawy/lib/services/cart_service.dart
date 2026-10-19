@@ -7,7 +7,7 @@ class CartService extends ChangeNotifier {
   Customer? _selectedCustomer;
   ProductVariant? _selectedVariant;
   double _extraDiscount = 0.0;
-  String _paymentType = 'آجل';
+  String _paymentType = 'نقدي';
   String? _notes;
 
   Map<String, OrderItem> get items => _items;
@@ -25,7 +25,17 @@ class CartService extends ChangeNotifier {
 
   void selectCustomer(Customer? customer) {
     _selectedCustomer = customer;
+    _paymentType = _invoicePaymentType(customer?.paymentTerms);
     notifyListeners();
+  }
+
+  String _invoicePaymentType(String? savedTerms) {
+    final terms = savedTerms?.trim().toLowerCase() ?? '';
+    if (terms.isEmpty) return 'نقدي';
+    if (terms.contains('نقد') || terms.contains('كاش') || terms.contains('cash')) {
+      return 'نقدي';
+    }
+    return 'آجل';
   }
 
   void selectVariant(ProductVariant? variant) {
@@ -56,12 +66,26 @@ class CartService extends ChangeNotifier {
     int pieces = 0,
     double discount = 0,
     ProductVariant? variant,
+    String? branchName,
   }) {
     final key = variant != null ? '${product.id}_${variant.id}' : product.id;
     if (cartons <= 0 && pieces <= 0) {
       _items.remove(key);
     } else {
-      final effectiveProduct = variant?.rawProduct ?? product;
+      final branchAvailable = variant?.availableStock ??
+          product.availableStock.clamp(0, product.branchStockActual).toInt();
+      final octoberAvailable = variant?.octoberAvailableStock ??
+          (product.mainWarehouseStock -
+                  (product.mainWarehouseReserved ?? 0))
+              .clamp(0, product.mainWarehouseStock)
+              .toInt();
+      final branchFulfilled =
+          cartons.clamp(0, branchAvailable).toInt();
+      final octoberFulfilled =
+          (cartons - branchFulfilled).clamp(0, octoberAvailable).toInt();
+      final shortage = (cartons - branchFulfilled - octoberFulfilled)
+          .clamp(0, cartons)
+          .toInt();
       _items[key] = OrderItem(
         productId: product.id,
         productCode: variant?.code ?? product.code,
@@ -74,10 +98,18 @@ class CartService extends ChangeNotifier {
         variantId: variant?.id,
         unifiedCode: variant?.unifiedCode ?? product.unifiedCode,
         color: variant?.color,
-        branchStockAtOrder: variant?.availableStock,
-        octoberStockAtOrder: variant?.mainWarehouseActual,
-        branchName: product.branchStockActual > 0 ? 'الفرع الحالي' : 'مخزن أكتوبر',
-        fulfillFromMainWarehouse: variant != null && (variant.availableStock < cartons),
+        branchStockAtOrder: branchAvailable,
+        octoberStockAtOrder: octoberAvailable,
+        branchName: branchName,
+        fulfillFromMainWarehouse: octoberFulfilled > 0,
+        fulfilledFrom: branchFulfilled > 0 && octoberFulfilled > 0
+            ? 'mixed'
+            : octoberFulfilled > 0
+                ? 'main_warehouse'
+                : 'branch',
+        isShortage: shortage > 0,
+        shortageCartons: shortage,
+        needsOctoberSupply: octoberFulfilled > 0,
       );
     }
     notifyListeners();
@@ -94,6 +126,17 @@ class CartService extends ChangeNotifier {
     if (cartons <= 0 && pieces <= 0) {
       _items.remove(key);
     } else {
+      final branchAvailable = variant.availableStock;
+      final octoberAvailable = variant.octoberAvailableStock;
+      final branchFulfilled =
+          cartons.clamp(0, branchAvailable).toInt();
+      final octoberFulfilled = (cartons - branchFulfilled)
+          .clamp(0, octoberAvailable)
+          .toInt();
+      final shortage =
+          (cartons - branchFulfilled - octoberFulfilled)
+              .clamp(0, cartons)
+              .toInt();
       _items[key] = OrderItem(
         productId: variant.productId,
         productCode: variant.code,
@@ -106,10 +149,17 @@ class CartService extends ChangeNotifier {
         variantId: variant.id,
         unifiedCode: variant.unifiedCode,
         color: variant.color,
-        branchStockAtOrder: variant.availableStock,
-        octoberStockAtOrder: variant.mainWarehouseActual,
-        isShortage: variant.availableStock < cartons,
-        needsOctoberSupply: variant.availableStock < cartons && variant.mainWarehouseActual > 0,
+        branchStockAtOrder: branchAvailable,
+        octoberStockAtOrder: octoberAvailable,
+        fulfilledFrom: branchFulfilled > 0 && octoberFulfilled > 0
+            ? 'mixed'
+            : octoberFulfilled > 0
+                ? 'main_warehouse'
+                : 'branch',
+        fulfillFromMainWarehouse: octoberFulfilled > 0,
+        isShortage: shortage > 0,
+        shortageCartons: shortage,
+        needsOctoberSupply: octoberFulfilled > 0,
       );
     }
     notifyListeners();
@@ -131,6 +181,7 @@ class CartService extends ChangeNotifier {
     _selectedCustomer = null;
     _extraDiscount = 0.0;
     _notes = null;
+    _paymentType = 'نقدي';
     _selectedVariant = null;
     notifyListeners();
   }

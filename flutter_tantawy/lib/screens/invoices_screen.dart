@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
+import '../services/invoice_export_service.dart';
 import '../services/pdf_invoice_service.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
@@ -36,51 +37,30 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
     );
     final visible = rbac.filterInvoices(data);
-    if (data.isEmpty) {
-      _invoices = [
-        OrderInvoice(
-          id: 'inv_101',
-          invoiceNumber: 'INV-2026-0042',
-          customerId: 'c1',
-          customerName: 'معرض الأمل للأدوات المنزلية',
-          customerCode: 'CUST-001',
-          repId: widget.currentUser.id,
-          repName: widget.currentUser.name,
-          branchName: widget.currentUser.branchName,
-          date: DateTime.now().subtract(const Duration(hours: 3)),
-          items: [
-            OrderItem(productId: 'p1', productCode: 'TNT-101', productName: 'طقم حلل جرانيت 10 قطع', cartons: 3, pieces: 0, cartonPrice: 1800, piecePrice: 450),
-            OrderItem(productId: 'p3', productCode: 'TNT-103', productName: 'خلاط يدوي تورنيدو 1000 وات', cartons: 2, pieces: 0, cartonPrice: 1950, piecePrice: 350),
-          ],
-          subtotal: 9300,
-          discount: 300,
-          totalAmount: 9000,
-          status: 'معتمد من المشرف',
-          paymentType: 'آجل',
-        ),
-        OrderInvoice(
-          id: 'inv_102',
-          invoiceNumber: 'INV-2026-0041',
-          customerId: 'c2',
-          customerName: 'سنتر النور والبركة',
-          customerCode: 'CUST-002',
-          repId: widget.currentUser.id,
-          repName: widget.currentUser.name,
-          branchName: widget.currentUser.branchName,
-          date: DateTime.now().subtract(const Duration(days: 1)),
-          items: [
-            OrderItem(productId: 'p4', productCode: 'TNT-104', productName: 'طقم علب ثلاجة 5 قطع', cartons: 5, pieces: 0, cartonPrice: 1080, piecePrice: 45),
-          ],
-          subtotal: 5400,
-          totalAmount: 5400,
-          status: 'تم الصرف',
-          paymentType: 'نقدي',
-        ),
-      ];
-    } else {
-      _invoices = visible;
-    }
+    _invoices = visible;
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  Future<void> _shareExcel(OrderInvoice invoice) async {
+    try {
+      await InvoiceExportService.shareExcel(invoice);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تصدير Excel: $error')),
+      );
+    }
+  }
+
+  Future<void> _sharePdf(OrderInvoice invoice) async {
+    try {
+      await PdfInvoiceService.shareInvoicePdf(invoice);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تصدير PDF: $error')),
+      );
+    }
   }
 
   @override
@@ -93,11 +73,23 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
+          : _invoices.isEmpty
+              ? Center(
+                  child: Text(
+                    'لا توجد فواتير مسجلة.',
+                    style: GoogleFonts.cairo(color: AppTheme.textMuted),
+                  ),
+                )
+              : ListView.builder(
               padding: const EdgeInsets.all(14),
               itemCount: _invoices.length,
               itemBuilder: (context, index) {
                 final inv = _invoices[index];
+                final itemsForStockReview = inv.items
+                    .where((item) =>
+                        item.needsOctoberSupply == true ||
+                        (item.shortageCartons ?? 0) > 0)
+                    .toList();
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   shape: RoundedRectangleBorder(
@@ -160,18 +152,66 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           '${inv.items.length} أصناف | الدفع: ${inv.paymentType}',
                           style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade600),
                         ),
+                        if (itemsForStockReview.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGold.withValues(alpha: 0.14),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'مراجعة المخزون: ${itemsForStockReview.map((item) {
+                                final requiredFromOctober = (item.cartons -
+                                        (item.branchStockAtOrder ?? 0))
+                                    .clamp(0, item.cartons)
+                                    .toInt();
+                                final octoberAvailable =
+                                    item.octoberStockAtOrder ?? 0;
+                                final transferQuantity =
+                                    requiredFromOctober < octoberAvailable
+                                        ? requiredFromOctober
+                                        : octoberAvailable;
+                                final shortage = (requiredFromOctober -
+                                        transferQuantity)
+                                    .clamp(0, item.cartons)
+                                    .toInt();
+                                return item.needsOctoberSupply == true
+                                    ? '${item.productName}: تحويل $transferQuantity من أكتوبر${shortage > 0 ? '، عجز $shortage' : ''}'
+                                    : '${item.productName}: عجز $shortage';
+                              }).join('، ')}',
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.darkSlate,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 10),
                         const Divider(height: 1),
                         const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'الإجمالي: ${inv.totalAmount.toStringAsFixed(2)} ج.م',
-                              style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15, color: const Color(0xFF0F766E)),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                                'الإجمالي: ${inv.totalAmount.toStringAsFixed(2)} ج.م',
+                                style: GoogleFonts.cairo(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: const Color(0xFF0F766E),
+                                ),
+                              ),
                             ),
-                             Row(
-                               children: [
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              alignment: WrapAlignment.start,
+                              children: [
                                  OutlinedButton.icon(
                                    icon: const Icon(Icons.print_outlined, size: 16),
                                    label: Text('طباعة حرارية', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
@@ -182,7 +222,16 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                                    ),
                                    onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: true),
                                  ),
-                                 const SizedBox(width: 8),
+                                 OutlinedButton.icon(
+                                   icon: const Icon(Icons.table_view_outlined, size: 16),
+                                   label: Text('Excel', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
+                                   style: OutlinedButton.styleFrom(
+                                     foregroundColor: const Color(0xFF15803D),
+                                     side: const BorderSide(color: Color(0xFF15803D)),
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                   ),
+                                   onPressed: () => _shareExcel(inv),
+                                 ),
                                  OutlinedButton.icon(
                                    icon: const Icon(Icons.assignment_return_outlined, size: 16, color: AppTheme.roseRed),
                                    label: Text('مرتجع', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: AppTheme.roseRed)),
@@ -203,14 +252,18 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                                      }
                                    },
                                  ),
-                                 const SizedBox(width: 8),
-                                 IconButton(
-                                   icon: const Icon(Icons.picture_as_pdf_outlined, color: Colors.red),
-                                   tooltip: 'تصدير A4 PDF',
-                                   onPressed: () => PdfInvoiceService.printInvoice(inv, isThermal: false),
+                                 OutlinedButton.icon(
+                                   icon: const Icon(Icons.picture_as_pdf_outlined, size: 16, color: Colors.red),
+                                   label: Text('PDF', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.red)),
+                                   style: OutlinedButton.styleFrom(
+                                     foregroundColor: Colors.red,
+                                     side: const BorderSide(color: Colors.red),
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                   ),
+                                   onPressed: () => _sharePdf(inv),
                                  ),
                               ],
-                            ),
+                            )
                           ],
                         ),
                       ],

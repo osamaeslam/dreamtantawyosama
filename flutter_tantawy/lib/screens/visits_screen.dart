@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/role_access_controller.dart';
@@ -19,8 +21,11 @@ class VisitsScreen extends StatefulWidget {
 
 class _VisitsScreenState extends State<VisitsScreen> {
   List<CustomerVisit> _visits = [];
+  List<Customer> _customers = [];
   bool _isLoading = true;
+  bool _isLoadingCustomers = true;
   bool _isOffline = false;
+  DateTime? _selectedDate;
   static const String _cacheKey = 'visits_cache_${"USER"}';
 
   RoleAccessController get rbac => RoleAccessController(widget.currentUser);
@@ -29,49 +34,84 @@ class _VisitsScreenState extends State<VisitsScreen> {
   void initState() {
     super.initState();
     _fetchVisits();
+    _fetchCustomers();
   }
 
   Future<void> _fetchVisits() async {
-    setState(() => _isLoading = true);
-
+    if (mounted) setState(() => _isLoading = true);
+    List<CustomerVisit> data;
     try {
-      final data = await SupabaseService.instance.fetchVisits(
+      data = await SupabaseService.instance.fetchVisits(
         repName: rbac.isSalesRep ? widget.currentUser.name : null,
+        branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+        date: _selectedDate,
       );
-      if (data.isNotEmpty) {
-        _visits = rbac.filterVisits(data);
-        await _saveCache(data);
-      } else {
-        _visits = await _loadCache();
-      }
-      setState(() => _isOffline = false);
     } catch (e) {
+      final cached = await _loadCache();
+      if (!mounted) return;
       setState(() {
         _isOffline = true;
-        _visits = [];
+        _visits = rbac
+            .filterVisits(_filterCachedVisits(cached))
+            .toList();
+        _isLoading = false;
       });
-      final cached = await _loadCache();
-      if (cached.isNotEmpty) {
-        setState(() => _visits = rbac.filterVisits(cached));
+      if (_visits.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('تعذر تحميل الزيارات: $e')),
+        );
       }
+      return;
     }
 
-    if (mounted) setState(() => _isLoading = false);
+    _visits = rbac.filterVisits(data);
+    if (mounted) {
+      setState(() {
+        _isOffline = false;
+        _isLoading = false;
+      });
+    }
+    if (_selectedDate == null) {
+      try {
+        await _saveCache(data);
+      } catch (e) {
+        debugPrint('تعذر تحديث ذاكرة الزيارات المؤقتة: $e');
+      }
+    }
+  }
+
+  Future<void> _fetchCustomers() async {
+    try {
+      final data = await SupabaseService.instance.fetchCustomers(
+        repName: rbac.isSalesRep ? widget.currentUser.name : null,
+        repId: rbac.isSalesRep ? widget.currentUser.id : null,
+        branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+      );
+      if (!mounted) return;
+      setState(() {
+        _customers = rbac.filterCustomerAccounts(data);
+        _isLoadingCustomers = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingCustomers = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تحميل قائمة العملاء: $e')),
+      );
+    }
+  }
+
+  List<CustomerVisit> _filterCachedVisits(List<CustomerVisit> visits) {
+    if (_selectedDate == null) return visits;
+    return visits.where((visit) =>
+        visit.date.year == _selectedDate!.year &&
+        visit.date.month == _selectedDate!.month &&
+        visit.date.day == _selectedDate!.day);
   }
 
   Future<void> _saveCache(List<CustomerVisit> visits) async {
     final prefs = await SharedPreferences.getInstance();
-    final json = visits.map((v) => jsonEncode({
-          'id': v.id,
-          'customerId': v.customerId,
-          'customerName': v.customerName,
-          'repName': v.repName,
-          'date': v.date.toIso8601String(),
-          'type': v.type,
-          'outcome': v.outcome,
-          'collectedAmount': v.collectedAmount,
-          'notes': v.notes,
-        })).toList();
+    final json = visits.map((visit) => jsonEncode(visit.toJson())).toList();
     await prefs.setStringList(_cacheKey.replaceFirst('USER', widget.currentUser.id), json);
   }
 
@@ -80,33 +120,48 @@ class _VisitsScreenState extends State<VisitsScreen> {
       final prefs = await SharedPreferences.getInstance();
       final cached = prefs.getStringList(_cacheKey.replaceFirst('USER', widget.currentUser.id));
       if (cached == null || cached.isEmpty) return [];
-      return cached.map((json) {
-        final map = jsonDecode(json) as Map<String, dynamic>;
-        return CustomerVisit(
-          id: map['id'] as String,
-          customerId: map['customerId'] as String,
-          customerName: map['customerName'] as String,
-          repName: map['repName'] as String,
-          date: DateTime.parse(map['date'] as String),
-          type: map['type'] as String,
-          outcome: map['outcome'] as String? ?? 'N/A',
-          collectedAmount: (map['collectedAmount'] as num?)?.toDouble() ?? 0.0,
-          notes: map['notes'] as String?,
-        );
-      }).toList();
-    } catch (_) {
+      return cached
+          .map((json) => CustomerVisit.fromJson(
+                jsonDecode(json) as Map<String, dynamic>,
+              ))
+          .toList();
+    } catch (e) {
+      debugPrint('تعذر قراءة ذاكرة الزيارات المؤقتة: $e');
       return [];
     }
   }
 
-  void _showNewVisitDialog() {
-    final customerController = TextEditingController();
+  Future<Position> _getCurrentPosition() async {
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      throw StateError('فعّل خدمة الموقع لتسجيل الزيارة.');
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      throw StateError('اسمح للتطبيق بالوصول إلى الموقع لتسجيل الزيارة.');
+    }
+
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 20),
+      ),
+    );
+  }
+
+  Future<void> _showNewVisitDialog() async {
     final notesController = TextEditingController();
     final amountController = TextEditingController();
     String visitType = 'زيارة بيع وطلبية';
     String outcome = 'تم عمل طلبية';
+    Customer? selectedCustomer;
+    bool isSaving = false;
 
-    showModalBottomSheet(
+    final dialog = showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -141,7 +196,43 @@ class _VisitsScreenState extends State<VisitsScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      _buildTextField(customerController, 'اسم العميل / المتجر', Icons.person_outline),
+                      DropdownButtonFormField<Customer>(
+                        value: selectedCustomer,
+                        isExpanded: true,
+                        dropdownColor: AppTheme.cardSlate,
+                        style: GoogleFonts.cairo(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'العميل المرتبط بالمندوب',
+                          labelStyle: GoogleFonts.cairo(color: Colors.grey.shade400),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: _customers.map((customer) {
+                          return DropdownMenuItem(
+                            value: customer,
+                            child: Text(
+                              '${customer.name} • ${customer.code}',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.cairo(color: Colors.white),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (customer) => setModalState(
+                          () => selectedCustomer = customer,
+                        ),
+                      ),
+                      if (_isLoadingCustomers)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: LinearProgressIndicator(),
+                        )
+                      else if (_customers.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'لا يوجد عملاء مرتبطون بهذا الحساب.',
+                            style: GoogleFonts.cairo(color: Colors.orangeAccent),
+                          ),
+                        ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: visitType,
@@ -172,6 +263,30 @@ class _VisitsScreenState extends State<VisitsScreen> {
                         onChanged: (val) => setModalState(() => visitType = val!),
                       ),
                       const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: outcome,
+                        dropdownColor: AppTheme.cardSlate,
+                        style: GoogleFonts.cairo(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: 'نتيجة الزيارة',
+                          labelStyle: GoogleFonts.cairo(color: Colors.grey.shade400),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: const [
+                          'تم عمل طلبية',
+                          'تم التحصيل',
+                          'متابعة لاحقة',
+                          'لم يتم مقابلة العميل',
+                          'تم تسجيل مرتجع',
+                        ].map((value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value),
+                            )).toList(),
+                        onChanged: (value) => setModalState(
+                          () => outcome = value ?? outcome,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       _buildTextField(amountController, 'المبلغ المحصل (ج.م)', Icons.payments, isNumber: true),
                       const SizedBox(height: 12),
                       _buildTextField(notesController, 'ملاحظات الزيارة أو المرتجع', Icons.note, isMultiLine: true),
@@ -185,25 +300,107 @@ class _VisitsScreenState extends State<VisitsScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          icon: const Icon(Icons.check_circle_outline),
-                          label: Text('حفظ الزيارة',
+                          icon: isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.darkSlate,
+                                  ),
+                                )
+                              : const Icon(Icons.check_circle_outline),
+                          label: Text(isSaving ? 'جارٍ الحفظ...' : 'حفظ الزيارة',
                               style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15)),
-                          onPressed: () async {
-                            final newVisit = CustomerVisit(
-                              id: 'vis_${DateTime.now().millisecondsSinceEpoch}',
-                              customerId: 'c_temp',
-                              customerName: customerController.text.isNotEmpty ? customerController.text : 'عميل عام',
-                              repName: widget.currentUser.name,
-                              date: DateTime.now(),
-                              type: visitType,
-                              outcome: outcome,
-                              collectedAmount: double.tryParse(amountController.text) ?? 0.0,
-                              notes: notesController.text,
-                            );
-
-                            await SupabaseService.instance.logVisit(newVisit);
-                            setState(() => _visits.insert(0, newVisit));
-                            Navigator.pop(ctx);
+                          onPressed: isSaving || selectedCustomer == null
+                              ? null
+                              : () async {
+                                  final amountInput = amountController.text.trim();
+                                  final collectedAmount = amountInput.isEmpty
+                                      ? 0.0
+                                      : double.tryParse(amountInput);
+                                  if (collectedAmount == null ||
+                                      collectedAmount < 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('أدخل مبلغ تحصيل صحيحًا وغير سالب.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (outcome == 'تم التحصيل' &&
+                                      collectedAmount == 0) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('أدخل مبلغ التحصيل قبل تسجيل نتيجة التحصيل.'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  setModalState(() => isSaving = true);
+                                  final visitNotes = notesController.text.trim();
+                                  try {
+                                    final position =
+                                        await _getCurrentPosition();
+                                    final now = DateTime.now();
+                                    final newVisit = CustomerVisit(
+                                      id: 'vis_${now.millisecondsSinceEpoch}',
+                                      customerId: selectedCustomer!.id,
+                                      customerCode: selectedCustomer!.code,
+                                      customerName: selectedCustomer!.name,
+                                      repName: widget.currentUser.name,
+                                      repId: widget.currentUser.id,
+                                      branchName: widget.currentUser.branchName,
+                                      date: now,
+                                      checkInTime: now.toIso8601String(),
+                                      locationTimestamp: now.toIso8601String(),
+                                      latitude: position.latitude,
+                                      longitude: position.longitude,
+                                      accuracy: position.accuracy,
+                                      type: visitType,
+                                      outcome: outcome,
+                                      status: 'executed',
+                                      collectedAmount: collectedAmount,
+                                      notes: visitNotes,
+                                      createdBy: widget.currentUser.id,
+                                    );
+                                    final success =
+                                        await SupabaseService.instance
+                                            .logVisit(newVisit);
+                                    if (!success) {
+                                      throw StateError('تعذر حفظ الزيارة في قاعدة البيانات.');
+                                    }
+                                    if (!mounted) return;
+                                    final matchesDate = _selectedDate == null ||
+                                        (_selectedDate!.year == now.year &&
+                                            _selectedDate!.month == now.month &&
+                                            _selectedDate!.day == now.day);
+                                    if (matchesDate) {
+                                      setState(() => _visits.insert(0, newVisit));
+                                    }
+                                    if (_selectedDate == null) {
+                                      try {
+                                        await _saveCache(_visits);
+                                      } catch (e) {
+                                        debugPrint('تعذر تحديث ذاكرة الزيارات المؤقتة: $e');
+                                      }
+                                    }
+                                    if (ctx.mounted) Navigator.pop(ctx);
+                                    ScaffoldMessenger.of(this.context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('تم حفظ الزيارة بنجاح مع الموقع والوقت.'),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    if (mounted) {
+                                      if (ctx.mounted) {
+                                        setModalState(() => isSaving = false);
+                                      }
+                                      ScaffoldMessenger.of(this.context).showSnackBar(
+                                        SnackBar(content: Text('لم يتم حفظ الزيارة: $e')),
+                                      );
+                                    }
+                                  }
                           },
                         ),
                       ),
@@ -215,6 +412,70 @@ class _VisitsScreenState extends State<VisitsScreen> {
           ),
         ),
       ),
+    );
+    await dialog.whenComplete(() {
+      notesController.dispose();
+      amountController.dispose();
+    });
+  }
+
+  Future<void> _selectVisitDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      helpText: 'اختر يوم الزيارات',
+    );
+    if (selected == null || !mounted) return;
+    setState(() => _selectedDate = selected);
+    await _fetchVisits();
+  }
+
+  Future<void> _archiveVisit(CustomerVisit visit) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('أرشفة الزيارة', style: GoogleFonts.cairo()),
+        content: Text(
+          'هل تريد إخفاء زيارة ${visit.customerName} من السجل؟',
+          style: GoogleFonts.cairo(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('إلغاء', style: GoogleFonts.cairo()),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('أرشفة', style: GoogleFonts.cairo()),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final archived = await SupabaseService.instance.archiveVisit(
+      visitId: visit.id,
+      archivedBy: widget.currentUser.id,
+    );
+    if (!mounted) return;
+    if (!archived) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر أرشفة الزيارة. لم يتم تغيير السجل.')),
+      );
+      return;
+    }
+    setState(() => _visits.removeWhere((item) => item.id == visit.id));
+    if (_selectedDate == null) {
+      try {
+        await _saveCache(_visits);
+      } catch (e) {
+        debugPrint('تعذر تحديث ذاكرة الزيارات المؤقتة بعد الأرشفة: $e');
+      }
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تمت أرشفة الزيارة.')),
     );
   }
 
@@ -255,6 +516,22 @@ class _VisitsScreenState extends State<VisitsScreen> {
               child: Icon(Icons.wifi_off_rounded, color: Colors.orange),
             ),
           IconButton(
+            tooltip: _selectedDate == null
+                ? 'فلترة حسب التاريخ'
+                : 'التاريخ: ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+            icon: const Icon(Icons.calendar_month_rounded, color: Colors.white70),
+            onPressed: _selectVisitDate,
+          ),
+          if (_selectedDate != null)
+            IconButton(
+              tooltip: 'إلغاء فلتر التاريخ',
+              icon: const Icon(Icons.filter_alt_off_rounded, color: Colors.white70),
+              onPressed: () async {
+                setState(() => _selectedDate = null);
+                await _fetchVisits();
+              },
+            ),
+          IconButton(
             icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
             onPressed: _fetchVisits,
           ),
@@ -269,17 +546,49 @@ class _VisitsScreenState extends State<VisitsScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGold))
-          : _visits.isEmpty
-              ? _buildEmptyState()
-              : ResponsiveLayout(
-                  mobile: _buildVisitsList(),
-                  desktop: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 800),
-                      child: _buildVisitsList(),
+          : Column(
+              children: [
+                if (_isOffline)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    color: Colors.orange.withValues(alpha: 0.16),
+                    child: Text(
+                      _visits.isEmpty
+                          ? 'تعذر الاتصال، ولا توجد زيارات محفوظة لعرضها.'
+                          : 'أنت غير متصل؛ المعروض بيانات محفوظة وقد لا تكون محدثة.',
+                      style: GoogleFonts.cairo(color: Colors.orangeAccent),
                     ),
                   ),
+                if (_selectedDate != null)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        'زيارات ${DateFormat('yyyy-MM-dd').format(_selectedDate!)}',
+                        style: GoogleFonts.cairo(color: Colors.white70),
+                      ),
+                    ),
+                  ),
+                Expanded(
+                  child: _visits.isEmpty
+                      ? _buildEmptyState()
+                      : ResponsiveLayout(
+                          mobile: _buildVisitsList(),
+                          desktop: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 800),
+                              child: _buildVisitsList(),
+                            ),
+                          ),
+                        ),
                 ),
+              ],
+            ),
     );
   }
 
@@ -289,21 +598,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
       itemCount: _visits.length,
       itemBuilder: (context, index) {
         final v = _visits[index];
-        return Dismissible(
-          key: Key(v.id),
-          background: Container(
-            decoration: BoxDecoration(
-              color: Colors.red.shade900,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: const Icon(Icons.delete_rounded, color: Colors.white),
-          ),
-          onDismissed: (direction) async {
-            setState(() => _visits.removeAt(index));
-          },
-          child: Card(
+        return Card(
             margin: const EdgeInsets.only(bottom: 12),
             color: AppTheme.cardSlate,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -322,10 +617,18 @@ class _VisitsScreenState extends State<VisitsScreen> {
                       ),
                       Text(DateFormat('yyyy-MM-dd\nHH:mm').format(v.date),
                           style: GoogleFonts.cairo(fontSize: 10, color: Colors.grey.shade400)),
+                      IconButton(
+                        tooltip: 'أرشفة الزيارة',
+                        onPressed: _isOffline ? null : () => _archiveVisit(v),
+                        icon: const Icon(Icons.archive_outlined),
+                        color: Colors.white54,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -334,7 +637,20 @@ class _VisitsScreenState extends State<VisitsScreen> {
                         child: Text(v.type,
                             style: GoogleFonts.cairo(fontSize: 11, color: Colors.blue.shade300)),
                       ),
-                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppTheme.darkBorder,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          v.outcome,
+                          style: GoogleFonts.cairo(
+                            fontSize: 11,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
                       if (v.collectedAmount > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -348,6 +664,13 @@ class _VisitsScreenState extends State<VisitsScreen> {
                         ),
                     ],
                   ),
+                  if (v.latitude != null && v.longitude != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'الموقع مسجل • ${v.latitude!.toStringAsFixed(5)}, ${v.longitude!.toStringAsFixed(5)}',
+                      style: GoogleFonts.cairo(fontSize: 10, color: Colors.white54),
+                    ),
+                  ],
                   if (v.notes != null && v.notes!.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text('ملاحظة: ${v.notes!}',
@@ -356,7 +679,6 @@ class _VisitsScreenState extends State<VisitsScreen> {
                 ],
               ),
             ),
-          ),
         );
       },
     );

@@ -6,6 +6,7 @@ import '../services/cart_service.dart';
 import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
+import '../widgets/role_dashboard_summary.dart';
 import 'all_customers_analytics_view.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
@@ -298,7 +299,9 @@ class RepDashboardScreen extends StatelessWidget {
                     _buildWelcomePanel(context),
                     const SizedBox(height: 16),
                     const ConnectionStatusBar(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
+                    RoleDashboardSummary(currentUser: currentUser),
+                    const SizedBox(height: 22),
                     Row(
                       children: [
                         Expanded(

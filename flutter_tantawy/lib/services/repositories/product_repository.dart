@@ -43,16 +43,104 @@ class ProductRepository extends BaseRepository {
             'name.ilike.%$searchQuery%,primary_code.ilike.%$searchQuery%,unified_code.ilike.%$searchQuery%');
       }
       final data = await query.order('name');
-      return (data as List<dynamic>)
+      final products = (data as List<dynamic>)
           .map((e) => ParentProduct.fromJson(e as Map<String, dynamic>))
           .toList();
+      if (branchName == null || branchName.isEmpty || products.isEmpty) {
+        return products;
+      }
+
+      final stockByProduct = await _fetchBranchStockMap(branchName);
+      return _applyBranchStocks(products, stockByProduct);
     } catch (e) {
       logError('fetchParentProducts', e);
       final products =
           await fetchProducts(branchName: branchName, department: department);
-      return products
-          .map((p) => _fallbackParentProduct(p))
-          .toList();
+      final parentProducts = products.map(_fallbackParentProduct).toList();
+      if (branchName == null || branchName.isEmpty || parentProducts.isEmpty) {
+        return parentProducts;
+      }
+      try {
+        final stockByProduct = await _fetchBranchStockMap(branchName);
+        return _applyBranchStocks(parentProducts, stockByProduct);
+      } catch (stockError) {
+        logError('fetchParentProducts branch stock fallback', stockError);
+        return parentProducts;
+      }
+    }
+  }
+
+  List<ParentProduct> _applyBranchStocks(
+    List<ParentProduct> products,
+    Map<String, Map<String, int>> stockByProduct,
+  ) {
+    return products.map((product) {
+      final variantProductIds =
+          product.variants.map((variant) => variant.productId).toSet();
+      final variants = product.variants.map((variant) {
+        final stock = stockByProduct[variant.id] ??
+            (variantProductIds.length == product.variants.length
+                ? stockByProduct[variant.productId]
+                : null);
+        return ProductVariant.fromJson({
+          ...variant.toJson(),
+          'branch_stock_actual': stock?['actual'] ?? 0,
+          'branch_stock_reserved': stock?['reserved'] ?? 0,
+        });
+      }).toList();
+      final defaultVariant = variants.isEmpty
+          ? null
+          : variants.firstWhere(
+              (variant) => variant.availableStock > 0,
+              orElse: () => variants.firstWhere(
+                (variant) => variant.octoberAvailableStock > 0,
+                orElse: () => variants.first,
+              ),
+            );
+      return ParentProduct(
+        id: product.id,
+        primaryCode: product.primaryCode,
+        unifiedCode: product.unifiedCode,
+        name: product.name,
+        department: product.department,
+        category: product.category,
+        classification: product.classification,
+        familyName: product.familyName,
+        salesPriority: product.salesPriority,
+        status: product.status,
+        cartonQuantity: product.cartonQuantity,
+        imageUrl: product.imageUrl,
+        minPrice: product.minPrice,
+        maxPrice: product.maxPrice,
+        totalBranchStock: variants.fold(
+            0, (total, variant) => total + variant.availableStock),
+        totalOctoberStock: product.totalOctoberStock,
+        variants: variants,
+        variantsCount: product.variantsCount,
+        hasMultipleVariants: product.hasMultipleVariants,
+        defaultVariant: defaultVariant,
+      );
+    }).toList();
+  }
+
+  Future<Map<String, Map<String, int>>> _fetchBranchStockMap(
+    String branchName,
+  ) async {
+    try {
+      final rows = await client
+          .from('product_stocks')
+          .select('product_id, quantity_actual, quantity_reserved')
+          .eq('branch_name', branchName);
+      return {
+        for (final row in rows as List<dynamic>)
+          row['product_id'].toString(): {
+            'actual': (row['quantity_actual'] as num?)?.toInt() ?? 0,
+            'reserved': (row['quantity_reserved'] as num?)?.toInt() ?? 0,
+          },
+      };
+    } catch (e) {
+      logError('fetchBranchStocks', e);
+      rethrow;
     }
   }
 

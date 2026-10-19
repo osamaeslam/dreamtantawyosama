@@ -113,8 +113,11 @@ class RoleAccessController {
       if (!branchOk) return false;
 
       if (isSalesRep) {
-        return c.repName != null &&
-            _matchesName(c.repName!, currentUser.name);
+        final matchesRepId = c.salesRepId == currentUser.id;
+        final matchesRepName = [c.repName, c.salesRepName]
+            .whereType<String>()
+            .any((name) => _matchesName(name, currentUser.name));
+        return matchesRepId || matchesRepName;
       }
 
       if (isSupervisor) {

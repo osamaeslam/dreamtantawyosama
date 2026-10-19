@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
@@ -83,7 +85,16 @@ class SupabaseService {
           .maybeSingle();
 
       if (response != null) {
-        return AppUser.fromJson(Map<String, dynamic>.from(response));
+        final storedHash = response['password']?.toString() ?? '';
+        final isActive = response['is_active'] as bool? ??
+            (response['is_active'] == 1);
+
+        if (isActive && _verifyPassword(password, storedHash)) {
+          return AppUser.fromJson(Map<String, dynamic>.from(response));
+        }
+
+        debugPrint('Login failed for $clean — password mismatch or inactive user');
+        return null;
       }
     } catch (e) {
       debugPrint('Supabase login query error (or offline mode): $e');
@@ -146,6 +157,31 @@ class SupabaseService {
     return null;
   }
 
+  /// Verifies a plaintext password against a stored sha256 hash.
+  /// Expected format: sha256$iterations$salt$hash
+  bool _verifyPassword(String password, String storedHash) {
+    if (storedHash.isEmpty || password.isEmpty) return false;
+
+    final parts = storedHash.split(r'$');
+    if (parts.length != 4 || parts[0] != 'sha256') return false;
+
+    try {
+      final iterations = int.parse(parts[1]);
+      final salt = parts[2];
+      final expectedHash = parts[3];
+
+      var bytes = utf8.encode(password + salt);
+      for (int i = 0; i < iterations; i++) {
+        bytes = sha256.convert(bytes).bytes;
+      }
+
+      return base64Encode(bytes) == expectedHash;
+    } catch (e) {
+      debugPrint('Password verification error: $e');
+      return false;
+    }
+  }
+
   // ===================== المنتجات (Products) =====================
   Future<List<Product>> fetchProducts({String? branchName, String? department}) {
     return _products.fetchProducts(branchName: branchName, department: department);
@@ -184,13 +220,33 @@ class SupabaseService {
   }
 
   // ===================== العملاء (Customers) =====================
-  Future<List<Customer>> fetchCustomers({String? repName, String? branchName}) {
-    return _customers.fetchCustomers(repName: repName, branchName: branchName);
+  Future<List<Customer>> fetchCustomers({
+    String? repName,
+    String? repId,
+    String? branchName,
+  }) {
+    return _customers.fetchCustomers(
+      repName: repName,
+      repId: repId,
+      branchName: branchName,
+    );
   }
 
   // ===================== الطلبيات والفواتين (Orders & Invoices) =====================
-  Future<List<OrderInvoice>> fetchInvoices({String? repName, String? status, String? branchName}) {
-    return _invoices.fetchInvoices(repName: repName, status: status, branchName: branchName);
+  Future<List<OrderInvoice>> fetchInvoices({
+    String? repName,
+    String? status,
+    String? branchName,
+    DateTime? startDate,
+    DateTime? endDateExclusive,
+  }) {
+    return _invoices.fetchInvoices(
+      repName: repName,
+      status: status,
+      branchName: branchName,
+      startDate: startDate,
+      endDateExclusive: endDateExclusive,
+    );
   }
 
   Future<bool> createInvoice(OrderInvoice invoice) async {
@@ -209,11 +265,33 @@ class SupabaseService {
   }
 
   // ===================== الزيارات الميدانية (Visits) =====================
-  Future<List<CustomerVisit>> fetchVisits({String? repName, DateTime? date}) {
-    return _visits.fetchVisits(repName: repName, date: date);
+  Future<List<CustomerVisit>> fetchVisits({
+    String? repName,
+    String? branchName,
+    DateTime? date,
+    DateTime? startDate,
+    DateTime? endDateExclusive,
+  }) {
+    return _visits.fetchVisits(
+      repName: repName,
+      branchName: branchName,
+      date: date,
+      startDate: startDate,
+      endDateExclusive: endDateExclusive,
+    );
   }
 
   Future<bool> logVisit(CustomerVisit visit) => _visits.logVisit(visit);
+
+  Future<bool> archiveVisit({
+    required String visitId,
+    required String archivedBy,
+  }) {
+    return _visits.archiveVisit(
+      visitId: visitId,
+      archivedBy: archivedBy,
+    );
+  }
 
   // ===================== الاشتراك اللحظي (Realtime Stream) =====================
   RealtimeChannel subscribeToOrders(void Function(Map<String, dynamic> payload) onEvent) {

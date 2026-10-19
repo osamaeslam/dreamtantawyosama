@@ -64,365 +64,11 @@ class _CatalogViewState extends State<CatalogScreen>
     setState(() => _isLoading = true);
     final data = await SupabaseService.instance.fetchParentProducts(
       department: _selectedDepartment != 'الكل' ? _selectedDepartment : null,
+      branchName: widget.currentUser.branchName,
     );
-    if (data.isEmpty) {
-      _allProducts = _generateMockParentProducts();
-    } else {
-      _allProducts = data;
-    }
+    _allProducts = data;
     _applyFilter();
     if (mounted) setState(() => _isLoading = false);
-  }
-
-  List<ParentProduct> _generateMockParentProducts() {
-    final Product baseP1 = Product(
-      id: 'p1',
-      code: 'TNT-101',
-      name: 'طقم حلل جرانيت 10 قطع تركي فاخر',
-      department: 'أدوات منزلية',
-      category: 'جرانيت وسيراميك',
-      piecePrice: 450.0,
-      cartonPrice: 1800.0,
-      cartonQuantity: 4,
-      branchStockActual: 24,
-      branchStockReserved: 4,
-      mainWarehouseStock: 150,
-      status: 'متاح',
-      salesPriority: 'مرتفع',
-      unifiedCode: '#TNT-101',
-    );
-    final Product baseP2 = Product(
-      id: 'p2',
-      code: 'TNT-102',
-      name: 'طقم كاسات كريستال بوهيمي 6 قطع',
-      department: 'زجاج وبورسلين',
-      category: 'كريستال',
-      piecePrice: 120.0,
-      cartonPrice: 1440.0,
-      cartonQuantity: 12,
-      branchStockActual: 10,
-      branchStockReserved: 0,
-      mainWarehouseStock: 80,
-      status: 'متاح',
-      salesPriority: 'عادي',
-      unifiedCode: '#TNT-102',
-    );
-    final Product baseP3 = Product(
-      id: 'p3',
-      code: 'TNT-103',
-      name: 'خلاط يدوي تورنيدو 1000 وات مع مضرب',
-      department: 'أجهزة كهربائية',
-      category: 'محضرات طعام',
-      piecePrice: 350.0,
-      cartonPrice: 2100.0,
-      promoPrice: 1950.0,
-      cartonQuantity: 6,
-      branchStockActual: 18,
-      branchStockReserved: 2,
-      mainWarehouseStock: 200,
-      status: 'عرض ترويجي',
-      salesPriority: 'مرتفع',
-      unifiedCode: '#TNT-103',
-    );
-
-    return [
-      // منتج 1: 3 ألوان/نوافذ
-      ParentProduct(
-        id: 'p1',
-        primaryCode: 'TNT-101',
-        unifiedCode: '#TNT-101',
-        name: baseP1.name,
-        department: baseP1.department,
-        category: baseP1.category,
-        classification: 'مطابخ وحلل',
-        salesPriority: 'مرتفع',
-        status: 'متاح',
-        cartonQuantity: 4,
-        imageUrl: baseP1.imageUrl,
-        minPrice: 1800,
-        maxPrice: 1800,
-        totalBranchStock: 20,
-        totalOctoberStock: 150,
-        variants: [
-          ProductVariant(
-            id: 'v1_1',
-            productId: 'p1',
-            code: 'TNT-101-R',
-            name: 'شباك 1',
-            color: 'أبيض',
-            colorCode: '#FFFFFF',
-            branchStockActual: 24,
-            branchStockReserved: 4,
-            mainWarehouseActual: 150,
-            mainWarehouseReserved: 10,
-            cartonQuantity: 4,
-            piecePrice: 450,
-            cartonPrice: 1800,
-            promoPrice: null,
-            status: 'متاح',
-            rawProduct: baseP1,
-          ),
-          ProductVariant(
-            id: 'v1_2',
-            productId: 'p1',
-            code: 'TNT-101-B',
-            name: 'شباك 2',
-            color: 'بيج',
-            colorCode: '#F5E6C8',
-            branchStockActual: 12,
-            branchStockReserved: 2,
-            mainWarehouseActual: 80,
-            cartonQuantity: 4,
-            piecePrice: 450,
-            cartonPrice: 1800,
-            status: 'متاح',
-            rawProduct: baseP1,
-          ),
-          ProductVariant(
-            id: 'v1_3',
-            productId: 'p1',
-            code: 'TNT-101-G',
-            name: 'شباك 3',
-            color: 'رمادي',
-            colorCode: '#808080',
-            branchStockActual: 0,
-            branchStockReserved: 0,
-            mainWarehouseActual: 120,
-            cartonQuantity: 4,
-            piecePrice: 450,
-            cartonPrice: 1800,
-            status: 'متاح',
-            rawProduct: baseP1,
-          ),
-        ],
-        variantsCount: 3,
-        hasMultipleVariants: true,
-        defaultVariant: ProductVariant(
-          id: 'v1_1',
-          productId: 'p1',
-          code: 'TNT-101-R',
-          name: 'شباك 1',
-          color: 'أبيض',
-          colorCode: '#FFFFFF',
-          branchStockActual: 24,
-          branchStockReserved: 4,
-          mainWarehouseActual: 150,
-          mainWarehouseReserved: 10,
-          cartonQuantity: 4,
-          piecePrice: 450,
-          cartonPrice: 1800,
-          status: 'متاح',
-          rawProduct: baseP1,
-        ),
-      ),
-      // منتج 2: لونين
-      ParentProduct(
-        id: 'p2',
-        primaryCode: 'TNT-102',
-        unifiedCode: '#TNT-102',
-        name: baseP2.name,
-        department: baseP2.department,
-        category: baseP2.category,
-        classification: 'كريستال',
-        salesPriority: 'عادي',
-        status: 'متاح',
-        cartonQuantity: 12,
-        minPrice: 1440,
-        maxPrice: 1440,
-        totalBranchStock: 10,
-        totalOctoberStock: 80,
-        variants: [
-          ProductVariant(
-            id: 'v2_1',
-            productId: 'p2',
-            code: 'TNT-102-R',
-            name: 'شباك 1',
-            color: 'أحمر',
-            colorCode: '#EF4444',
-            branchStockActual: 6,
-            branchStockReserved: 1,
-            mainWarehouseActual: 50,
-            cartonQuantity: 12,
-            piecePrice: 120,
-            cartonPrice: 1440,
-            status: 'متاح',
-            rawProduct: baseP2,
-          ),
-          ProductVariant(
-            id: 'v2_2',
-            productId: 'p2',
-            code: 'TNT-102-B',
-            name: 'شباك 2',
-            color: 'أزرق',
-            colorCode: '#3B82F6',
-            branchStockActual: 4,
-            branchStockReserved: 0,
-            mainWarehouseActual: 30,
-            cartonQuantity: 12,
-            piecePrice: 120,
-            cartonPrice: 1440,
-            status: 'راكد',
-            rawProduct: baseP2,
-          ),
-        ],
-        variantsCount: 2,
-        hasMultipleVariants: true,
-        defaultVariant: ProductVariant(
-          id: 'v2_1',
-          productId: 'p2',
-          code: 'TNT-102-R',
-          name: 'شباك 1',
-          color: 'أحمر',
-          colorCode: '#EF4444',
-          branchStockActual: 6,
-          branchStockReserved: 1,
-          mainWarehouseActual: 50,
-          cartonQuantity: 12,
-          piecePrice: 120,
-          cartonPrice: 1440,
-          status: 'متاح',
-          rawProduct: baseP2,
-        ),
-      ),
-      // منتج 3: عرض ترويجي بخصم
-      ParentProduct(
-        id: 'p3',
-        primaryCode: 'TNT-103',
-        unifiedCode: '#TNT-103',
-        name: baseP3.name,
-        department: baseP3.department,
-        category: baseP3.category,
-        classification: 'أجهزة',
-        salesPriority: 'مرتفع',
-        status: 'عرض ترويجي',
-        cartonQuantity: 6,
-        minPrice: 1950,
-        maxPrice: 1950,
-        totalBranchStock: 16,
-        totalOctoberStock: 200,
-        variants: [
-          ProductVariant(
-            id: 'v3_1',
-            productId: 'p3',
-            code: 'TNT-103-W',
-            name: 'أبيض',
-            color: 'أبيض',
-            colorCode: '#FFFFFF',
-            branchStockActual: 18,
-            branchStockReserved: 2,
-            mainWarehouseActual: 200,
-            cartonQuantity: 6,
-            piecePrice: 350,
-            cartonPrice: 2100,
-            promoPrice: 1950,
-            status: 'عرض ترويجي',
-            rawProduct: baseP3,
-          ),
-        ],
-        variantsCount: 1,
-        hasMultipleVariants: false,
-        defaultVariant: ProductVariant(
-          id: 'v3_1',
-          productId: 'p3',
-          code: 'TNT-103-W',
-          name: 'أبيض',
-          color: 'أبيض',
-          colorCode: '#FFFFFF',
-          branchStockActual: 18,
-          branchStockReserved: 2,
-          mainWarehouseActual: 200,
-          cartonQuantity: 6,
-          piecePrice: 350,
-          cartonPrice: 2100,
-          promoPrice: 1950,
-          status: 'عرض ترويجي',
-          rawProduct: baseP3,
-        ),
-      ),
-      // منتج 4: منتج بسيط بدون variants
-      ParentProduct(
-        id: 'p4',
-        primaryCode: 'TNT-104',
-        unifiedCode: '#TNT-104',
-        name: 'طقم علب ثلاجة محكمة الغلق 5 قطع',
-        department: 'بلاستيك وميلامين',
-        category: 'حافظات طعام',
-        classification: 'مطابخ',
-        salesPriority: 'عادي',
-        status: 'متاح',
-        cartonQuantity: 24,
-        minPrice: 1080,
-        maxPrice: 1080,
-        totalBranchStock: 40,
-        totalOctoberStock: 320,
-        variants: [
-          ProductVariant(
-            id: 'v4_1',
-            productId: 'p4',
-            code: 'TNT-104-G',
-            name: 'أخضر',
-            color: 'أخضر',
-            colorCode: '#10B981',
-            branchStockActual: 45,
-            branchStockReserved: 5,
-            mainWarehouseActual: 320,
-            cartonQuantity: 24,
-            piecePrice: 45,
-            cartonPrice: 1080,
-            status: 'متاح',
-            rawProduct: Product(
-              id: 'p4',
-              code: 'TNT-104',
-              name: 'طقم علب ثلاجة محكمة الغلق 5 قطع',
-              department: 'بلاستيك وميلامين',
-              category: 'حافظات طعام',
-              piecePrice: 45,
-              cartonPrice: 1080,
-              cartonQuantity: 24,
-              branchStockActual: 45,
-              branchStockReserved: 5,
-              mainWarehouseStock: 320,
-              status: 'متاح',
-              salesPriority: 'عادي',
-              unifiedCode: '#TNT-104',
-            ),
-          ),
-        ],
-        variantsCount: 1,
-        hasMultipleVariants: false,
-        defaultVariant: ProductVariant(
-          id: 'v4_1',
-          productId: 'p4',
-          code: 'TNT-104-G',
-          name: 'أخضر',
-          color: 'أخضر',
-          colorCode: '#10B981',
-          branchStockActual: 45,
-          branchStockReserved: 5,
-          mainWarehouseActual: 320,
-          cartonQuantity: 24,
-          piecePrice: 45,
-          cartonPrice: 1080,
-          status: 'متاح',
-          rawProduct: Product(
-            id: 'p4',
-            code: 'TNT-104',
-            name: 'طقم علب ثلاجة محكمة الغلق 5 قطع',
-            department: 'بلاستيك وميلامين',
-            category: 'حافظات طعام',
-            piecePrice: 45,
-            cartonPrice: 1080,
-            cartonQuantity: 24,
-            branchStockActual: 45,
-            branchStockReserved: 5,
-            mainWarehouseStock: 320,
-            status: 'متاح',
-            salesPriority: 'عادي',
-            unifiedCode: '#TNT-104',
-          ),
-        ),
-      ),
-    ];
   }
 
   String _normalizeSearchText(String value) {
@@ -477,8 +123,8 @@ class _CatalogViewState extends State<CatalogScreen>
             final tierA = _stockTier(a);
             final tierB = _stockTier(b);
             if (tierA != tierB) return tierA.compareTo(tierB);
-            final stockA = (a.defaultVariant?.availableStock ?? 0) + a.totalOctoberStock;
-            final stockB = (b.defaultVariant?.availableStock ?? 0) + b.totalOctoberStock;
+            final stockA = a.defaultVariant?.availableForOrder ?? 0;
+            final stockB = b.defaultVariant?.availableForOrder ?? 0;
             return stockB.compareTo(stockA);
           });
           break;
@@ -491,7 +137,8 @@ class _CatalogViewState extends State<CatalogScreen>
             final pa = priorityOrder[a.salesPriority] ?? 2;
             final pb = priorityOrder[b.salesPriority] ?? 2;
             if (pa != pb) return pa.compareTo(pb);
-            return b.variants.first.availableStock.compareTo(a.variants.first.availableStock);
+            return b.variants.first.availableForOrder
+                .compareTo(a.variants.first.availableForOrder);
           });
           break;
       }
@@ -517,8 +164,7 @@ class _CatalogViewState extends State<CatalogScreen>
   int _stockTier(ParentProduct p) {
     final v = p.defaultVariant;
     final totalVariantStock =
-        (v?.branchStockActual ?? 0) - (v?.branchStockReserved ?? 0) +
-        (v?.mainWarehouseActual ?? 0);
+        (v?.availableStock ?? 0) + (v?.octoberAvailableStock ?? 0);
     if (v == null) {
       return p.totalBranchStock > 0
           ? 0
@@ -526,11 +172,11 @@ class _CatalogViewState extends State<CatalogScreen>
               ? 1
               : 2;
     }
-    if (totalVariantStock <= 0 && v.branchStockActual <= 0 && v.mainWarehouseActual <= 0) {
+    if (totalVariantStock <= 0) {
       return 2;
     }
-    if (v.branchStockActual - v.branchStockReserved > 0) return 0;
-    return v.mainWarehouseActual > 0 ? 1 : 2;
+    if (v.availableStock > 0) return 0;
+    return v.octoberAvailableStock > 0 ? 1 : 2;
   }
 
   void _showVariantSelector(ParentProduct product) {
@@ -573,7 +219,7 @@ class _CatalogViewState extends State<CatalogScreen>
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final variant = product.variants[index];
-                  final isAvailable = variant.availableStock > 0;
+                  final isAvailable = variant.availableForOrder > 0;
                   final cart = context.read<CartService>();
                   final key = '${product.id}_${variant.id}';
                   final inCart = cart.items.containsKey(key) ? cart.items[key]!.cartons : 0;
@@ -688,7 +334,7 @@ class _CatalogViewState extends State<CatalogScreen>
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'متاح: ${variant.branchStockActual - variant.branchStockReserved} كرتونة',
+                                    'الفرع: ${variant.availableStock} • أكتوبر: ${variant.octoberAvailableStock} كرتونة',
                                     style: GoogleFonts.cairo(fontSize: 11, color: AppTheme.emeraldGreen, fontWeight: FontWeight.w600),
                                   ),
                                   Row(
@@ -718,6 +364,7 @@ class _CatalogViewState extends State<CatalogScreen>
                                                   ),
                                                   variant: variant,
                                                   cartons: inCart - 1,
+                                                  branchName: widget.currentUser.branchName,
                                                 );
                                               }
                                             : null,
@@ -748,6 +395,7 @@ class _CatalogViewState extends State<CatalogScreen>
                                             ),
                                             variant: variant,
                                             cartons: inCart + 1,
+                                            branchName: widget.currentUser.branchName,
                                           );
                                         },
                                         color: AppTheme.primaryGold,
@@ -1095,7 +743,7 @@ class _CatalogViewState extends State<CatalogScreen>
     final key = '${product.id}_${variant.id}';
     final itemInCart = cart.items[key];
     final currentQty = itemInCart?.cartons ?? 0;
-    final availableStock = variant.availableStock;
+    final availableStock = variant.availableForOrder;
 
     if (currentQty > 0) {
       return Container(
@@ -1112,11 +760,12 @@ class _CatalogViewState extends State<CatalogScreen>
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               color: AppTheme.primaryGold,
               onPressed: () {
-                if (currentQty > 0 && (currentQty - 1) < availableStock) {
+                if (currentQty > 0) {
                   cart.addOrUpdateProduct(
                     product: variant.rawProduct ?? _fallbackProduct(product),
                     variant: variant,
                     cartons: currentQty - 1,
+                    branchName: widget.currentUser.branchName,
                   );
                 }
               },
@@ -1134,15 +783,14 @@ class _CatalogViewState extends State<CatalogScreen>
               padding: const EdgeInsets.all(6),
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               color: AppTheme.primaryGold,
-              onPressed: currentQty < availableStock
-                  ? () {
-                      cart.addOrUpdateProduct(
-                        product: variant.rawProduct ?? _fallbackProduct(product),
-                        variant: variant,
-                        cartons: currentQty + 1,
-                      );
-                    }
-                  : null,
+              onPressed: () {
+                cart.addOrUpdateProduct(
+                  product: variant.rawProduct ?? _fallbackProduct(product),
+                  variant: variant,
+                  cartons: currentQty + 1,
+                  branchName: widget.currentUser.branchName,
+                );
+              },
             ),
           ],
         ),
@@ -1161,6 +809,7 @@ class _CatalogViewState extends State<CatalogScreen>
                 product: variant.rawProduct ?? _fallbackProduct(product),
                 variant: variant,
                 cartons: 1,
+                branchName: widget.currentUser.branchName,
               );
             }
           : null,
@@ -1283,7 +932,7 @@ class _CatalogViewState extends State<CatalogScreen>
                           Icon(
                             Icons.warehouse_outlined,
                             size: 12,
-                            color: variant.availableStock > 0 ? AppTheme.emeraldGreen : AppTheme.roseRed,
+                            color: variant.availableForOrder > 0 ? AppTheme.emeraldGreen : AppTheme.roseRed,
                           ),
                           const SizedBox(width: 2),
                           Text(
@@ -1294,11 +943,11 @@ class _CatalogViewState extends State<CatalogScreen>
                           Icon(
                             Icons.local_shipping_outlined,
                             size: 12,
-                            color: variant.mainWarehouseActual > 0 ? AppTheme.emeraldGreen : AppTheme.roseRed,
+                            color: variant.octoberAvailableStock > 0 ? AppTheme.emeraldGreen : AppTheme.roseRed,
                           ),
                           const SizedBox(width: 2),
                           Text(
-                            'أكتوبر: ${variant.mainWarehouseActual}',
+                            'أكتوبر: ${variant.octoberAvailableStock}',
                             style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant),
                           ),
                         ],
@@ -1543,7 +1192,9 @@ class _CatalogViewState extends State<CatalogScreen>
                             const Icon(Icons.search_off_outlined, size: 48, color: Colors.grey),
                             const SizedBox(height: 12),
                             Text(
-                              'لا توجد أصناف مطابقة للبحث',
+                              _allProducts.isEmpty
+                                  ? 'لا توجد أصناف مسجلة في قاعدة البيانات.'
+                                  : 'لا توجد أصناف مطابقة للبحث',
                               style: GoogleFonts.cairo(fontSize: 14, color: colorScheme.onSurfaceVariant),
                             ),
                           ],

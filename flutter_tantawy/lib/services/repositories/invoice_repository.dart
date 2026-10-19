@@ -10,6 +10,8 @@ class InvoiceRepository extends BaseRepository {
     String? repName,
     String? status,
     String? branchName,
+    DateTime? startDate,
+    DateTime? endDateExclusive,
   }) async {
     try {
       var query = client.from('invoices').select();
@@ -21,6 +23,12 @@ class InvoiceRepository extends BaseRepository {
       }
       if (status != null && status != 'الكل') {
         query = query.eq('status', status);
+      }
+      if (startDate != null) {
+        query = query.gte('date', startDate.toIso8601String());
+      }
+      if (endDateExclusive != null) {
+        query = query.lt('date', endDateExclusive.toIso8601String());
       }
       final data = await query.order('date', ascending: false);
       return (data as List<dynamic>)

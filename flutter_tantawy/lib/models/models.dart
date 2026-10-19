@@ -352,10 +352,18 @@ class Customer {
       phone: json['phone']?.toString() ?? '',
       address: json['address']?.toString(),
       branchName: json['branchName']?.toString() ?? json['branch_name']?.toString() ?? '',
-      repName: json['repName']?.toString() ?? json['rep_name']?.toString() ?? json['salesRepName']?.toString(),
+      repName: json['repName']?.toString() ??
+          json['rep_name']?.toString() ??
+          json['salesRepName']?.toString() ??
+          json['sales_rep_name']?.toString(),
       currentBalance: (json['balance'] ?? json['currentBalance'] ?? json['current_balance'] ?? 0).toDouble(),
       creditLimit: (json['creditLimit'] ?? json['credit_limit'] ?? 0).toDouble(),
-      overdueBalance: (json['overdueBalance'] ?? json['totalOverdue'] ?? 0).toDouble(),
+      overdueBalance: (json['overdueBalance'] ??
+              json['overdue_balance'] ??
+              json['totalOverdue'] ??
+              json['total_overdue'] ??
+              0)
+          .toDouble(),
       tier: json['tier']?.toString() ?? 'عادي',
       governorate: json['governorate']?.toString() ?? json['state']?.toString(),
       region: json['region']?.toString() ?? json['area']?.toString(),
@@ -375,7 +383,12 @@ class Customer {
       annualTarget: _toDouble(json['annualTarget'] ?? json['annual_target']),
       dealEligibility: json['dealEligibility']?.toString() ?? json['deal_eligibility']?.toString(),
       debtStatus: json['debtStatus']?.toString() ?? json['debt_status']?.toString(),
-      paymentTerms: json['paymentTerms']?.toString() ?? json['payment_terms']?.toString(),
+      paymentTerms: json['paymentTerms']?.toString() ??
+          json['payment_terms']?.toString() ??
+          json['paymentMethod']?.toString() ??
+          json['payment_method']?.toString() ??
+          json['paymentType']?.toString() ??
+          json['payment_type']?.toString(),
       clientType: json['clientType']?.toString() ?? json['client_type']?.toString(),
       activityType: json['activityType']?.toString() ?? json['activity_type']?.toString(),
       guaranteeAmount: _toDouble(json['guaranteeAmount'] ?? json['guarantee_amount']),
@@ -1157,7 +1170,16 @@ class ProductVariant {
     this.notes,
   });
 
-  int get availableStock => (branchStockActual - branchStockReserved).clamp(0, branchStockActual);
+  int get availableStock => (branchStockActual - branchStockReserved)
+      .clamp(0, branchStockActual)
+      .toInt();
+
+  int get octoberAvailableStock =>
+      (mainWarehouseActual - mainWarehouseReserved)
+          .clamp(0, mainWarehouseActual)
+          .toInt();
+
+  int get availableForOrder => availableStock + octoberAvailableStock;
 
   double get effectiveCartonPrice => promoPrice ?? cartonPrice;
 
@@ -1269,7 +1291,10 @@ class ParentProduct {
     final variants = variantsData.map((e) => ProductVariant.fromJson(e as Map<String, dynamic>)).toList();
     final defaultVariant = variants.isNotEmpty ? variants.firstWhere(
       (v) => v.availableStock > 0,
-      orElse: () => variants.first,
+      orElse: () => variants.firstWhere(
+        (v) => v.octoberAvailableStock > 0,
+        orElse: () => variants.first,
+      ),
     ) : null;
 
     return ParentProduct(
@@ -2962,4 +2987,3 @@ String formatOfflineItemType(OfflineActionType type) {
       return 'إرجاع بضاعة';
   }
 }
-

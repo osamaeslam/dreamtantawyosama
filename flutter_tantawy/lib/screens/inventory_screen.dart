@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
+import 'branch_stock_planning_screen.dart';
 
 class InventoryScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -144,6 +145,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
         backgroundColor: AppTheme.darkSlate,
         title: Text('حركة المخزون', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 17)),
         actions: [
+          if (rbac.isAdmin || rbac.isSupervisor || rbac.isBranchManager)
+            IconButton(
+              tooltip: 'تجهيز مخزون الفروع',
+              icon: const Icon(Icons.local_shipping_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BranchStockPlanningScreen(
+                      currentUser: widget.currentUser,
+                    ),
+                  ),
+                );
+              },
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: TextButton.icon(

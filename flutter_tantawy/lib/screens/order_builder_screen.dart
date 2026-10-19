@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
-import '../services/pdf_invoice_service.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
@@ -30,55 +29,35 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
   }
 
   void _fetchCustomers() async {
-    final data = await SupabaseService.instance.fetchCustomers(
-      repName: rbac.isSalesRep ? widget.currentUser.name : null,
-      branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
-    );
+    try {
+      final data = await SupabaseService.instance.fetchCustomers(
+        repName: rbac.isSalesRep ? widget.currentUser.name : null,
+        repId: rbac.isSalesRep ? widget.currentUser.id : null,
+        branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+      );
 
-    if (data.isEmpty) {
-      // عملاء تجريبيين
-      _customers = [
-        Customer(
-          id: 'c1',
-          code: 'CUST-001',
-          name: 'معرض الأمل للأدوات المنزلية',
-          storeName: 'معرض الأمل',
-          phone: '01099887766',
-          branchName: 'فرع القاهرة الكبرى',
-          currentBalance: 12500,
-          creditLimit: 50000,
-          overdueBalance: 0,
-          tier: 'مميز',
-        ),
-        Customer(
-          id: 'c2',
-          code: 'CUST-002',
-          name: 'سنتر النور والبركة',
-          storeName: 'سنتر النور',
-          phone: '01122334455',
-          branchName: 'فرع القاهرة الكبرى',
-          currentBalance: 62000,
-          creditLimit: 50000,
-          overdueBalance: 15000,
-          tier: 'متوسط',
-        ),
-        Customer(
-          id: 'c3',
-          code: 'CUST-003',
-          name: 'هايبر ماركت الفرسان',
-          storeName: 'الفرسان',
-          phone: '01233445566',
-          branchName: 'فرع القاهرة الكبرى',
-          currentBalance: 8000,
-          creditLimit: 100000,
-          overdueBalance: 0,
-          tier: 'راقي',
-        ),
-      ];
-    } else {
       _customers = rbac.filterCustomerAccounts(data);
+      if (!mounted) return;
+      final cart = context.read<CartService>();
+      final currentCustomer = cart.selectedCustomer;
+      if (currentCustomer != null) {
+        Customer? refreshedCustomer;
+        for (final customer in _customers) {
+          if (customer.id == currentCustomer.id) {
+            refreshedCustomer = customer;
+            break;
+          }
+        }
+        cart.selectCustomer(refreshedCustomer);
+      }
+      setState(() => _isLoadingCustomers = false);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoadingCustomers = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تحميل قائمة العملاء: $e')),
+      );
     }
-    if (mounted) setState(() => _isLoadingCustomers = false);
   }
 
   void _submitOrder() async {
@@ -92,11 +71,11 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
 
     setState(() => _isSubmitting = true);
     final success = await cart.submitOrder(currentUser: widget.currentUser);
+    if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    if (mounted) {
-      if (success) {
-        showDialog(
+    if (success) {
+      showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Row(
@@ -120,18 +99,38 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
               ),
             ],
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ أثناء حفظ الطلبية، يرجى المحاولة ثانية')),
-        );
-      }
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('حدث خطأ أثناء حفظ الطلبية، يرجى المحاولة ثانية')),
+      );
     }
+  }
+
+  Widget _customerSummaryRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: GoogleFonts.cairo(fontSize: 12)),
+        Text(
+          value,
+          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 12),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
+    final customer = cart.selectedCustomer;
+    final projectedCustomerBalance = customer == null
+        ? 0.0
+        : (customer.balance ?? customer.currentBalance) +
+            (cart.paymentType == 'نقدي' ? 0 : cart.netTotal);
+    final exceedsCreditLimit = customer != null &&
+        customer.creditLimit > 0 &&
+        projectedCustomerBalance > customer.creditLimit;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -178,6 +177,14 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                           const SizedBox(height: 12),
                           _isLoadingCustomers
                               ? const LinearProgressIndicator()
+                              : _customers.isEmpty
+                                  ? Text(
+                                      'لا يوجد عملاء مسندون لهذا المندوب في قاعدة العملاء.',
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 12,
+                                        color: AppTheme.textMuted,
+                                      ),
+                                    )
                               : DropdownButtonFormField<Customer>(
                                   value: cart.selectedCustomer,
                                   isExpanded: true,
@@ -199,12 +206,12 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: cart.selectedCustomer!.isOverCreditLimit
+                                color: exceedsCreditLimit
                                     ? const Color(0xFFFEF2F2)
                                     : const Color(0xFFF0FDF4),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: cart.selectedCustomer!.isOverCreditLimit
+                                  color: exceedsCreditLimit
                                       ? const Color(0xFFFECACA)
                                       : const Color(0xFFBBF7D0),
                                 ),
@@ -215,20 +222,36 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('الرصيد الحالي:', style: GoogleFonts.cairo(fontSize: 12)),
-                                      Text('${cart.selectedCustomer!.currentBalance} ج.م',
+                                      Text('المديونية الحالية:', style: GoogleFonts.cairo(fontSize: 12)),
+                                      Text('${(cart.selectedCustomer!.balance ?? cart.selectedCustomer!.currentBalance).toStringAsFixed(2)} ج.م',
                                           style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 12)),
                                     ],
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text('الحد الائتماني:', style: GoogleFonts.cairo(fontSize: 12)),
-                                      Text('${cart.selectedCustomer!.creditLimit} ج.م',
+                                      Text('المستحق / المتأخر:', style: GoogleFonts.cairo(fontSize: 12)),
+                                      Text('${(cart.selectedCustomer!.dueBalance ?? cart.selectedCustomer!.totalOverdueAndDue ?? cart.selectedCustomer!.overdueBalance).toStringAsFixed(2)} ج.م',
                                           style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 12)),
                                     ],
                                   ),
-                                  if (cart.selectedCustomer!.isOverCreditLimit)
+                                  _customerSummaryRow(
+                                    'الحد الائتماني:',
+                                    '${cart.selectedCustomer!.creditLimit.toStringAsFixed(2)} ج.م',
+                                  ),
+                                  _customerSummaryRow(
+                                    'طريقة الدفع المسجلة:',
+                                    cart.paymentType,
+                                  ),
+                                  _customerSummaryRow(
+                                    'إجمالي الفاتورة:',
+                                    '${cart.netTotal.toStringAsFixed(2)} ج.م',
+                                  ),
+                                  _customerSummaryRow(
+                                    'المديونية بعد الفاتورة:',
+                                    '${projectedCustomerBalance.toStringAsFixed(2)} ج.م',
+                                  ),
+                                  if (exceedsCreditLimit)
                                     Padding(
                                       padding: const EdgeInsets.only(top: 6),
                                       child: Text(
@@ -268,6 +291,11 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                           const Divider(),
                           ...cart.items.values.map((item) {
                             final hasVariant = item.variantId != null || item.color != null;
+                            final branchQuantity =
+                                item.cartons.clamp(0, item.branchStockAtOrder ?? 0);
+                            final octoberQuantity =
+                                (item.cartons - branchQuantity)
+                                    .clamp(0, item.octoberStockAtOrder ?? 0);
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Row(
@@ -304,6 +332,22 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                                           '${item.cartons} كرتونة × ${item.cartonPrice.toStringAsFixed(0)} ج.م = ${item.totalPrice.toStringAsFixed(1)} ج.م',
                                           style: GoogleFonts.cairo(fontSize: 11, color: Colors.grey.shade600),
                                         ),
+                                        Text(
+                                          'صرف متوقع: الفرع $branchQuantity • أكتوبر $octoberQuantity',
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 10,
+                                            color: AppTheme.textMuted,
+                                          ),
+                                        ),
+                                        if ((item.shortageCartons ?? 0) > 0)
+                                          Text(
+                                            'نقص ${item.shortageCartons} كرتونة — يحتاج مراجعة المشرف',
+                                            style: GoogleFonts.cairo(
+                                              fontSize: 10,
+                                              color: AppTheme.roseRed,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -329,26 +373,19 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('خيارات الدفع والإجمالي', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15)),
+                          Text('الدفع والإجمالي', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15)),
                           const SizedBox(height: 12),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  title: Text('آجل', style: GoogleFonts.cairo(fontSize: 13)),
-                                  value: 'آجل',
-                                  groupValue: cart.paymentType,
-                                  onChanged: (val) => cart.setPaymentType(val!),
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  title: Text('نقدي', style: GoogleFonts.cairo(fontSize: 13)),
-                                  value: 'نقدي',
-                                  groupValue: cart.paymentType,
-                                  onChanged: (val) => cart.setPaymentType(val!),
-                                  contentPadding: EdgeInsets.zero,
+                              Text('طريقة الدفع المسجلة للعميل:',
+                                  style: GoogleFonts.cairo(fontSize: 12)),
+                              Text(
+                                cart.paymentType,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.darkSlate,
                                 ),
                               ),
                             ],
