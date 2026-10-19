@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/role_access_controller.dart';
@@ -131,28 +130,6 @@ class _VisitsScreenState extends State<VisitsScreen> {
     }
   }
 
-  Future<Position> _getCurrentPosition() async {
-    if (!await Geolocator.isLocationServiceEnabled()) {
-      throw StateError('فعّل خدمة الموقع لتسجيل الزيارة.');
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      throw StateError('اسمح للتطبيق بالوصول إلى الموقع لتسجيل الزيارة.');
-    }
-
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 20),
-      ),
-    );
-  }
-
   Future<void> _showNewVisitDialog() async {
     final notesController = TextEditingController();
     final amountController = TextEditingController();
@@ -189,7 +166,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.pin_drop_rounded, color: AppTheme.primaryGold, size: 24),
+                          const Icon(Icons.event_available_rounded, color: AppTheme.primaryGold, size: 24),
                           const SizedBox(width: 8),
                           Text('تسجيل زيارة ميدانية جديدة',
                               style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
@@ -340,8 +317,6 @@ class _VisitsScreenState extends State<VisitsScreen> {
                                   setModalState(() => isSaving = true);
                                   final visitNotes = notesController.text.trim();
                                   try {
-                                    final position =
-                                        await _getCurrentPosition();
                                     final now = DateTime.now();
                                     final newVisit = CustomerVisit(
                                       id: 'vis_${now.millisecondsSinceEpoch}',
@@ -353,10 +328,6 @@ class _VisitsScreenState extends State<VisitsScreen> {
                                       branchName: widget.currentUser.branchName,
                                       date: now,
                                       checkInTime: now.toIso8601String(),
-                                      locationTimestamp: now.toIso8601String(),
-                                      latitude: position.latitude,
-                                      longitude: position.longitude,
-                                      accuracy: position.accuracy,
                                       type: visitType,
                                       outcome: outcome,
                                       status: 'executed',
@@ -388,7 +359,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
                                     if (ctx.mounted) Navigator.pop(ctx);
                                     ScaffoldMessenger.of(this.context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('تم حفظ الزيارة بنجاح مع الموقع والوقت.'),
+                                        content: Text('تم حفظ الزيارة بنجاح.'),
                                       ),
                                     );
                                   } catch (e) {
@@ -540,7 +511,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: AppTheme.primaryGold,
         foregroundColor: AppTheme.darkSlate,
-        icon: const Icon(Icons.add_location_alt_rounded),
+        icon: const Icon(Icons.add_rounded),
         label: Text('تسجيل زيارة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
         onPressed: _showNewVisitDialog,
       ),
@@ -563,6 +534,10 @@ class _VisitsScreenState extends State<VisitsScreen> {
                       style: GoogleFonts.cairo(color: Colors.orangeAccent),
                     ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                  child: _buildVisitsOverview(),
+                ),
                 if (_selectedDate != null)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
@@ -667,7 +642,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
                   if (v.latitude != null && v.longitude != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'الموقع مسجل • ${v.latitude!.toStringAsFixed(5)}, ${v.longitude!.toStringAsFixed(5)}',
+                      'موقع محفوظ من زيارة سابقة • ${v.latitude!.toStringAsFixed(5)}, ${v.longitude!.toStringAsFixed(5)}',
                       style: GoogleFonts.cairo(fontSize: 10, color: Colors.white54),
                     ),
                   ],
@@ -681,6 +656,185 @@ class _VisitsScreenState extends State<VisitsScreen> {
             ),
         );
       },
+    );
+  }
+
+  Widget _buildVisitsOverview() {
+    final collected = _visits.fold<double>(
+      0,
+      (total, visit) => total + visit.collectedAmount,
+    );
+    final customersCount = _visits.map((visit) => visit.customerId).toSet().length;
+    final dateLabel = DateFormat('yyyy/MM/dd')
+        .format(_selectedDate ?? DateTime.now());
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.primaryGold.withOpacity(0.24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.16),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGold.withOpacity(0.14),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.route_rounded,
+                  color: AppTheme.secondaryGold,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'متابعة الزيارات',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      '${_selectedDate == null ? 'كل السجل حتى' : 'الفترة المحددة'} • $dateLabel',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.cairo(
+                        color: Colors.white60,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 13,
+                      color: AppTheme.secondaryGold,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _selectedDate == null ? 'كل السجل' : 'تاريخ محدد',
+                      style: GoogleFonts.cairo(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 360;
+              return Row(
+                children: [
+                  Expanded(
+                    child: _overviewMetric(
+                      icon: Icons.fact_check_outlined,
+                      label: 'الزيارات',
+                      value: _visits.length.toString(),
+                      compact: compact,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _overviewMetric(
+                      icon: Icons.storefront_outlined,
+                      label: 'عملاء تمت زيارتهم',
+                      value: customersCount.toString(),
+                      compact: compact,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _overviewMetric(
+                      icon: Icons.payments_outlined,
+                      label: 'إجمالي التحصيل',
+                      value: '${NumberFormat('#,##0', 'ar_EG').format(collected)} ج.م',
+                      compact: compact,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _overviewMetric({
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool compact,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 82),
+      padding: EdgeInsets.all(compact ? 8 : 11),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.055),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: Colors.white.withOpacity(0.07)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 17, color: AppTheme.secondaryGold),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.cairo(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: compact ? 12 : 14,
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.cairo(color: Colors.white60, fontSize: 9),
+          ),
+        ],
+      ),
     );
   }
 

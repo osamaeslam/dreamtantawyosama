@@ -420,7 +420,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
                         width: width,
                         title: 'الزيارات',
                         value: _visits.length.toString(),
-                        subtitle: '${_visits.where((v) => v.latitude != null).length} بموقع مسجل',
+                        subtitle: '${_visits.where((v) => v.latitude != null).length} بإحداثيات محفوظة',
                         icon: Icons.location_on_outlined,
                         color: AppTheme.warningAmber,
                       ),
