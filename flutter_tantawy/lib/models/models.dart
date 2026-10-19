@@ -2849,3 +2849,117 @@ class CustomerAnalytics {
     'target_achievement_percentage': targetAchievementPercentage,
   };
 }
+
+// ===== Offline Queue Models =====
+
+/// نوع العملية المخزّنة في الطابور غير المتصل.
+/// تغطي كل العمليات اللي يطلبها المستخدم من غير إنترنت.
+enum OfflineActionType {
+  salesOrder,
+  customerVisit,
+  materialRequest,
+  customerRegistration,
+  expenseClaim,
+  vehicleLogEntry,
+  returnRequest,
+}
+
+/// حالة العنصر في الطابور
+enum OfflineItemStatus { pending, processing, failed, completed, skipped }
+
+/// عنصر في طابور المزامنة غير المتصل.
+/// يُخزّن في shared_preferences ويُعاد محاكاتها حسب الحاجة.
+class OfflineAction {
+  final String id;
+  final OfflineActionType type;
+  final Map<String, dynamic> payload;
+  final String branchName;
+  final String repName;
+  final String repId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  final OfflineItemStatus status;
+  final String? errorMessage;
+  final int retryCount;
+  final List<String>? attachedImagePaths;
+  final String? serverId;
+
+  OfflineAction({
+    required this.id,
+    required this.type,
+    required this.payload,
+    required this.branchName,
+    required this.repName,
+    required this.repId,
+    required this.createdAt,
+    this.updatedAt,
+    this.status = OfflineItemStatus.pending,
+    this.errorMessage,
+    this.retryCount = 0,
+    this.attachedImagePaths,
+    this.serverId,
+  });
+
+  factory OfflineAction.fromJson(Map<String, dynamic> json) => OfflineAction(
+        id: json['id']?.toString() ?? '',
+        type: OfflineActionType.values.firstWhere(
+          (e) => e.name == json['type']?.toString(),
+          orElse: () => OfflineActionType.salesOrder,
+        ),
+        payload: Map<String, dynamic>.from(json['payload'] ?? {}),
+        branchName: json['branchName']?.toString() ?? '',
+        repName: json['repName']?.toString() ?? '',
+        repId: json['repId']?.toString() ?? '',
+        createdAt: DateTime.parse(json['createdAt']?.toString() ?? DateTime.now().toIso8601String()),
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'])
+            : null,
+        status: OfflineItemStatus.values.firstWhere(
+          (e) => e.name == json['status']?.toString(),
+          orElse: () => OfflineItemStatus.pending,
+        ),
+        errorMessage: json['errorMessage']?.toString(),
+        retryCount: (json['retryCount'] ?? 0).toInt(),
+        attachedImagePaths: (json['attachedImagePaths'] as List?)?.map((e) => e.toString()).toList(),
+        serverId: json['serverId']?.toString(),
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type.name,
+        'payload': payload,
+        'branchName': branchName,
+        'repName': repName,
+        'repId': repId,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt?.toIso8601String(),
+        'status': status.name,
+        'errorMessage': errorMessage,
+        'retryCount': retryCount,
+        'attachedImagePaths': attachedImagePaths,
+        'serverId': serverId,
+      };
+}
+
+/// حالة الاتصال — يُستَخدم في ConnectionStatusBar
+enum ConnectionStatus { online, offline, checking, disconnected }
+
+String formatOfflineItemType(OfflineActionType type) {
+  switch (type) {
+    case OfflineActionType.salesOrder:
+      return 'طلب مبيعات';
+    case OfflineActionType.customerVisit:
+      return 'زيارة عميل';
+    case OfflineActionType.materialRequest:
+      return 'طلب مواد';
+    case OfflineActionType.customerRegistration:
+      return 'تسجيل عميل';
+    case OfflineActionType.expenseClaim:
+      return 'مطالبة بمصروف';
+    case OfflineActionType.vehicleLogEntry:
+      return 'سجل مركبة';
+    case OfflineActionType.returnRequest:
+      return 'إرجاع بضاعة';
+  }
+}
+

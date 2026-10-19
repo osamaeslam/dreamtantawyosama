@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../services/auth_service.dart';
+import '../services/connectivity_service.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
@@ -43,11 +46,23 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // Gate login behind a real server reachability check.
+      final connectivity = ConnectivityService.instance;
+      final reachable = await connectivity.pingServer();
+      if (!reachable) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'غير متصل بالخادم — يرجى التحقق من الاتصال ثم المحاولة مرة أخرى';
+        });
+        return;
+      }
+
       final user = await SupabaseService.instance.login(username, password);
 
       if (!mounted) return;
 
       if (user != null) {
+        await AuthService.instance.persistSessionForLogin(user);
         setState(() => _isLoading = false);
         Navigator.pushReplacement(
           context,
@@ -61,11 +76,45 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = 'بيانات الدخول غير صحيحة، يرجى التأكد من اسم المستخدم';
         });
       }
+    } on PlatformException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.message ?? 'حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً';
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
         _errorMessage = 'حدث خطأ في الاتصال بالخادم، يرجى المحاولة لاحقاً';
+      });
+    }
+  }
+
+  // === الدخول السريع بالبصمة ===
+  Future<void> _handleBiometricUnlock() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = await AuthService.instance.unlockWithBiometrics();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AdaptiveHomeScreen(currentUser: user),
+          ),
+        );
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'لم يتم التعرف على البصمة — يرجى إدخال بيانات الدخول';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = 'فشل المصادقة بالبصمة';
       });
     }
   }
@@ -306,45 +355,67 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // زر تسجيل الدخول
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogin,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryGold,
-                          foregroundColor: const Color(0xFF0F172A),
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F172A)),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'تسجيل الدخول إلى النظام',
-                                    style: GoogleFonts.cairo(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.arrow_back, size: 18),
-                                ],
-                              ),
-                      ),
-                    ),
+                     // زر تسجيل الدخول
+                     SizedBox(
+                       width: double.infinity,
+                       height: 50,
+                       child: ElevatedButton(
+                         onPressed: _isLoading ? null : _handleLogin,
+                         style: ElevatedButton.styleFrom(
+                           backgroundColor: AppTheme.primaryGold,
+                           foregroundColor: const Color(0xFF0F172A),
+                           elevation: 3,
+                           shape: RoundedRectangleBorder(
+                             borderRadius: BorderRadius.circular(16),
+                           ),
+                         ),
+                         child: _isLoading
+                             ? const SizedBox(
+                                 width: 22,
+                                 height: 22,
+                                 child: CircularProgressIndicator(
+                                   strokeWidth: 2.5,
+                                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F172A)),
+                                 ),
+                               )
+                             : Row(
+                                 mainAxisAlignment: MainAxisAlignment.center,
+                                 children: [
+                                   Text(
+                                     'تسجيل الدخول إلى النظام',
+                                     style: GoogleFonts.cairo(
+                                       fontSize: 14,
+                                       fontWeight: FontWeight.w900,
+                                     ),
+                                   ),
+                                   const SizedBox(width: 8),
+                                   const Icon(Icons.arrow_back, size: 18),
+                                 ],
+                               ),
+                       ),
+                     ),
+
+                     // زر البصمة للدخول السريع (إن كان مفعلًا)
+                     FutureBuilder<bool>(
+                       future: AuthService.instance.canQuickUnlock(),
+                       builder: (context, snapshot) {
+                         if (snapshot.data != true) return const SizedBox.shrink();
+                         return Padding(
+                           padding: const EdgeInsets.only(top: 12),
+                           child: TextButton.icon(
+                             onPressed: _isLoading ? null : _handleBiometricUnlock,
+                             style: TextButton.styleFrom(
+                               foregroundColor: const Color(0xFFCBD5E1),
+                             ),
+                             icon: const Icon(Icons.fingerprint, size: 22),
+                             label: Text(
+                               'أو افتح باستخدام البصمة',
+                               style: GoogleFonts.cairo(fontSize: 12),
+                             ),
+                           ),
+                         );
+                       },
+                     ),
                   ],
                 ),
               ),

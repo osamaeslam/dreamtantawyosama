@@ -5,6 +5,9 @@ import 'screens/adaptive_home_screen.dart';
 import 'screens/login_screen.dart';
 import 'services/cart_service.dart';
 import 'services/config.dart';
+import 'services/connectivity_service.dart';
+import 'services/offline_cache_service.dart';
+import 'services/offline_queue_service.dart';
 import 'services/supabase_service.dart';
 import 'services/theme_provider.dart';
 import 'theme/app_theme.dart';
@@ -24,11 +27,23 @@ void main() async {
     debugPrint('Supabase offline or initialized in mock mode: $e');
   }
 
+  final connectivity = ConnectivityService.instance;
+  final queueService = OfflineQueueService(connectivity);
+
+  // Eagerly check connectivity + load queued actions before first frame.
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await queueService.init();
+    await connectivity.startWatching(interval: const Duration(seconds: 30));
+  });
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CartService()),
         ChangeNotifierProvider(create: (_) => ThemeModeProvider()),
+        ChangeNotifierProvider.value(value: queueService),
+        Provider(create: (_) => connectivity),
+        Provider(create: (_) => OfflineCacheService()),
       ],
       child: const TantawyGroupApp(),
     ),
@@ -38,6 +53,8 @@ void main() async {
 class TantawyGroupApp extends StatelessWidget {
   const TantawyGroupApp({super.key});
 
+  // Trigger an immediate connectivity check on resume so the queue drains
+  // as soon as the app returns to the foreground.
   @override
   Widget build(BuildContext context) {
     final defaultUser = AppUser(

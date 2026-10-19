@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import 'connectivity_service.dart';
 import 'repositories/repositories.dart';
 
 /// Facade المحافظ على واجهة برمجة SupabaseService القديمة (للتوافق العكسي)
@@ -12,6 +15,25 @@ class SupabaseService {
   static final SupabaseService instance = SupabaseService._internal();
   SupabaseService._internal();
 
+  final ConnectivityService _connectivity = ConnectivityService.instance;
+
+  /// Gatekeeper for financially-sensitive operations.
+  ///
+  /// Creating invoices, collecting payments, and transferring inventory
+  /// **must** happen online to prevent concurrent-write conflicts
+  /// (e.g. two reps exceeding a shared credit limit).
+  /// This performs a *real* server probe — not just a network signal.
+  Future<void> requireOnline() async {
+    final status = _connectivity.currentStatus;
+    if (status == ConnectionStatus.online) return;
+
+    // Force a fresh real probe.
+    final reachable = await _connectivity.pingServer();
+    if (!reachable) {
+      throw const SocketException('غير متصل بالخادم — العمليات المالية تتطلب اتصالاً نشطاً');
+    }
+  }
+
   // Repository instances (lazy-initialized singletons per concern).
   static final ProductRepository _products = const ProductRepository();
   static final CustomerRepository _customers = const CustomerRepository();
@@ -20,6 +42,8 @@ class SupabaseService {
   static final ForecastRepository _forecasts = const ForecastRepository();
   static final AnalyticsRepository _analytics = const AnalyticsRepository();
   static final ReturnsRepository _returns = const ReturnsRepository();
+
+
 
   /// Exposes the product repository for new code / repositories to share.
   ProductRepository get productRepo => _products;
@@ -159,10 +183,6 @@ class SupabaseService {
     return _products.fetchProductBranchStock(productId, branchName);
   }
 
-  Future<bool> reserveStock({required String productId, required int cartonsToReserve}) {
-    return _products.reserveStock(productId: productId, cartonsToReserve: cartonsToReserve);
-  }
-
   // ===================== العملاء (Customers) =====================
   Future<List<Customer>> fetchCustomers({String? repName, String? branchName}) {
     return _customers.fetchCustomers(repName: repName, branchName: branchName);
@@ -173,10 +193,19 @@ class SupabaseService {
     return _invoices.fetchInvoices(repName: repName, status: status, branchName: branchName);
   }
 
-  Future<bool> createInvoice(OrderInvoice invoice) => _invoices.createInvoice(invoice);
+  Future<bool> createInvoice(OrderInvoice invoice) async {
+    await requireOnline();
+    return _invoices.createInvoice(invoice);
+  }
 
-  Future<bool> updateInvoiceStatus(String invoiceId, String newStatus) {
+  Future<bool> updateInvoiceStatus(String invoiceId, String newStatus) async {
+    await requireOnline();
     return _invoices.updateInvoiceStatus(invoiceId, newStatus);
+  }
+
+  Future<bool> reserveStock({required String productId, required int cartonsToReserve}) async {
+    await requireOnline();
+    return _products.reserveStock(productId: productId, cartonsToReserve: cartonsToReserve);
   }
 
   // ===================== الزيارات الميدانية (Visits) =====================

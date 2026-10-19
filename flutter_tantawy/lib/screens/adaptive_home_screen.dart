@@ -12,7 +12,7 @@ import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_dashboard_screen.dart';
-import 'target_performance_screen.dart';
+import 'sync_queue_screen.dart';
 import 'visits_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
@@ -28,6 +28,22 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
 
   void _selectSecondaryDestination(int index) {
     setState(() => _selectedIndex = index);
+  }
+
+  /// Route-map: index → builder for the screen.
+  /// Adding a new destination only requires extending this map —
+  /// no fragile switch statements to update.
+  List<Widget> _buildScreens(BuildContext context) {
+    return [
+      RepDashboardScreen(currentUser: widget.currentUser),
+      CatalogScreen(currentUser: widget.currentUser),
+      OrderBuilderScreen(currentUser: widget.currentUser),
+      InvoicesScreen(currentUser: widget.currentUser),
+      VisitsScreen(currentUser: widget.currentUser),
+      InventoryScreen(currentUser: widget.currentUser),
+      CollectionForecastView(currentUser: widget.currentUser),
+      const SyncQueueScreen(),
+    ];
   }
 
   @override
@@ -94,24 +110,11 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
   }
 
   Widget _buildSelectedScreen(int index) {
-    switch (index) {
-      case 0:
-        return RepDashboardScreen(currentUser: widget.currentUser);
-      case 1:
-        return CatalogScreen(currentUser: widget.currentUser);
-      case 2:
-        return OrderBuilderScreen(currentUser: widget.currentUser);
-      case 3:
-        return InvoicesScreen(currentUser: widget.currentUser);
-      case 4:
-        return VisitsScreen(currentUser: widget.currentUser);
-      case 5:
-        return InventoryScreen(currentUser: widget.currentUser);
-      case 6:
-        return CollectionForecastView(currentUser: widget.currentUser);
-      default:
-        return RepDashboardScreen(currentUser: widget.currentUser);
+    final screens = _buildScreens(context);
+    if (index < 0 || index >= screens.length) {
+      return RepDashboardScreen(currentUser: widget.currentUser);
     }
+    return screens[index];
   }
 
   Widget _buildMoreScreen(BuildContext context) {
@@ -123,6 +126,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 4, title: 'الزيارات وخط السير', subtitle: 'تسجيل الزيارات ومتابعة التحصيل', icon: Icons.location_on_outlined),
       (index: 5, title: 'حركة المخزون', subtitle: 'الأرصدة والمعاملات اليومية', icon: Icons.warehouse_outlined),
       (index: 6, title: 'توقعات التحصيل', subtitle: 'متابعة التوقعات الأسبوعية', icon: Icons.energy_savings_leaf_outlined),
+      (index: 7, title: 'طابور المزامنة', subtitle: 'العناصر المعلقة والمعالجة غير المتصلة', icon: Icons.cloud_sync_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(

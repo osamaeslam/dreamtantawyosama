@@ -43,6 +43,15 @@ dependencies:
 
   # التخزين المحلي والأوفلاين
   shared_preferences: ^2.2.2
+  path_provider: ^2.13.1
+  flutter_secure_storage: ^9.2.2
+
+  # الاتصال والإشعارات
+  connectivity_plus: ^5.0.2
+
+  # البصمة / الخلوص البيومترية
+  local_auth: ^2.3.0
+
   flutter_localizations:
     sdk: flutter
 

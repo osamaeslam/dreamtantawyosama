@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/connection_status_bar.dart';
 import 'all_customers_analytics_view.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
@@ -295,7 +296,9 @@ class RepDashboardScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildWelcomePanel(context),
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 16),
+                    const ConnectionStatusBar(),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
@@ -320,27 +323,39 @@ class RepDashboardScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    GridView.count(
-                      crossAxisCount: columns,
+                    GridView.builder(
+                      padding: EdgeInsets.zero,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: columns,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: constraints.maxWidth < 420
+                            ? 1.0
+                            : constraints.maxWidth < 700
+                                ? 1.12
+                                : 1.2,
+                      ),
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: constraints.maxWidth < 360 ? 1.0 : 1.16,
-                      children: _dashboardMenuItems(cart.items.length)
+                      itemCount: _dashboardMenuItems(cart.items.length)
                           .where((item) => item.allowedRoles.contains(
                               _dashboardRole(currentUser.role)))
-                          .map((item) => _buildQuickAction(
-                                context,
-                                title: item.title,
-                                subtitle: item.subtitle,
-                                icon: item.icon,
-                                color: item.color,
-                                badge: item.badge,
-                                onTap: () =>
-                                    _open(context, item.buildScreen()),
-                              ))
-                          .toList(),
+                          .length,
+                      itemBuilder: (context, index) {
+                        final item = _dashboardMenuItems(cart.items.length)
+                            .where((item) => item.allowedRoles.contains(
+                                _dashboardRole(currentUser.role)))
+                            .elementAt(index);
+                        return _buildQuickAction(
+                          context,
+                          title: item.title,
+                          subtitle: item.subtitle,
+                          icon: item.icon,
+                          color: item.color,
+                          badge: item.badge,
+                          onTap: () => _open(context, item.buildScreen()),
+                        );
+                      },
                     ),
                   ],
                 ),
