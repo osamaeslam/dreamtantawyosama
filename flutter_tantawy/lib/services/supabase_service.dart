@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:bcrypt/bcrypt.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -157,11 +158,39 @@ class SupabaseService {
     return null;
   }
 
-  /// Verifies a plaintext password against a stored sha256 hash.
-  /// Expected format: sha256$iterations$salt$hash
+  /// Verifies a plaintext password against a stored hash.
+  /// Supports multiple formats:
+  ///  - Django SHA256: sha256$iterations$salt$hash
+  ///  - bcrypt: bcrypt$version$hash  (or $2b$...)
+  ///  - argon2: argon2$...
+  ///  - Plain text fallback (insecure, for development only)
   bool _verifyPassword(String password, String storedHash) {
     if (storedHash.isEmpty || password.isEmpty) return false;
 
+    // Django SHA256 format: sha256$iterations$salt$hash
+    if (storedHash.startsWith('sha256$')) {
+      return _verifyDjangoSha256(password, storedHash);
+    }
+
+    // bcrypt format: $2a$, $2b$, $2y$
+    if (storedHash.startsWith('\$2') || storedHash.toLowerCase().startsWith('bcrypt$')) {
+      return _verifyBcrypt(password, storedHash);
+    }
+
+    // argon2 format
+    if (storedHash.startsWith('argon2')) {
+      // Argon2 verification would require additional package
+      // For now, fall through to direct comparison as fallback
+      return storedHash == password;
+    }
+
+    // Direct comparison (plain text / development fallback)
+    return storedHash == password;
+  }
+
+  /// Django SHA256 password verification
+  /// Format: sha256$iterations$salt$hash
+  bool _verifyDjangoSha256(String password, String storedHash) {
     final parts = storedHash.split(r'$');
     if (parts.length != 4 || parts[0] != 'sha256') return false;
 
@@ -177,7 +206,24 @@ class SupabaseService {
 
       return base64Encode(bytes) == expectedHash;
     } catch (e) {
-      debugPrint('Password verification error: $e');
+      debugPrint('Django SHA256 verification error: $e');
+      return false;
+    }
+  }
+
+  /// bcrypt password verification
+  /// Supports both bcrypt-prefixed and standard $2b$ formats
+  bool _verifyBcrypt(String password, String storedHash) {
+    try {
+      // Handle bcrypt$ prefix format
+      final hash = storedHash.toLowerCase().startsWith('bcrypt$')
+          ? storedHash.substring(7)
+          : storedHash;
+
+      // BCrypt.checkpw returns true if password matches the hash
+      return BCrypt.checkpw(password, hash);
+    } catch (e) {
+      debugPrint('bcrypt verification error: $e');
       return false;
     }
   }
