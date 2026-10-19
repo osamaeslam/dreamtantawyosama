@@ -35,6 +35,13 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
     final cart = context.watch<CartService>();
     final colorScheme = Theme.of(context).colorScheme;
     final cartCount = cart.items.length;
+    final visibleDestinationIndices =
+      AppNavigation.visibleDestinationIndices(widget.currentUser.role);
+    final visibleMobileDestinationIndices = visibleDestinationIndices
+      .where(AppNavigation.mobileTabIndices.contains)
+      .toList();
+    final selectedVisibleIndex =
+      visibleMobileDestinationIndices.indexOf(_selectedIndex);
 
     return ResponsiveLayout(
       // 1. مظهر الموبايل (Phone < 650px): شريط سفلي متجاوب
@@ -43,19 +50,24 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
             ? _buildMoreScreen(context)
             : _buildSelectedScreen(_selectedIndex),
         bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex < 3 ? _selectedIndex : 3,
+          selectedIndex: _selectedIndex == AppNavigation.moreIndex
+              ? visibleMobileDestinationIndices.length
+              : selectedVisibleIndex < 0
+                ? 0
+                : selectedVisibleIndex,
           backgroundColor: colorScheme.surface,
           indicatorColor: AppTheme.primaryGold.withOpacity(0.22),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          onDestinationSelected: (index) {
-            setState(() => _selectedIndex =
-                index == 3 ? AppNavigation.moreIndex : index);
-          },
+          onDestinationSelected: (index) => setState(() {
+            _selectedIndex = index == visibleMobileDestinationIndices.length
+                ? AppNavigation.moreIndex
+                : visibleMobileDestinationIndices[index];
+          }),
           destinations: [
-            AppNavigation.buildMobileDestination(0, cartCount),
-            AppNavigation.buildMobileDestination(1, cartCount),
-            AppNavigation.buildMobileDestination(2, cartCount),
-            AppNavigation.buildMobileDestination(AppNavigation.moreIndex, cartCount),
+            ...visibleMobileDestinationIndices.map((index) =>
+                AppNavigation.buildMobileDestination(index, cartCount)),
+            AppNavigation.buildMobileDestination(
+                AppNavigation.moreIndex, cartCount),
           ],
         ),
       ),
@@ -67,6 +79,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
             AppNavigationRail(
               selectedIndex: _selectedIndex,
               cartItemCount: cartCount,
+              visibleDestinationIndices: visibleDestinationIndices,
               onSelected: (index) => setState(() => _selectedIndex = index),
             ),
             const VerticalDivider(
@@ -103,12 +116,14 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
 
   Widget _buildMoreScreen(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final visibleDestinationIndices =
+        AppNavigation.visibleDestinationIndices(widget.currentUser.role);
     final items = [
       (index: 3, title: 'الفواتق والطباعة', subtitle: 'عرض الفواتق ومتابعة المستندات', icon: Icons.receipt_long_outlined),
       (index: 4, title: 'الزيارات وخط السير', subtitle: 'تسجيل الزيارات ومتابعة التحصيل', icon: Icons.location_on_outlined),
       (index: 5, title: 'حركة المخزون', subtitle: 'الأرصدة والمعاملات اليومية', icon: Icons.warehouse_outlined),
       (index: 6, title: 'توقعات التحصيل', subtitle: 'متابعة التوقعات الأسبوعية', icon: Icons.energy_savings_leaf_outlined),
-    ];
+    ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(
       appBar: AppBar(title: const Text('المزيد من الأقسام')),

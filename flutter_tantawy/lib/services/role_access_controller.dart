@@ -9,7 +9,10 @@ class RoleAccessController {
   RoleAccessController(this.currentUser);
 
   // === Role checkers ===
-  bool get isAdmin => currentUser.role == 'admin' || currentUser.role == 'developer';
+  bool get isAdmin =>
+      currentUser.role == 'admin' ||
+      currentUser.role == 'manager' ||
+      currentUser.role == 'developer';
   bool get isBranchManager => currentUser.role == 'branch_manager';
   bool get isSupervisor => currentUser.role == 'supervisor';
   bool get isSalesRep => currentUser.role == 'sales_rep';

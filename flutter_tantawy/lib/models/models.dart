@@ -4,7 +4,7 @@
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
 int? _toInt(dynamic v) => v == null ? null : (v is int ? v : int.tryParse(v.toString()));
 
-enum UserRole { admin, branchManager, supervisor, salesRep, developer }
+enum UserRole { admin, manager, branchManager, supervisor, salesRep, developer }
 
 class AppUser {
   final String id;

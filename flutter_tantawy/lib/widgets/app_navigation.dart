@@ -10,12 +10,14 @@ class AppDestination {
   final IconData selectedIcon;
   final String label;
   final bool showBadge;
+  final List<String>? allowedRoles;
 
   const AppDestination({
     required this.icon,
     required this.selectedIcon,
     required this.label,
     this.showBadge = false,
+    this.allowedRoles,
   });
 }
 
@@ -39,6 +41,7 @@ class AppNavigation {
       selectedIcon: Icons.shopping_bag,
       label: 'الطلبية',
       showBadge: true,
+      allowedRoles: ['sales_rep'],
     ),
     AppDestination(
       icon: Icons.receipt_long_outlined,
@@ -70,6 +73,13 @@ class AppNavigation {
 
   /// Index reserved for the "More" overflow entry on mobile.
   static const int moreIndex = 7;
+
+  static List<int> visibleDestinationIndices(String role) => [
+        for (var i = 0; i < destinations.length; i++)
+          if (destinations[i].allowedRoles == null ||
+              destinations[i].allowedRoles!.contains(role))
+            i,
+      ];
 
   /// Builds a [NavigationDestination] for the mobile bottom nav. The cart
   /// destination receives a [Badge] showing the live cart item count.
@@ -151,19 +161,22 @@ class AppNavigation {
 class AppNavigationRail extends StatelessWidget {
   final int selectedIndex;
   final int cartItemCount;
+  final List<int> visibleDestinationIndices;
   final void Function(int logicalIndex) onSelected;
 
   const AppNavigationRail({
     super.key,
     required this.selectedIndex,
     required this.cartItemCount,
+    required this.visibleDestinationIndices,
     required this.onSelected,
   });
 
   @override
   Widget build(BuildContext context) {
+    final selectedVisibleIndex = visibleDestinationIndices.indexOf(selectedIndex);
     return NavigationRail(
-      selectedIndex: selectedIndex,
+      selectedIndex: selectedVisibleIndex < 0 ? 0 : selectedVisibleIndex,
       backgroundColor: AppTheme.darkSlate,
       indicatorColor: AppTheme.primaryGold,
       useIndicator: true,
@@ -184,7 +197,8 @@ class AppNavigationRail extends StatelessWidget {
           ),
         ),
       ),
-      onDestinationSelected: onSelected,
+        onDestinationSelected: (index) =>
+          onSelected(visibleDestinationIndices[index]),
       selectedLabelTextStyle: GoogleFonts.cairo(
         fontWeight: FontWeight.bold,
         color: AppTheme.secondaryGold,
@@ -192,10 +206,10 @@ class AppNavigationRail extends StatelessWidget {
       ),
       unselectedLabelTextStyle:
           GoogleFonts.cairo(color: Colors.grey.shade400, fontSize: 10),
-      destinations: List.generate(
-        AppNavigation.destinations.length,
-        (i) => AppNavigation.buildRailDestination(i, cartItemCount),
-      ),
+      destinations: visibleDestinationIndices
+          .map((index) =>
+              AppNavigation.buildRailDestination(index, cartItemCount))
+          .toList(),
     );
   }
 }
