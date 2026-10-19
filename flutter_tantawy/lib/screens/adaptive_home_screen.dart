@@ -8,10 +8,10 @@ import '../widgets/responsive_layout.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
 import 'all_customers_analytics_view.dart';
+import 'home_screen.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
-import 'rep_dashboard_screen.dart';
 import 'sync_queue_screen.dart';
 import 'visits_screen.dart';
 
@@ -35,7 +35,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
   /// no fragile switch statements to update.
   List<Widget> _buildScreens(BuildContext context) {
     return [
-      RepDashboardScreen(currentUser: widget.currentUser),
+      HomeScreen(currentUser: widget.currentUser),
       CatalogScreen(currentUser: widget.currentUser),
       OrderBuilderScreen(currentUser: widget.currentUser),
       InvoicesScreen(currentUser: widget.currentUser),
@@ -112,7 +112,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
   Widget _buildSelectedScreen(int index) {
     final screens = _buildScreens(context);
     if (index < 0 || index >= screens.length) {
-      return RepDashboardScreen(currentUser: widget.currentUser);
+      return HomeScreen(currentUser: widget.currentUser);
     }
     return screens[index];
   }

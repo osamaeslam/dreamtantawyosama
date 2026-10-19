@@ -79,7 +79,7 @@ class TantawyGroupApp extends StatelessWidget {
             Locale('ar', 'EG'),
             Locale('en', 'US'),
           ],
-          localizationsDelegates: const [
+           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
