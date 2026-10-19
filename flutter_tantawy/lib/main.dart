@@ -67,10 +67,7 @@ class TantawyGroupApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: Directionality(
-            textDirection: TextDirection.rtl,
-            child: AdaptiveHomeScreen(currentUser: defaultUser),
-          ),
+          home: const LoginScreen(),
         );
       },
     );

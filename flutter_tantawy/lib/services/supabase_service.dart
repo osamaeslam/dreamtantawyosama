@@ -48,6 +48,80 @@ class SupabaseService {
     );
   }
 
+  // ===================== تسجيل الدخول والمصادقة (Authentication) =====================
+  Future<AppUser?> login(String username, String password) async {
+    try {
+      final clean = username.trim();
+      final response = await client
+          .from('users')
+          .select()
+          .or('username.eq.$clean,phone.eq.$clean,email.eq.$clean')
+          .maybeSingle();
+
+      if (response != null) {
+        return AppUser.fromJson(Map<String, dynamic>.from(response));
+      }
+    } catch (e) {
+      debugPrint('Supabase login query error (or offline mode): $e');
+    }
+
+    // Enterprise Fallback / Offline Profiles
+    final cleanLower = username.trim().toLowerCase();
+    final demoUsers = [
+      AppUser(
+        id: 'user-rep-1',
+        name: 'أحمد علي النجار',
+        username: 'ahmed_rep',
+        role: 'sales_rep',
+        branchName: 'فرع القاهرة الكبرى',
+        phone: '01012345678',
+        supervisorName: 'محمود عبد الله',
+        email: 'ahmed.rep@tantawy-group.com',
+      ),
+      AppUser(
+        id: 'user-sup-1',
+        name: 'محمود عبد الله',
+        username: 'mahmoud_sup',
+        role: 'supervisor',
+        branchName: 'فرع القاهرة الكبرى',
+        phone: '01198765432',
+        email: 'mahmoud.sup@tantawy-group.com',
+      ),
+      AppUser(
+        id: 'user-mgr-1',
+        name: 'م. طارق الصاوي',
+        username: 'tarek_mgr',
+        role: 'branch_manager',
+        branchName: 'فرع القاهرة الكبرى',
+        phone: '01234567890',
+        email: 'tarek.manager@tantawy-group.com',
+      ),
+      AppUser(
+        id: 'user-admin-1',
+        name: 'الحاج مصطفى الطنطاوي',
+        username: 'tantawy_gm',
+        role: 'admin',
+        branchName: 'الإدارة العامة - المركز الرئيسي',
+        phone: '01000000001',
+        email: 'gm@tantawy-group.com',
+      ),
+    ];
+
+    for (final u in demoUsers) {
+      if (u.username.toLowerCase() == cleanLower ||
+          u.phone == cleanLower ||
+          (u.email != null && u.email!.toLowerCase() == cleanLower) ||
+          (cleanLower.contains('rep') && u.role == 'sales_rep') ||
+          (cleanLower.contains('sup') && u.role == 'supervisor') ||
+          (cleanLower.contains('mgr') && u.role == 'branch_manager') ||
+          (cleanLower.contains('admin') && u.role == 'admin')) {
+        return u;
+      }
+    }
+
+    return null;
+  }
+
   // ===================== المنتجات (Products) =====================
   Future<List<Product>> fetchProducts({String? branchName, String? department}) {
     return _products.fetchProducts(branchName: branchName, department: department);

@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # يتيح لك بناء APK الموبايل بضغطة زر واحدة من GitHub
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. سحب الكود
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. إعداد Java SDK لبناء الأندرويد
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      # 3. إعداد بيئة Flutter
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # 4. بناء ملف APK للأندرويد
+      - name: Build Android APK
+        working-directory: ./flutter_tantawy
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      # 5. رفع ملف الـ APK الجاهز للتحميل المباشر
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tantawy-sales-app-release
+          path: flutter_tantawy/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14

@@ -72,7 +72,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
     const saved = localStorage.getItem('tantawy_is_logged_in');
-    return saved !== null ? saved === 'true' : true;
+    return saved === 'true';
   });
 
   const [products, setProducts] = useState<Product[]>(() => {
@@ -157,6 +157,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
   const [selectedLightboxProduct, setSelectedLightboxProduct] = useState<Product | null>(null);
 
+  // Auto-sync selectedCustomer to match current user's assigned customer
+  useEffect(() => {
+    if (currentUser.role === 'sales_rep') {
+      const myCust = customers.find((c) => c.repName === currentUser.name);
+      if (myCust && (!selectedCustomer || selectedCustomer.repName !== currentUser.name)) {
+        setSelectedCustomer(myCust);
+      }
+    }
+  }, [currentUser, customers, selectedCustomer]);
+
   // Sync to localStorage
   useEffect(() => {
     localStorage.setItem('tantawy_current_user', JSON.stringify(currentUser));
@@ -233,15 +243,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = (username: string, _password?: string): boolean => {
     const trimmed = username.trim().toLowerCase();
-    setIsLoggedIn(true);
-
+    
+    // Look up user by username, employee code, phone, email, or exact ID
     const found = users.find(
-      (u) => u.username.toLowerCase() === trimmed || 
-             u.id.toLowerCase() === trimmed || 
-             u.role.toLowerCase() === trimmed
+      (u) =>
+        u.username.toLowerCase() === trimmed ||
+        (u.code && u.code.toLowerCase() === trimmed) ||
+        (u.phone && u.phone.trim() === trimmed) ||
+        (u.email && u.email.toLowerCase() === trimmed) ||
+        u.id.toLowerCase() === trimmed
     );
+
     if (found) {
       setCurrentUser(found);
+      setIsLoggedIn(true);
       if (found.role === 'sales_rep') {
         setActiveTab('rep_catalog');
       } else {
@@ -250,28 +265,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return true;
     }
 
-    // Allow custom login for admin/rep keywords
-    if (trimmed.includes('admin') || trimmed.includes('مدير')) {
-      switchRole('admin');
+    // Role-based keyword match fallback for administrative convenience
+    if (trimmed.includes('admin') || trimmed.includes('مدير عام') || trimmed.includes('مالك')) {
+      const adminUser = users.find((u) => u.role === 'admin') || users[4];
+      setCurrentUser(adminUser);
+      setIsLoggedIn(true);
+      setActiveTab('admin_review');
       return true;
     }
     if (trimmed.includes('sup') || trimmed.includes('مشرف')) {
-      switchRole('supervisor');
+      const supUser = users.find((u) => u.role === 'supervisor') || users[3];
+      setCurrentUser(supUser);
+      setIsLoggedIn(true);
+      setActiveTab('admin_review');
       return true;
     }
     if (trimmed.includes('rep') || trimmed.includes('مندوب')) {
-      switchRole('sales_rep');
+      const repUser = users.find((u) => u.role === 'sales_rep') || users[1];
+      setCurrentUser(repUser);
+      setIsLoggedIn(true);
+      setActiveTab('rep_catalog');
       return true;
     }
 
-    // Default match first user
-    setCurrentUser(INITIAL_USERS[0]);
-    setActiveTab('rep_catalog');
-    return true;
+    // If completely unrecognized and not matching any user
+    return false;
   };
 
   const logout = () => {
     setIsLoggedIn(false);
+    localStorage.setItem('tantawy_is_logged_in', 'false');
     setActiveTab('login_screen');
     setIsLoginModalOpen(false);
   };

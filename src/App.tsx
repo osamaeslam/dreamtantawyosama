@@ -11,8 +11,6 @@ import { CollectionForecastView } from './components/CollectionForecastView';
 import { DatabaseHubView } from './components/DatabaseHubView';
 import { LuxuryLoginPage } from './components/LuxuryLoginPage';
 import { ProductLightboxModal } from './components/ProductLightboxModal';
-import { ApkDistributionModal } from './components/ApkDistributionModal';
-import { LoginModal } from './components/LoginModal';
 import { DataManagementModal } from './components/DataManagementModal';
 
 export const AppContent: React.FC = () => {
@@ -32,27 +30,25 @@ export const AppContent: React.FC = () => {
   // If user is logged out or explicitly navigated to the login screen
   const isViewingLoginPage = !isLoggedIn || activeTab === 'login_screen';
 
+  if (isViewingLoginPage) {
+    return <LuxuryLoginPage />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-['Cairo',sans-serif]">
-      {/* Top Navbar with Instant Role Switcher & Navigation Tabs */}
+      {/* Top Navbar with Clean Navigation Tabs */}
       <RoleSwitcherBar />
 
       {/* Main Content Area */}
       <main className="flex-1 pb-16">
-        {isViewingLoginPage ? (
-          <LuxuryLoginPage />
-        ) : (
-          <>
-            {activeTab === 'visits' && <FieldVisitsManagementHub />}
-            {activeTab === 'target' && <TargetPerformanceDashboard />}
-            {activeTab === 'forecast' && <CollectionForecastView />}
-            {activeTab === 'database_hub' && <DatabaseHubView />}
-            {activeTab === 'rep_catalog' && <SalesRepMobileApp />}
-            {activeTab === 'admin_review' && <AdminWorkflowReviewHub />}
-            {activeTab === 'customers' && <CustomerDirectoryView />}
-            {activeTab === 'inventory' && <InventoryView />}
-          </>
-        )}
+        {activeTab === 'visits' && <FieldVisitsManagementHub />}
+        {activeTab === 'target' && <TargetPerformanceDashboard />}
+        {activeTab === 'forecast' && <CollectionForecastView />}
+        {activeTab === 'database_hub' && <DatabaseHubView />}
+        {activeTab === 'rep_catalog' && <SalesRepMobileApp />}
+        {activeTab === 'admin_review' && <AdminWorkflowReviewHub />}
+        {activeTab === 'customers' && <CustomerDirectoryView />}
+        {activeTab === 'inventory' && <InventoryView />}
       </main>
 
       {/* Modals */}
@@ -69,12 +65,6 @@ export const AppContent: React.FC = () => {
         />
       )}
 
-      {isLoginModalOpen && (
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
-      )}
 
       {isDataModalOpen && (
         <DataManagementModal
