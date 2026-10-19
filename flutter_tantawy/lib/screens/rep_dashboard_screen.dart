@@ -172,7 +172,7 @@ class RepDashboardScreen extends StatelessWidget {
     ];
   }
 
-  String _roleLabel => switch (currentUser.role) {
+  String _roleLabel() => switch (currentUser.role) {
         'admin' || 'developer' => 'الإدارة العامة',
         'manager' => 'المدير العام',
         'branch_manager' => 'مدير الفرع',
@@ -432,7 +432,7 @@ class RepDashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$_roleLabel  •  ${currentUser.branchName}',
+                  '${_roleLabel()}  •  ${currentUser.branchName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.cairo(
