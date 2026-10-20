@@ -78,8 +78,8 @@ class SupabaseService {
   // ===================== تسجيل الدخول والمصادقة (Authentication) =====================
   Future<AppUser?> login(String username, String password) async {
     final clean = username.trim();
-    // Temporary bypass for development: allow login for osama@dream.com with any password
-    if (clean == 'osama@dream.com' || clean == 'osama') {
+    // Temporary bypass for development: allow login for osama@dream.com with any password (case-insensitive)
+    if (clean.toLowerCase() == 'osama@dream.com' || clean.toLowerCase() == 'osama') {
       // Return a hardcoded user for osama
       return AppUser(
         id: 'u-admin-osama',
