@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import 'supabase_service.dart';
 
@@ -219,5 +221,59 @@ class CartService extends ChangeNotifier {
       clearCart();
     }
     return success;
+  }
+
+  // ===================== حفظ/تحميل المسودة (Draft Persistence) =====================
+
+  Future<void> saveDraftToPrefs(String draftKey) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final itemsJson = _items.values.map((item) => item.toJson()).toList();
+
+    final draft = {
+      'customer_id': _selectedCustomer?.id,
+      'customer_name': _selectedCustomer?.name,
+      'customer_code': _selectedCustomer?.code,
+      'items': itemsJson,
+      'extra_discount': _extraDiscount,
+      'payment_type': _paymentType,
+      'notes': _notes,
+      'saved_at': DateTime.now().toIso8601String(),
+    };
+
+    await prefs.setString('${draftKey}_customer_id', _selectedCustomer?.id ?? '');
+    await prefs.setString(draftKey, jsonEncode(draft));
+  }
+
+  Future<void> loadDraftFromPrefs(String draftKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(draftKey);
+    if (raw == null || raw.isEmpty) return;
+
+    try {
+      final draft = jsonDecode(raw) as Map<String, dynamic>;
+
+      final itemsData = draft['items'] as List<dynamic>? ?? [];
+      _items.clear();
+      for (final itemJson in itemsData) {
+        final item = OrderItem.fromJson(itemJson as Map<String, dynamic>);
+        final productId = item.productId;
+        _items[productId] = item;
+      }
+
+      _extraDiscount = (draft['extra_discount'] as num?)?.toDouble() ?? 0;
+      _paymentType = draft['payment_type']?.toString() ?? 'نقدي';
+      _notes = draft['notes']?.toString();
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[CartService] Failed to load draft: $e');
+    }
+  }
+
+  void clearDraft(String draftKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(draftKey);
+    await prefs.remove('${draftKey}_customer_id');
   }
 }

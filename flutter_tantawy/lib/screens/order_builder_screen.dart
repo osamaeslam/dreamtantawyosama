@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../services/role_access_controller.dart';
@@ -19,6 +20,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
   List<Customer> _customers = [];
   bool _isLoadingCustomers = true;
   bool _isSubmitting = false;
+  bool _isSavingDraft = false;
 
   RoleAccessController get rbac => RoleAccessController(widget.currentUser);
 
@@ -26,6 +28,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
   void initState() {
     super.initState();
     _fetchCustomers();
+    _loadDraft();
   }
 
   void _fetchCustomers() async {
@@ -60,6 +63,59 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
     }
   }
 
+  // === حفظ المسودة (Draft) ===
+  static const String _draftKey = 'order_builder_draft_v1';
+
+  Future<void> _loadDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final customerId = prefs.getString('${_draftKey}_customer_id');
+    if (customerId == null || !mounted) return;
+    final cart = context.read<CartService>();
+    await cart.loadDraftFromPrefs(_draftKey);
+    if (!mounted) return;
+    if (customerId.isNotEmpty) {
+      for (final customer in _customers) {
+        if (customer.id == customerId) {
+          cart.selectCustomer(customer);
+          break;
+        }
+      }
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    setState(() => _isSavingDraft = true);
+    final cart = context.read<CartService>();
+    await cart.saveDraftToPrefs(_draftKey);
+    if (!mounted) return;
+    setState(() => _isSavingDraft = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('تم حفظ المسودة محلياً — يمكنك إكمالها لاحةً بعد إرسالها'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  List<OrderItem> _sortedCartItems(Map<String, OrderItem> items) {
+    final priorityOrder = {
+      'عاجل': 0,
+      'عالي': 1,
+      'مهم': 1,
+      'عادي': 2,
+      'منخفض': 3,
+    };
+    return items.values.toList()
+      ..sort((a, b) {
+        final aPriority = priorityOrder[a.productCategory ?? 'عادي'] ?? 2;
+        final bPriority = priorityOrder[b.productCategory ?? 'عادي'] ?? 2;
+        final priorityCompare = aPriority.compareTo(bPriority);
+        return priorityCompare != 0
+            ? priorityCompare
+            : (a.productName.compareTo(b.productName));
+      });
+  }
+
   void _submitOrder() async {
     final cart = context.read<CartService>();
     if (cart.selectedCustomer == null) {
@@ -75,6 +131,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
     setState(() => _isSubmitting = false);
 
     if (success) {
+      cart.clearDraft(_draftKey);
       showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
@@ -289,8 +346,8 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                             ],
                           ),
                           const Divider(),
-                          ...cart.items.values.map((item) {
-                            final hasVariant = item.variantId != null || item.color != null;
+                           ..._sortedCartItems(cart.items).map((item) {
+                             final hasVariant = item.variantId != null || item.color != null;
                             final branchQuantity =
                                 item.cartons.clamp(0, item.branchStockAtOrder ?? 0);
                             final octoberQuantity =
@@ -412,6 +469,24 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
+                  // زر حفظ المسودة المحلي
+                  OutlinedButton.icon(
+                    onPressed: _isSavingDraft ? null : _saveDraft,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryGold,
+                      side: const BorderSide(color: AppTheme.primaryGold),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    label: _isSavingDraft
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text('حفظ كمسودة', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
 
                   // زر الحفظ النهائي
                   ElevatedButton(

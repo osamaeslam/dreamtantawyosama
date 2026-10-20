@@ -13,6 +13,7 @@ import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'sync_queue_screen.dart';
+import 'supplier_expense_screen.dart';
 import 'visits_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
@@ -43,6 +44,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       InventoryScreen(currentUser: widget.currentUser),
       CollectionForecastView(currentUser: widget.currentUser),
       const SyncQueueScreen(),
+      SupplierExpenseScreen(currentUser: widget.currentUser),
     ];
   }
 
@@ -127,6 +129,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 5, title: 'حركة المخزون', subtitle: 'الأرصدة والمعاملات اليومية', icon: Icons.warehouse_outlined),
       (index: 6, title: 'توقعات التحصيل', subtitle: 'متابعة التوقعات الأسبوعية', icon: Icons.energy_savings_leaf_outlined),
       (index: 7, title: 'طابور المزامنة', subtitle: 'العناصر المعلقة والمعالجة غير المتصلة', icon: Icons.cloud_sync_outlined),
+      (index: 8, title: 'الموردين والمصروفات', subtitle: 'إدارة المشتريات والمصروفات', icon: Icons.receipt_long_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(

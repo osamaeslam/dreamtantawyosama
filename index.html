@@ -46,104 +46,290 @@
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #f59e0b;
       }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       @keyframes toastIn {
         from { transform: translateY(-20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
       }
-      .toast-animate {
-        animation: toastIn 0.25s ease-out forwards;
-      }
+      .toast-animate { animation: toastIn 0.25s ease-out forwards; }
     </style>
   </head>
   <body class="bg-[#030712] text-slate-100 flex flex-col min-h-screen">
-
-    <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
-
-    <!-- APP ROOT CONTAINER -->
     <div id="app" class="flex-1 flex flex-col">
-      <!-- Loading indicator initially -->
       <div id="initial-loading" class="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center text-gray-950 text-3xl font-black shadow-xl shadow-amber-500/20 mb-4 animate-pulse">
-          ط
-        </div>
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center text-gray-950 text-3xl font-black shadow-xl shadow-amber-500/20 mb-4 animate-pulse">ط</div>
         <h2 class="text-xl font-bold text-white">جاري الاتصال بقاعدة بيانات مجموعة الطنطاوي...</h2>
         <p class="text-xs text-amber-400 mt-1">Supabase Live Connection</p>
       </div>
     </div>
-
-    <!-- MAIN APP SCRIPT -->
     <script>
-      // ==========================================
-      // SUPABASE CONFIGURATION
-      // ==========================================
-      const SUPABASE_PROJECT_URL = "https://papxbfmgxnhbmagvqtje.supabase.co";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcHhiZm1neG5oYm1hZ3ZxdGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODcyNjUsImV4cCI6MjEwODA2MzI2NX0.m7l5Y7gwpuLaUDqP0o-to11MqfPSvuCFz_s2w2TqDMc";
+      const SUPABASE_PROJECT_URL = "%VITE_SUPABASE_URL%";
+      const SUPABASE_KEY = "%VITE_SUPABASE_ANON_KEY%";
       const SUPABASE_CONFIGURED = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_PROJECT_URL)
-        && SUPABASE_KEY.length > 20
-        && !SUPABASE_KEY.includes('%');
+        && SUPABASE_KEY.length > 20 && !SUPABASE_KEY.includes('%');
       const SUPABASE_URL = `${SUPABASE_PROJECT_URL.replace(/\/+$/, '')}/rest/v1/`;
-
       const headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation'
       };
 
-      // ==========================================
-      // IN-APP TOAST SYSTEM (NO WINDOW.ALERT)
-      // ==========================================
       function showToast(message, type = 'success') {
         const container = document.getElementById('toast-container');
         if (!container) return;
-
         const toast = document.createElement('div');
-        const bgColors = {
-          success: 'bg-emerald-950 border-emerald-500/50 text-emerald-200',
-          error: 'bg-red-950 border-red-500/50 text-red-200',
-          info: 'bg-amber-950 border-amber-500/50 text-amber-200'
-        };
-        const icons = {
-          success: '✓',
-          error: '✕',
-          info: 'ℹ'
-        };
-
-        toast.className = `toast-animate pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs font-bold ${bgColors[type] || bgColors.success}`;
-        toast.innerHTML = `
-          <span class="w-5 h-5 rounded-full flex items-center justify-center font-black text-[11px] bg-white/10 shrink-0">${icons[type] || '✓'}</span>
-          <span>${message}</span>
-        `;
-
+        const colors = { success: 'bg-emerald-950 text-emerald-200', error: 'bg-red-950 text-red-200', info: 'bg-amber-950 text-amber-200' };
+        toast.className = `toast-animate pointer-events-auto px-4 py-3 rounded-xl border border-gray-700 shadow-2xl text-xs font-bold ${colors[type] || colors.success}`;
+        toast.textContent = message;
         container.appendChild(toast);
-        setTimeout(() => {
-          toast.style.transition = 'all 0.3s ease-out';
-          toast.style.opacity = '0';
-          toast.style.transform = 'translateY(-10px)';
-          setTimeout(() => toast.remove(), 300);
-        }, 3200);
+        setTimeout(() => toast.remove(), 3500);
       }
 
-      // ==========================================
+      /* Removed misplaced admin markup/functions; rebuilt below in the script.
+            <nav class="flex gap-2 overflow-x-auto border-b border-gray-800 pb-3">
+              <button onclick="setAdminPage('overview')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'overview' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">نظرة عامة</button>
+              ${isAdmin(state.currentUser.role) ? `
+                <button onclick="setAdminPage('users')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'users' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">المستخدمون والصلاحيات</button>
+                <button onclick="setAdminPage('data')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'data' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">مركز البيانات</button>
+              ` : ''}
+            </nav>
+
+            ${state.adminPage === 'overview' ? `
+              <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5"><span class="text-xs text-slate-400 block font-bold">مديونيات العملاء</span><div class="text-2xl font-black text-amber-400 font-mono mt-1">${totalDebt.toLocaleString()} ج.م</div></div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5"><span class="text-xs text-slate-400 block font-bold">التحصيلات الميدانية</span><div class="text-2xl font-black text-emerald-400 font-mono mt-1">${totalVisitsAmount.toLocaleString()} ج.م</div></div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5"><span class="text-xs text-slate-400 block font-bold">الطلبيات والمبيعات</span><div class="text-2xl font-black text-blue-400 font-mono mt-1">${totalOrdersAmount.toLocaleString()} ج.م</div></div>
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-5"><span class="text-xs text-slate-400 block font-bold">المستخدمون النشطون</span><div class="text-2xl font-black text-amber-400 font-mono mt-1">${state.usersList.length}</div></div>
+              </div>
+              <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-3 text-xs">
+                <h3 class="font-bold text-white">اتصال قاعدة البيانات</h3>
+                <p class="text-slate-300">${state.dbConnected ? 'متصل' : 'غير متصل'} · ${escapeHtml(SUPABASE_PROJECT_URL)}</p>
+                <p class="text-slate-400">المستخدم الحالي: ${escapeHtml(state.currentUser.name)} · ${escapeHtml(state.currentUser.role)}</p>
+              </section>
+            ` : ''}
+            ${state.adminPage === 'users' && isAdmin(state.currentUser.role) ? renderAdminUsers() : ''}
+            ${state.adminPage === 'data' && isAdmin(state.currentUser.role) ? renderDataCenter() : ''}
       // APP STATE
       // ==========================================
+
+      const permissionScreens = [
+        ['catalog', 'الكتالوج'], ['clients', 'العملاء'], ['visits', 'الزيارات'],
+        ['orders', 'الطلبيات'], ['adminOverview', 'لوحة الإدارة']
+      ];
+
+      function adminPasswordControl() {
+        return `<label class="block text-xs text-slate-300">كلمة مرور المدير لتأكيد التغييرات
+          <input id="admin-password" type="password" autocomplete="current-password" required class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+        </label>`;
+      }
+
+      function renderAdminUsers() {
+        return `
+          <div class="grid xl:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)] gap-5">
+            <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+              <h3 class="font-bold text-white">إضافة مستخدم</h3>
+              ${adminPasswordControl()}
+              <form onsubmit="createManagedUser(event)" class="space-y-3 text-xs">
+                <input name="username" required placeholder="الاسم أو اسم المستخدم" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <input name="email" type="email" required placeholder="البريد الإلكتروني" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <select name="role" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white">
+                  <option value="sales_rep">مندوب مبيعات</option><option value="supervisor">مشرف</option>
+                  <option value="branch_manager">مدير فرع</option><option value="manager">مدير</option><option value="admin">مدير نظام</option>
+                </select>
+                <input name="branch" placeholder="الفرع" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <input name="password" type="password" minlength="8" required placeholder="كلمة مرور أولية (8 أحرف على الأقل)" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <fieldset class="grid grid-cols-2 gap-2 border border-gray-800 rounded-lg p-3">
+                  <legend class="px-1 text-slate-300">الشاشات المتاحة</legend>
+                  ${permissionScreens.map(([key, label]) => `<label class="flex items-center gap-2 text-slate-300"><input type="checkbox" name="screen" value="${key}" ${key !== 'adminOverview' ? 'checked' : ''} />${label}</label>`).join('')}
+                </fieldset>
+                <button class="w-full bg-amber-500 text-gray-950 font-bold rounded-lg p-2.5">إنشاء المستخدم</button>
+              </form>
+            </section>
+            <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+              <div class="flex items-center justify-between gap-3"><h3 class="font-bold text-white">المستخدمون (${state.usersList.length})</h3><button onclick="loadAdminUsers()" class="bg-gray-800 text-white rounded-lg px-3 py-2 text-xs">تحديث القائمة</button></div>
+              <p class="text-[11px] text-slate-400">تغيير الدور أو الشاشة أو كلمة المرور يحتاج حفظًا منفصلًا لكل مستخدم.</p>
+              <div class="space-y-3 max-h-[70vh] overflow-auto">
+                ${state.usersList.length ? state.usersList.map((user) => `
+                  <article class="border border-gray-800 rounded-lg p-3 space-y-3">
+                    <div class="grid sm:grid-cols-2 gap-2 text-xs"><strong class="text-white">${escapeHtml(user.username || user.name)}</strong><span class="text-slate-400">${escapeHtml(user.email)}</span></div>
+                    ${user.source === 'app_users' ? `
+                      <div class="grid sm:grid-cols-3 gap-2">
+                        <select id="managed-role-${escapeHtml(user.id)}" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs">
+                          ${[['sales_rep','مندوب'],['supervisor','مشرف'],['branch_manager','مدير فرع'],['manager','مدير'],['admin','مدير نظام']].map(([value,label]) => `<option value="${value}" ${user.role === value ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                        <input id="managed-branch-${escapeHtml(user.id)}" value="${escapeHtml(user.branch || user.branch_name)}" placeholder="الفرع" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs" />
+                        <input id="managed-password-${escapeHtml(user.id)}" type="password" minlength="8" placeholder="كلمة مرور جديدة (اختياري)" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs" />
+                      </div>
+                      <label class="flex items-center gap-2 text-xs text-slate-300"><input id="managed-active-${escapeHtml(user.id)}" type="checkbox" ${user.is_active ? 'checked' : ''} />الحساب نشط</label>
+                      <details class="text-xs text-slate-300"><summary class="cursor-pointer">صلاحيات الشاشات</summary><div class="grid grid-cols-2 gap-2 p-2">${permissionScreens.map(([key,label]) => `<label class="flex items-center gap-2"><input type="checkbox" data-user-screen="${key}" data-user-id="${escapeHtml(user.id)}" ${user.permissions?.[key] === true ? 'checked' : ''} />${label}</label>`).join('')}</div></details>
+                      <button onclick="saveManagedUser('${escapeHtml(user.id)}')" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-950 text-white rounded px-3 py-2 text-xs">حفظ التغييرات</button>
+                    ` : '<p class="text-[11px] text-slate-500">حساب قديم للقراءة فقط؛ أنشئ الحسابات الجديدة من هذا النموذج.</p>'}
+                  </article>
+                `).join('') : '<p class="text-xs text-slate-500">أدخل كلمة مرور المدير ثم اختر تحديث القائمة.</p>'}
+              </div>
+            </section>
+          </div>
+        `;
+      }
+
+      window.loadAdminUsers = async () => {
+        try {
+          await fetchAllUsers(document.getElementById('admin-password')?.value || '');
+          render();
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.createManagedUser = async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const values = new FormData(form);
+        const permissions = Object.fromEntries([...form.querySelectorAll('input[name="screen"]')].map((input) => [input.value, input.checked]));
+        try {
+          await callAdminRpc('add_app_user', {
+            p_admin_id: state.currentUser.id,
+            p_admin_password: document.getElementById('admin-password')?.value || '',
+            p_username: values.get('username'), p_email: values.get('email'),
+            p_role: values.get('role'), p_password: values.get('password'),
+            p_branch_name: values.get('branch'), p_permissions: permissions
+          });
+          await fetchAllUsers(document.getElementById('admin-password')?.value || '');
+          showToast('تم إنشاء المستخدم وصلاحياته', 'success');
+          render();
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      window.saveManagedUser = async (userId) => {
+        try {
+          const permissions = Object.fromEntries(permissionScreens.map(([key]) => [key,
+            document.querySelector(`[data-user-id="${CSS.escape(userId)}"][data-user-screen="${key}"]`)?.checked === true
+          ]));
+          await callAdminRpc('update_app_user', {
+            p_admin_id: state.currentUser.id,
+            p_admin_password: document.getElementById('admin-password')?.value || '',
+            p_user_id: userId,
+            p_role: document.getElementById(`managed-role-${CSS.escape(userId)}`).value,
+            p_is_active: document.getElementById(`managed-active-${CSS.escape(userId)}`).checked,
+            p_branch_name: document.getElementById(`managed-branch-${CSS.escape(userId)}`).value,
+            p_permissions: permissions,
+            p_new_password: document.getElementById(`managed-password-${CSS.escape(userId)}`).value || null
+          });
+          await fetchAllUsers(document.getElementById('admin-password')?.value || '');
+          showToast('تم حفظ بيانات المستخدم', 'success');
+          render();
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
+      function renderDataCenter() {
+        return `
+          <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+            <div><h3 class="font-bold text-white">استيراد من Google Sheets</h3><p class="text-xs text-slate-400 mt-1">اجعل الورقة متاحة للقراءة أو انشرها كـCSV. المطابقة تتم بأسماء الأعمدة العربية أو الإنجليزية.</p></div>
+            ${adminPasswordControl()}
+            <div class="grid md:grid-cols-[1fr_2fr_auto] gap-3">
+              <select id="sheet-kind" onchange="state.sheetKind=this.value" class="bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white text-xs">
+                <option value="products">المنتجات</option><option value="reps">المندوبون</option><option value="clients">العملاء</option><option value="promotions">العروض</option>
+              </select>
+              <input id="sheet-url" type="url" placeholder="رابط Google Sheet المنشور أو رابط CSV" class="bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white text-xs" />
+              <button onclick="previewSheet()" class="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-4 py-2 text-xs">جلب ومعاينة</button>
+            </div>
+            <div class="flex items-center justify-between gap-3 text-xs"><span class="text-slate-400">${state.sheetRows.length} صف جاهز للمراجعة</span><button onclick="importSheetRows()" ${state.sheetRows.length ? '' : 'disabled'} class="bg-emerald-500 disabled:opacity-40 text-gray-950 font-bold rounded-lg px-4 py-2">استيراد / تحديث البيانات</button></div>
+            <div class="overflow-auto max-h-[55vh] border border-gray-800 rounded-lg">
+              ${state.sheetRows.length ? `<table class="w-full text-right text-xs"><thead class="sticky top-0 bg-gray-950"><tr>${Object.keys(state.sheetRows[0]).slice(0,8).map((key) => `<th class="p-2 text-slate-300">${escapeHtml(key)}</th>`).join('')}</tr></thead><tbody>${state.sheetRows.slice(0,12).map((row) => `<tr class="border-t border-gray-800">${Object.keys(state.sheetRows[0]).slice(0,8).map((key) => `<td class="p-2 text-slate-400">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p class="p-4 text-xs text-slate-500">أدخل رابط الورقة ثم اعرض المعاينة.</p>'}
+            </div>
+          </section>
+        `;
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let field = '';
+        let quoted = false;
+        for (let index = 0; index < text.length; index += 1) {
+          const character = text[index];
+          if (character === '"' && quoted && text[index + 1] === '"') { field += '"'; index += 1; }
+          else if (character === '"') quoted = !quoted;
+          else if (character === ',' && !quoted) { row.push(field); field = ''; }
+          else if ((character === '\n' || character === '\r') && !quoted) {
+            if (character === '\r' && text[index + 1] === '\n') index += 1;
+            row.push(field); rows.push(row); row = []; field = '';
+          } else field += character;
+        }
+        if (field || row.length) { row.push(field); rows.push(row); }
+        const headers = (rows.shift() || []).map((header) => header.replace(/^\uFEFF/, '').trim());
+        return rows.filter((values) => values.some((value) => value.trim())).map((values) =>
+          Object.fromEntries(headers.map((header, index) => [header, (values[index] || '').trim()]))
+        );
+      }
+
+      window.previewSheet = async () => {
+        try {
+          const rawUrl = document.getElementById('sheet-url').value.trim();
+          const parsed = new URL(rawUrl);
+          let urls = [rawUrl];
+          if (parsed.hostname.endsWith('docs.google.com') && parsed.pathname.includes('/spreadsheets/d/')) {
+            const sheetId = parsed.pathname.split('/')[3];
+            const gid = parsed.searchParams.get('gid') || parsed.hash.match(/gid=(\d+)/)?.[1] || '0';
+            urls = [
+              `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/export?format=csv&gid=${encodeURIComponent(gid)}`,
+              `https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/gviz/tq?tqx=out:csv&gid=${encodeURIComponent(gid)}`
+            ];
+          }
+          let csvText;
+          let lastError;
+          for (const url of urls) {
+            try {
+              const response = await fetch(url);
+              if (!response.ok) throw new Error(`HTTP ${response.status}`);
+              csvText = await response.text();
+              if (!csvText || csvText.trimStart().startsWith('<')) throw new Error('الورقة ليست منشورة كـCSV');
+              break;
+            } catch (error) { lastError = error; }
+          }
+          if (!csvText) throw new Error(`تعذر قراءة الورقة. اجعلها متاحة للقراءة العامة أو استخدم رابط CSV. ${lastError?.message || ''}`);
+          state.sheetRows = parseCsv(csvText);
+          state.sheetKind = document.getElementById('sheet-kind').value;
+          render();
+          showToast(`تمت قراءة ${state.sheetRows.length} صف`, 'success');
+        } catch (error) {
+          showToast(error.message || 'رابط غير صالح', 'error');
+        }
+      };
+
+      window.importSheetRows = async () => {
+        if (!state.sheetRows.length) return;
+        try {
+          const result = await callAdminRpc('import_sheet_rows', {
+            p_admin_id: state.currentUser.id,
+            p_admin_password: document.getElementById('admin-password')?.value || '',
+            p_kind: document.getElementById('sheet-kind').value,
+            p_rows: state.sheetRows
+          });
+          showToast(`تم استيراد أو تحديث ${result.imported} سجل`, 'success');
+          state.sheetRows = [];
+          if (state.sheetKind === 'products') await fetchProducts();
+          if (state.sheetKind === 'clients') await fetchClients();
+          render();
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+      */
       const state = {
         currentUser: null,
-        activeTab: 'catalog', // 'catalog' | 'clients' | 'visits' | 'orders' | 'admin'
-        cart: [],
-        clients: [],
-        visits: [],
-        orders: [],
-        products: [],
-        usersList: [],
+        activeTab: 'catalog',
+        adminPage: 'overview',
+        adminPassword: '',
+        cart: [], clients: [], visits: [], orders: [], products: [], usersList: [],
+        sheetRows: [], sheetKind: 'products',
         selectedDept: 'الكل',
         selectedBranch: 'الكل',
         searchQuery: '',
@@ -178,20 +364,39 @@
         }
       }
 
-      async function fetchAllUsers() {
-        if (!SUPABASE_CONFIGURED) return;
+      async function fetchAllUsers(adminPassword) {
+        if (!SUPABASE_CONFIGURED || !state.currentUser) return;
         try {
           const res = await fetch(`${SUPABASE_URL}rpc/list_app_users`, {
             method: 'POST',
             headers,
-            body: '{}'
+            body: JSON.stringify({
+              p_admin_id: state.currentUser.id,
+              p_admin_password: adminPassword
+            })
           });
           if (res.ok) {
             state.usersList = await res.json();
+            return;
           }
+          const error = await res.json().catch(() => ({}));
+          throw new Error(error.message || `Supabase (${res.status})`);
         } catch (e) {
-          console.error("Error fetching users:", e);
+          throw new Error(`تعذر تحميل المستخدمين: ${e.message}`);
         }
+      }
+
+      async function callAdminRpc(name, payload) {
+        const res = await fetch(`${SUPABASE_URL}rpc/${name}`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(result?.message || `فشل تنفيذ العملية (${res.status})`);
+        }
+        return result;
       }
 
       async function apiLogin(identifier, password) {
@@ -214,10 +419,11 @@
         if (!user || Array.isArray(user) || !user.id) return null;
         return {
           id: user.id,
-          name: user.username,
+          name: user.name || user.username,
           email: user.email || user.username || clean,
           role: user.role || 'مندوب',
-          branch: user.branch || 'المركز الرئيسي'
+          branch: user.branch_name || user.branch || 'المركز الرئيسي',
+          permissions: user.permissions || {}
         };
       }
 
@@ -367,7 +573,25 @@
 
       function isAdmin(role) {
         if (!role) return false;
-        return role.includes('ادمن') || role.includes('مدير') || role === 'admin';
+        const normalized = role.trim().toLowerCase();
+        return ['admin', 'administrator', 'مدير عام', 'ادمن', 'أدمن', 'developer'].includes(normalized);
+      }
+
+      function canAccessScreen(screen) {
+        const user = state.currentUser;
+        if (!user) return false;
+        if (isAdmin(user.role)) return true;
+        if (Object.prototype.hasOwnProperty.call(user.permissions || {}, screen)) {
+          return user.permissions[screen] === true;
+        }
+        if (['catalog', 'clients', 'visits', 'orders'].includes(screen)) return true;
+        return screen === 'adminOverview' && isSupervisor(user.role);
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[character]);
       }
 
       // ==========================================
@@ -583,43 +807,43 @@
 
               <!-- Navigation Tabs -->
               <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                <button 
+                ${canAccessScreen('catalog') ? `<button
                   onclick="setTab('catalog')" 
                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'catalog' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
                 >
                   <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
                   <span>الكتالوج</span>
                   <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.products.length}</span>
-                </button>
+                </button>` : ''}
 
-                <button 
+                ${canAccessScreen('clients') ? `<button
                   onclick="setTab('clients')" 
                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'clients' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
                 >
                   <i data-lucide="users" class="w-3.5 h-3.5"></i>
                   <span>العملاء والمديونيات</span>
                   <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.clients.length}</span>
-                </button>
+                </button>` : ''}
 
-                <button 
+                ${canAccessScreen('visits') ? `<button
                   onclick="setTab('visits')" 
                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'visits' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
                 >
                   <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
                   <span>الزيارات والتحصيل</span>
                   <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.visits.length}</span>
-                </button>
+                </button>` : ''}
 
-                <button 
+                ${canAccessScreen('orders') ? `<button
                   onclick="setTab('orders')" 
                   class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'orders' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
                 >
                   <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
                   <span>الطلبيات</span>
                   <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.orders.length}</span>
-                </button>
+                </button>` : ''}
 
-                ${isAdmin(u.role) || isSupervisor(u.role) ? `
+                ${canAccessScreen('adminOverview') || isAdmin(u.role) ? `
                   <button 
                     onclick="setTab('admin')" 
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'admin' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
@@ -659,11 +883,11 @@
 
           <!-- MAIN CONTENT BODY -->
           <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 pb-20">
-            ${state.activeTab === 'catalog' ? renderCatalogTab() : ''}
-            ${state.activeTab === 'clients' ? renderClientsTab() : ''}
-            ${state.activeTab === 'visits' ? renderVisitsTab() : ''}
-            ${state.activeTab === 'orders' ? renderOrdersTab() : ''}
-            ${state.activeTab === 'admin' ? renderAdminTab() : ''}
+            ${state.activeTab === 'catalog' && canAccessScreen('catalog') ? renderCatalogTab() : ''}
+            ${state.activeTab === 'clients' && canAccessScreen('clients') ? renderClientsTab() : ''}
+            ${state.activeTab === 'visits' && canAccessScreen('visits') ? renderVisitsTab() : ''}
+            ${state.activeTab === 'orders' && canAccessScreen('orders') ? renderOrdersTab() : ''}
+            ${state.activeTab === 'admin' && (canAccessScreen('adminOverview') || isAdmin(u.role)) ? renderAdminTab() : ''}
           </main>
 
           <!-- CART MODAL -->
@@ -678,8 +902,192 @@
       }
 
       window.setTab = (tab) => {
+        if (tab === 'admin' && !canAccessScreen('adminOverview') && !isAdmin(state.currentUser?.role)) return;
+        if (tab !== 'admin' && !canAccessScreen(tab)) return;
         state.activeTab = tab;
         render();
+      };
+
+      window.setAdminPage = (page) => {
+        if (!isAdmin(state.currentUser?.role) && page !== 'overview') return;
+        if (!['overview', 'users', 'data'].includes(page)) return;
+        state.adminPage = page;
+        render();
+      };
+
+      const permissionScreens = [
+        ['catalog', 'الكتالوج'], ['clients', 'العملاء'], ['visits', 'الزيارات'],
+        ['orders', 'الطلبيات'], ['adminOverview', 'لوحة الإدارة']
+      ];
+
+      function adminPasswordField() {
+        return `<label class="block text-xs text-slate-300">كلمة مرور المدير لتأكيد العملية
+          <input type="password" autocomplete="current-password" required value="${escapeHtml(state.adminPassword)}" oninput="state.adminPassword=this.value" class="mt-1 w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+        </label>`;
+      }
+
+      function renderAdminUsers() {
+        return `
+          <div class="grid xl:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.2fr)] gap-5">
+            <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+              <h3 class="font-bold text-white">إضافة مستخدم</h3>
+              ${adminPasswordField()}
+              <form onsubmit="createManagedUser(event)" class="space-y-3 text-xs">
+                <input name="username" required placeholder="اسم المستخدم" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <input name="email" type="email" required placeholder="البريد الإلكتروني" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <select name="role" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white">
+                  <option value="sales_rep">مندوب مبيعات</option><option value="supervisor">مشرف</option>
+                  <option value="branch_manager">مدير فرع</option><option value="manager">مدير</option><option value="admin">مدير نظام</option>
+                </select>
+                <input name="branch" placeholder="الفرع" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <input name="password" type="password" minlength="8" required placeholder="كلمة مرور أولية (8 أحرف على الأقل)" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white" />
+                <fieldset class="grid grid-cols-2 gap-2 border border-gray-800 rounded-lg p-3">
+                  <legend class="px-1 text-slate-300">الشاشات المتاحة</legend>
+                  ${permissionScreens.map(([key, label]) => `<label class="flex items-center gap-2 text-slate-300"><input type="checkbox" name="screen" value="${key}" ${key !== 'adminOverview' ? 'checked' : ''} />${label}</label>`).join('')}
+                </fieldset>
+                <button class="w-full bg-amber-500 text-gray-950 font-bold rounded-lg p-2.5">إنشاء المستخدم</button>
+              </form>
+            </section>
+            <section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+              <div class="flex items-center justify-between gap-3"><h3 class="font-bold text-white">المستخدمون (${state.usersList.length})</h3><button onclick="loadAdminUsers()" class="bg-gray-800 text-white rounded-lg px-3 py-2 text-xs">تحميل القائمة</button></div>
+              <div class="space-y-3 max-h-[70vh] overflow-auto">
+                ${state.usersList.length ? state.usersList.map((user) => `
+                  <article class="border border-gray-800 rounded-lg p-3 space-y-3">
+                    <div class="grid sm:grid-cols-2 gap-2 text-xs"><strong class="text-white">${escapeHtml(user.username || user.name)}</strong><span class="text-slate-400">${escapeHtml(user.email)}</span></div>
+                    ${user.source === 'app_users' ? `
+                      <div class="grid sm:grid-cols-3 gap-2">
+                        <select id="managed-role-${escapeHtml(user.id)}" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs">
+                          ${[['sales_rep','مندوب'],['supervisor','مشرف'],['branch_manager','مدير فرع'],['manager','مدير'],['admin','مدير نظام']].map(([value,label]) => `<option value="${value}" ${user.role === value ? 'selected' : ''}>${label}</option>`).join('')}
+                        </select>
+                        <input id="managed-branch-${escapeHtml(user.id)}" value="${escapeHtml(user.branch || user.branch_name)}" placeholder="الفرع" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs" />
+                        <input id="managed-password-${escapeHtml(user.id)}" type="password" minlength="8" placeholder="كلمة مرور جديدة" class="bg-gray-950 border border-gray-700 rounded p-2 text-white text-xs" />
+                      </div>
+                      <label class="flex items-center gap-2 text-xs text-slate-300"><input id="managed-active-${escapeHtml(user.id)}" type="checkbox" ${user.is_active ? 'checked' : ''} />الحساب نشط</label>
+                      <details class="text-xs text-slate-300"><summary class="cursor-pointer">صلاحيات الشاشات</summary><div class="grid grid-cols-2 gap-2 p-2">${permissionScreens.map(([key,label]) => `<label class="flex items-center gap-2"><input type="checkbox" data-user-screen="${key}" data-user-id="${escapeHtml(user.id)}" ${user.permissions?.[key] === true ? 'checked' : ''} />${label}</label>`).join('')}</div></details>
+                      <button onclick="saveManagedUser('${escapeHtml(user.id)}')" class="bg-gray-800 hover:bg-amber-500 hover:text-gray-950 text-white rounded px-3 py-2 text-xs">حفظ</button>
+                    ` : '<p class="text-[11px] text-slate-500">حساب قديم للقراءة فقط.</p>'}
+                  </article>
+                `).join('') : '<p class="text-xs text-slate-500">حمّل قائمة المستخدمين بكلمة مرور المدير.</p>'}
+              </div>
+            </section>
+          </div>`;
+      }
+
+      window.loadAdminUsers = async () => {
+        try {
+          await fetchAllUsers(state.adminPassword);
+          render();
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      window.createManagedUser = async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const values = new FormData(form);
+        const permissions = Object.fromEntries([...form.querySelectorAll('input[name="screen"]')].map((input) => [input.value, input.checked]));
+        try {
+          await callAdminRpc('add_app_user', {
+            p_admin_id: state.currentUser.id, p_admin_password: state.adminPassword,
+            p_username: values.get('username'), p_email: values.get('email'),
+            p_role: values.get('role'), p_password: values.get('password'),
+            p_branch_name: values.get('branch'), p_permissions: permissions
+          });
+          await fetchAllUsers(state.adminPassword);
+          showToast('تم إنشاء المستخدم', 'success');
+          render();
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      window.saveManagedUser = async (userId) => {
+        try {
+          const permissions = Object.fromEntries(permissionScreens.map(([key]) => [key,
+            document.querySelector(`[data-user-id="${CSS.escape(userId)}"][data-user-screen="${key}"]`)?.checked === true
+          ]));
+          await callAdminRpc('update_app_user', {
+            p_admin_id: state.currentUser.id, p_admin_password: state.adminPassword,
+            p_user_id: userId,
+            p_role: document.getElementById(`managed-role-${CSS.escape(userId)}`).value,
+            p_is_active: document.getElementById(`managed-active-${CSS.escape(userId)}`).checked,
+            p_branch_name: document.getElementById(`managed-branch-${CSS.escape(userId)}`).value,
+            p_permissions: permissions,
+            p_new_password: document.getElementById(`managed-password-${CSS.escape(userId)}`).value || null
+          });
+          await fetchAllUsers(state.adminPassword);
+          showToast('تم حفظ المستخدم والصلاحيات', 'success');
+          render();
+        } catch (error) { showToast(error.message, 'error'); }
+      };
+
+      function renderDataCenter() {
+        return `<section class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+          <div><h3 class="font-bold text-white">استيراد بيانات من Google Sheets</h3><p class="text-xs text-slate-400 mt-1">يجب أن تكون الورقة متاحة للقراءة أو منشورة كـCSV. راجع المعاينة قبل الاستيراد.</p></div>
+          ${adminPasswordField()}
+          <div class="grid md:grid-cols-[1fr_2fr_auto] gap-3">
+            <select id="sheet-kind" class="bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white text-xs" onchange="state.sheetKind=this.value">
+              ${[['products','المنتجات'],['reps','المندوبون'],['clients','العملاء'],['promotions','العروض']].map(([value,label]) => `<option value="${value}" ${state.sheetKind === value ? 'selected' : ''}>${label}</option>`).join('')}
+            </select>
+            <input id="sheet-url" type="url" placeholder="رابط Google Sheet" class="bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-white text-xs" />
+            <button onclick="previewSheet()" class="bg-gray-800 text-white rounded-lg px-4 py-2 text-xs">جلب ومعاينة</button>
+          </div>
+          <div class="flex items-center justify-between gap-3 text-xs"><span class="text-slate-400">${state.sheetRows.length} صف</span><button onclick="importSheetRows()" ${state.sheetRows.length ? '' : 'disabled'} class="bg-emerald-500 disabled:opacity-40 text-gray-950 font-bold rounded-lg px-4 py-2">استيراد أو تحديث</button></div>
+          <div class="overflow-auto max-h-[55vh] border border-gray-800 rounded-lg">
+            ${state.sheetRows.length ? `<table class="w-full text-right text-xs"><thead class="sticky top-0 bg-gray-950"><tr>${Object.keys(state.sheetRows[0]).slice(0,8).map((key) => `<th class="p-2 text-slate-300">${escapeHtml(key)}</th>`).join('')}</tr></thead><tbody>${state.sheetRows.slice(0,15).map((row) => `<tr class="border-t border-gray-800">${Object.keys(state.sheetRows[0]).slice(0,8).map((key) => `<td class="p-2 text-slate-400">${escapeHtml(row[key])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p class="p-4 text-xs text-slate-500">أدخل رابط الورقة لعرض المعاينة.</p>'}
+          </div>
+        </section>`;
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [], field = '', quoted = false;
+        for (let index = 0; index < text.length; index += 1) {
+          const character = text[index];
+          if (character === '"' && quoted && text[index + 1] === '"') { field += '"'; index += 1; }
+          else if (character === '"') quoted = !quoted;
+          else if (character === ',' && !quoted) { row.push(field); field = ''; }
+          else if ((character === '\n' || character === '\r') && !quoted) {
+            if (character === '\r' && text[index + 1] === '\n') index += 1;
+            row.push(field); rows.push(row); row = []; field = '';
+          } else field += character;
+        }
+        if (field || row.length) { row.push(field); rows.push(row); }
+        const columns = (rows.shift() || []).map((column) => column.replace(/^\uFEFF/, '').trim());
+        return rows.filter((values) => values.some((value) => value.trim())).map((values) =>
+          Object.fromEntries(columns.map((column, index) => [column, values[index] || '']))
+        );
+      }
+
+      window.previewSheet = async () => {
+        try {
+          const parsed = new URL(document.getElementById('sheet-url').value.trim());
+          if (parsed.hostname !== 'docs.google.com' || !parsed.pathname.includes('/spreadsheets/d/')) {
+            throw new Error('استخدم رابط Google Sheets من docs.google.com');
+          }
+          const sheetId = parsed.pathname.split('/')[3];
+          const gid = parsed.searchParams.get('gid') || parsed.hash.match(/gid=(\d+)/)?.[1] || '0';
+          const response = await fetch(`https://docs.google.com/spreadsheets/d/${encodeURIComponent(sheetId)}/export?format=csv&gid=${encodeURIComponent(gid)}`);
+          if (!response.ok) throw new Error('تعذر قراءة الورقة؛ اجعلها متاحة للقراءة');
+          const csv = await response.text();
+          if (csv.trimStart().startsWith('<')) throw new Error('الورقة غير منشورة كـCSV');
+          state.sheetRows = parseCsv(csv);
+          render();
+          showToast(`تمت قراءة ${state.sheetRows.length} صف`, 'success');
+        } catch (error) { showToast(error.message || 'تعذر قراءة الرابط', 'error'); }
+      };
+
+      window.importSheetRows = async () => {
+        if (!state.sheetRows.length) return;
+        try {
+          const result = await callAdminRpc('import_sheet_rows', {
+            p_admin_id: state.currentUser.id, p_admin_password: state.adminPassword,
+            p_kind: state.sheetKind, p_rows: state.sheetRows
+          });
+          showToast(`تم استيراد أو تحديث ${result.imported} سجل`, 'success');
+          state.sheetRows = [];
+          if (state.sheetKind === 'products') await fetchProducts();
+          if (state.sheetKind === 'clients') await fetchClients();
+          if (state.sheetKind === 'reps') await fetchAllUsers(state.adminPassword);
+          render();
+        } catch (error) { showToast(error.message, 'error'); }
       };
 
       // ------------------------------------------
@@ -1075,6 +1483,16 @@
 
         return `
           <div class="space-y-6">
+            <nav class="flex gap-2 overflow-x-auto border-b border-gray-800 pb-3">
+              <button onclick="setAdminPage('overview')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'overview' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">نظرة عامة</button>
+              ${isAdmin(state.currentUser.role) ? `
+                <button onclick="setAdminPage('users')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'users' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">المستخدمون والصلاحيات</button>
+                <button onclick="setAdminPage('data')" class="px-3 py-2 rounded-lg text-xs font-bold ${state.adminPage === 'data' ? 'bg-amber-500 text-gray-950' : 'bg-gray-900 text-slate-300'}">مركز البيانات</button>
+              ` : ''}
+            </nav>
+            ${state.adminPage === 'users' && isAdmin(state.currentUser.role) ? renderAdminUsers() : ''}
+            ${state.adminPage === 'data' && isAdmin(state.currentUser.role) ? renderDataCenter() : ''}
+            ${state.adminPage === 'overview' ? `
             <!-- Stats Overview -->
             <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
@@ -1140,7 +1558,7 @@
                       <th class="p-3">البريد الإلكتروني</th>
                       <th class="p-3">الدور / الرتبة</th>
                       <th class="p-3">الفرع</th>
-                      <th class="p-3 text-center">التبديل إلى الحساب</th>
+                        <th class="p-3 text-center">الحالة</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-800/60">
@@ -1150,35 +1568,17 @@
                         <td class="p-3 text-slate-300 font-mono">${u.email || '---'}</td>
                         <td class="p-3 text-amber-400">${u.role || 'مستخدم'}</td>
                         <td class="p-3 text-slate-400">${u.branch || '---'}</td>
-                        <td class="p-3 text-center">
-                          <button 
-                            onclick="switchUserDirectly('${u.id}')" 
-                            class="px-2.5 py-1 rounded-xl bg-gray-800 hover:bg-amber-500 hover:text-gray-950 text-slate-300 font-bold transition text-[11px] cursor-pointer"
-                          >
-                            عرض كـ ${u.username.split(' ')[0]}
-                          </button>
-                        </td>
+                        <td class="p-3 text-center ${u.is_active ? 'text-emerald-400' : 'text-red-400'}">${u.is_active ? 'نشط' : 'موقوف'}</td>
                       </tr>
                     `).join('')}
                   </tbody>
                 </table>
               </div>
             </div>
-
+            ` : ''}
           </div>
         `;
       }
-
-      window.switchUserDirectly = async (userId) => {
-        const u = state.usersList.find(x => x.id === userId);
-        if (u) {
-          state.currentUser = u;
-          localStorage.setItem('tantawy_auth_user', JSON.stringify(u));
-          showToast(`تم التبديل لحساب: ${u.username} (${u.role})`, 'info');
-          await loadUserData();
-          render();
-        }
-      };
 
       // ------------------------------------------
       // MODAL: CART & ORDER BUILDER
@@ -1562,6 +1962,8 @@
 
       window.logout = () => {
         state.currentUser = null;
+        state.adminPassword = '';
+        state.usersList = [];
         localStorage.removeItem('tantawy_auth_user');
         state.cart = [];
         showToast('تم تسجيل الخروج بنجاح', 'info');
@@ -1574,7 +1976,6 @@
       async function init() {
         try {
           await checkSupabaseConnection();
-          await fetchAllUsers();
 
           const saved = localStorage.getItem('tantawy_auth_user');
           if (saved) {

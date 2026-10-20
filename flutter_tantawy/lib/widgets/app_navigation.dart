@@ -69,16 +69,22 @@ class AppNavigation {
       label: 'الطابور',
       allowedRoles: ['sales_rep', 'supervisor', 'branch_manager', 'admin', 'developer'],
     ),
+    AppDestination(
+      icon: Icons.receipt_long_outlined,
+      selectedIcon: Icons.receipt_long,
+      label: 'الموردين',
+      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
+    ),
   ];
 
   /// Indices surfaced as direct tabs on the mobile bottom navigation bar.
   static const List<int> mobileTabIndices = [0, 1, 2];
 
   /// Indices collected inside the mobile "More" overflow screen.
-  static const List<int> overflowIndices = [3, 4, 5, 6, 7];
+  static const List<int> overflowIndices = [3, 4, 5, 6, 7, 8];
 
   /// Index reserved for the "More" overflow entry on mobile.
-  static const int moreIndex = 8;
+  static const int moreIndex = 9;
 
   static List<int> visibleDestinationIndices(String role) => [
         for (var i = 0; i < destinations.length; i++)

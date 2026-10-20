@@ -3006,3 +3006,187 @@ String formatOfflineItemType(OfflineActionType type) {
       return 'إرجاع بضاعة';
   }
 }
+
+// ============================================================
+// === Supplier (مورد) ===
+// ============================================================
+
+class Supplier {
+  final String id;
+  final String? code;
+  final String name;
+  final String? phone;
+  final String? address;
+  final String? email;
+  final String? taxNumber;
+  final String? contactPerson;
+  final String? notes;
+  final bool isActive;
+  final String? createdAt;
+  final String? deletedAt;
+
+  Supplier({
+    required this.id,
+    this.code,
+    required this.name,
+    this.phone,
+    this.address,
+    this.email,
+    this.taxNumber,
+    this.contactPerson,
+    this.notes,
+    this.isActive = true,
+    this.createdAt,
+    this.deletedAt,
+  });
+
+  factory Supplier.fromJson(Map<String, dynamic> json) {
+    return Supplier(
+      id: json['id']?.toString() ?? '',
+      code: json['code']?.toString(),
+      name: json['name']?.toString() ?? '',
+      phone: json['phone']?.toString(),
+      address: json['address']?.toString(),
+      email: json['email']?.toString(),
+      taxNumber: json['tax_number']?.toString() ?? json['taxNumber']?.toString(),
+      contactPerson: json['contact_person']?.toString() ?? json['contactPerson']?.toString(),
+      notes: json['notes']?.toString(),
+      isActive: json['is_active'] as bool? ?? true,
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
+      deletedAt: json['deleted_at']?.toString() ?? json['deletedAt']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        'name': name,
+        'phone': phone,
+        'address': address,
+        'email': email,
+        'tax_number': taxNumber,
+        'contact_person': contactPerson,
+        'notes': notes,
+        'is_active': isActive,
+        'created_at': createdAt,
+        'deleted_at': deletedAt,
+      };
+}
+
+// ============================================================
+// === Expense (مصروف) ===
+// ============================================================
+
+class Expense {
+  final String id;
+  final String branchName;
+  final String? repName;
+  final String? supplierId;
+  final String? supplierName;
+  final String category;
+  final double amount;
+  final String paymentMethod;
+  final String date;
+  final String? notes;
+  final String? receiptImageUrl;
+  final String? createdAt;
+  final String? deletedAt;
+
+  Expense({
+    required this.id,
+    required this.branchName,
+    this.repName,
+    this.supplierId,
+    this.supplierName,
+    required this.category,
+    required this.amount,
+    this.paymentMethod = 'نقدي',
+    required this.date,
+    this.notes,
+    this.receiptImageUrl,
+    this.createdAt,
+    this.deletedAt,
+  });
+
+  factory Expense.fromJson(Map<String, dynamic> json) {
+    return Expense(
+      id: json['id']?.toString() ?? '',
+      branchName: json['branch_name']?.toString() ?? '',
+      repName: json['rep_name']?.toString(),
+      supplierId: json['supplier_id']?.toString() ?? json['supplierId']?.toString(),
+      supplierName: json['supplier_name']?.toString() ?? json['supplierName']?.toString(),
+      category: json['category']?.toString() ?? '',
+      amount: _toDouble(json['amount']) ?? 0,
+      paymentMethod: json['payment_method']?.toString() ?? 'نقدي',
+      date: json['date']?.toString() ?? '',
+      notes: json['notes']?.toString(),
+      receiptImageUrl: json['receipt_image_url']?.toString() ?? json['receiptImageUrl']?.toString(),
+      createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
+      deletedAt: json['deleted_at']?.toString() ?? json['deletedAt']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'branch_name': branchName,
+        'rep_name': repName,
+        'supplier_id': supplierId,
+        'supplier_name': supplierName,
+        'category': category,
+        'amount': amount,
+        'payment_method': paymentMethod,
+        'date': date,
+        'notes': notes,
+        'receipt_image_url': receiptImageUrl,
+        'created_at': createdAt,
+        'deleted_at': deletedAt,
+      };
+}
+
+// ============================================================
+// === ProductFilter (فلاتر البحث في الكتالوج) ===
+// ============================================================
+
+class ProductFilter {
+  final String? department;
+  final String? category;
+  final String? searchQuery;
+  final bool showLowStockOnly;
+  final bool showOutOfStock;
+  final bool showWithPromoOnly;
+  final String? sortBy;
+  final bool ascending;
+
+  ProductFilter({
+    this.department,
+    this.category,
+    this.searchQuery,
+    this.showLowStockOnly = false,
+    this.showOutOfStock = false,
+    this.showWithPromoOnly = false,
+    this.sortBy,
+    this.ascending = true,
+  });
+
+  ProductFilter copyWith({
+    String? department,
+    String? category,
+    String? searchQuery,
+    bool? showLowStockOnly,
+    bool? showOutOfStock,
+    bool? showWithPromoOnly,
+    String? sortBy,
+    bool? ascending,
+  }) {
+    return ProductFilter(
+      department: department ?? this.department,
+      category: category ?? this.category,
+      searchQuery: searchQuery ?? this.searchQuery,
+      showLowStockOnly: showLowStockOnly ?? this.showLowStockOnly,
+      showOutOfStock: showOutOfStock ?? this.showOutOfStock,
+      showWithPromoOnly: showWithPromoOnly ?? this.showWithPromoOnly,
+      sortBy: sortBy ?? this.sortBy,
+      ascending: ascending ?? this.ascending,
+    );
+  }
+}

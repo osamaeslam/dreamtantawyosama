@@ -23,6 +23,9 @@ create table if not exists public.users (
   created_at timestamptz not null default now()
 );
 
+alter table public.users
+  add column if not exists permissions jsonb not null default '{}'::jsonb;
+
 create table if not exists public.branches (
   id text primary key default gen_random_uuid()::text,
   name text not null unique,
@@ -61,6 +64,7 @@ create table if not exists public.products (
   discount_percentage numeric(8, 3),
   sales_price numeric(14, 2),
   price numeric(14, 2),
+  stock integer not null default 0,
   barcode text,
   min_order_quantity integer,
   notes text,
@@ -73,6 +77,8 @@ create table if not exists public.products (
   cloudinary_url text,
   created_at timestamptz not null default now()
 );
+
+alter table public.products add column if not exists stock integer not null default 0;
 
 create table if not exists public.parent_products (
   id text primary key default gen_random_uuid()::text,
@@ -164,6 +170,7 @@ create table if not exists public.clients (
   rep_name text,
   mandoub_name text,
   balance numeric(14, 2) not null default 0,
+  debt numeric(14, 2) not null default 0,
   credit_limit numeric(14, 2) not null default 0,
   overdue_balance numeric(14, 2) not null default 0,
   tier text not null default 'عادي',
@@ -501,6 +508,70 @@ create table if not exists public.cloudinary_config (
   created_at timestamptz not null default now()
 );
 
+-- ============================================================
+-- جداول الموردين والمصروفات (جديدة)
+-- ============================================================
+
+create table if not exists public.suppliers (
+  id text primary key default gen_random_uuid()::text,
+  code text unique,
+  name text not null default '',
+  phone text,
+  address text,
+  email text,
+  tax_number text,
+  contact_person text,
+  notes text,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_suppliers_name on public.suppliers (name);
+create index if not exists idx_suppliers_active on public.suppliers (is_active);
+
+create table if not exists public.expenses (
+  id text primary key default gen_random_uuid()::text,
+  branch_name text not null default '',
+  rep_name text,
+  supplier_id text references public.suppliers(id),
+  supplier_name text,
+  category text not null default '',
+  amount numeric(14, 2) not null default 0,
+  payment_method text,
+  date date not null default current_date,
+  notes text,
+  receipt_image_url text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_expenses_date on public.expenses (date desc);
+create index if not exists idx_expenses_branch on public.expenses (branch_name);
+create index if not exists idx_expenses_category on public.expenses (category);
+
+-- ============================================================
+-- Soft Deletes: إضافة عمود deleted_at على الجداول الرئيسية
+-- (تم إنشاء جدول جديد بـ deleted_at مباشرة، مع إتاحة الترقيم اللاحق)
+-- ============================================================
+
+-- جداول جديدة تستخدم deleted_at مباشرة
+-- (يمكن تشغيل ALTER TABLE ... ADD COLUMN IF NOT EXISTS deleted_at على الجداول القديمة)
+alter table public.products add column if not exists deleted_at timestamptz;
+alter table public.customers add column if not exists deleted_at timestamptz;
+alter table public.invoices add column if not exists deleted_at timestamptz;
+alter table public.visits add column if not exists deleted_at timestamptz;
+alter table public.returns add column if not exists deleted_at timestamptz;
+alter table public.suppliers add column if not exists deleted_at timestamptz;
+alter table public.expenses add column if not exists deleted_at timestamptz;
+
+-- فهارس جزئية: المهمة فقط غير المحذوفة
+create index if not exists idx_products_active on public.products (deleted_at) where deleted_at is null;
+create index if not exists idx_customers_active on public.customers (deleted_at) where deleted_at is null;
+create index if not exists idx_invoices_active on public.invoices (deleted_at) where deleted_at is null;
+create index if not exists idx_visits_active on public.visits (deleted_at) where deleted_at is null;
+create index if not exists idx_returns_active on public.returns (deleted_at) where deleted_at is null;
+create index if not exists idx_suppliers_active on public.suppliers (deleted_at) where deleted_at is null;
+create index if not exists idx_expenses_active on public.expenses (deleted_at) where deleted_at is null;
+
 create index if not exists idx_products_name on public.products (name);
 create index if not exists idx_product_stocks_branch on public.product_stocks (branch_name);
 create index if not exists idx_clients_client_name on public.clients (client_name);
@@ -511,6 +582,16 @@ create index if not exists idx_visits_timestamp on public.visits (timestamp desc
 create index if not exists idx_targets_rep_month on public.targets (rep_name, year, month);
 create index if not exists idx_forecasts_month on public.forecasts (month_key desc);
 create index if not exists idx_audit_log_timestamp on public.audit_log (timestamp desc);
+
+-- GIN indexes لأعمدة JSONB — تسريع الاستعلامات الداخلية والمتداخلة
+create index if not exists idx_products_branch_stocks_gin on public.products using gin (branch_stocks);
+create index if not exists idx_clients_metadata_gin on public.clients using gin (metadata);
+create index if not exists idx_customers_metadata_gin on public.customers using gin (metadata);
+create index if not exists idx_invoices_return_records_gin on public.invoices using gin (return_records);
+create index if not exists idx_forecasts_weeks_gin on public.forecasts using gin (weeks);
+create index if not exists idx_customer_analytics_metadata_gin on public.customer_analytics using gin (metadata);
+create index if not exists idx_rep_performance_metadata_gin on public.rep_performance using gin (metadata);
+create index if not exists idx_audit_log_details_gin on public.audit_log using gin (details);
 
 -- Keep user records private; sign-in is exposed through the sanitized RPC below.
 alter table public.users enable row level security;
@@ -532,10 +613,42 @@ create table if not exists public.app_users (
     role text not null default 'rep',
     password text not null,
     is_active boolean default true,
+    permissions jsonb not null default '{}'::jsonb,
     created_at timestamp with time zone default now()
 );
 
 alter table public.app_users enable row level security;
+alter table public.app_users
+  add column if not exists permissions jsonb not null default '{}'::jsonb;
+alter table public.app_users
+  add column if not exists branch_name text not null default 'المركز الرئيسي';
+
+create or replace function public.verify_app_admin(p_admin_id text, p_admin_password text)
+returns boolean
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select exists (
+    select 1
+    from public.app_users u
+    where u.id::text = p_admin_id
+      and coalesce(u.is_active, true)
+      and lower(u.role) in ('admin', 'administrator', 'مدير عام', 'ادمن', 'أدمن')
+      and (u.password = p_admin_password
+        or (u.password like '$2%' and crypt(p_admin_password, u.password) = u.password))
+    union all
+    select 1
+    from public.users u
+    where u.id = p_admin_id
+      and u.is_active
+      and lower(u.role) in ('admin', 'administrator', 'مدير عام', 'ادمن', 'أدمن')
+      and (u.password = p_admin_password
+        or (u.password like '$2%' and crypt(p_admin_password, u.password) = u.password))
+  );
+$$;
+
+revoke all on function public.verify_app_admin(text, text) from public;
 
 -- Passwords are never returned by this RPC. It supports both the web
 -- app's app_users table and the Flutter app's legacy users table.
@@ -553,8 +666,9 @@ as $$
         'username', u.username,
         'email', u.email,
         'role', u.role,
-        'branch_name', 'المركز الرئيسي',
-        'is_active', coalesce(u.is_active, true)
+        'branch_name', u.branch_name,
+        'is_active', coalesce(u.is_active, true),
+        'permissions', u.permissions
       ) as profile,
       1 as priority
     from public.app_users u
@@ -588,20 +702,32 @@ revoke all on function public.app_login(text, text) from public;
 grant execute on function public.app_login(text, text) to anon, authenticated;
 
 -- List safe profile fields for the admin dashboard; passwords are excluded.
-create or replace function public.list_app_users()
+create or replace function public.list_app_users(
+  p_admin_id text,
+  p_admin_password text
+)
 returns jsonb
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
-  with profiles as (
+declare
+  result_json jsonb;
+begin
+  if not public.verify_app_admin(p_admin_id, p_admin_password) then
+    raise exception 'Admin access required';
+  end if;
+
+  with user_profiles as (
     select jsonb_build_object(
       'id', id,
       'username', username,
       'email', coalesce(email, username),
       'role', role,
-      'branch', 'المركز الرئيسي',
+      'branch', branch_name,
       'is_active', coalesce(is_active, true),
+      'permissions', permissions,
+      'source', 'app_users',
       'created_at', created_at
     ) as profile, created_at
     from public.app_users
@@ -616,17 +742,23 @@ as $$
       'role', role,
       'branch', branch_name,
       'is_active', is_active,
+      'permissions', permissions,
+      'source', 'users',
       'created_at', created_at
     ) as profile, created_at
     from public.users
     where is_active
   )
   select coalesce(jsonb_agg(profile order by created_at desc), '[]'::jsonb)
-  from profiles;
+  into result_json
+  from user_profiles;
+
+  return result_json;
+end;
 $$;
 
-revoke all on function public.list_app_users() from public;
-grant execute on function public.list_app_users() to anon, authenticated;
+revoke all on function public.list_app_users(text, text) from public;
+grant execute on function public.list_app_users(text, text) to anon, authenticated;
 
 create or replace function public.reserve_product_stock(p_id text, quantity integer)
 returns boolean
@@ -641,6 +773,13 @@ begin
     return false;
   end if;
 
+  -- استخدام SELECT ... FOR UPDATE لمنع race conditions عند حجز متزامن
+  -- يقفل الصف أثناء العملية ويمنع باقي العمليات من قراءة الرصيد المنقضي
+  perform 1 from public.product_stocks
+  where product_id = p_id
+    and quantity_actual - quantity_reserved >= 0
+  for update;
+
   update public.product_stocks
   set quantity_reserved = quantity_reserved + reserve_product_stock.quantity,
       updated_at = now()
@@ -654,130 +793,377 @@ $$;
 
 grant execute on function public.reserve_product_stock(text, integer) to anon, authenticated;
 
--- ============================================================
--- User hierarchy & admin management RPCs
--- ============================================================
+create unique index if not exists import_products_code_key
+  on public.products (code) where code <> '';
+create unique index if not exists import_clients_code_key
+  on public.clients (client_code) where client_code is not null and client_code <> '';
 
--- 1. Add hierarchy columns to app_users (idempotent).
-alter table public.app_users
-  add column if not exists supervisor_id uuid references public.app_users(id) on delete set null,
-  add column if not exists branch_name text default '';
-
--- 2. Add user (admin only). SECURITY DEFINER so RLS never blocks it.
 create or replace function public.add_app_user(
+  p_admin_id text,
+  p_admin_password text,
   p_username text,
   p_email text,
   p_role text,
   p_password text,
-  p_supervisor_id uuid default null,
-  p_branch_name text default null
+  p_branch_name text,
+  p_permissions jsonb
 )
 returns jsonb
 language plpgsql
 security definer
+set search_path = public, extensions
 as $$
 declare
   new_user public.app_users;
 begin
-  insert into public.app_users (username, email, role, password, is_active, supervisor_id, branch_name)
-  values (p_username, p_email, p_role, p_password, true, p_supervisor_id, p_branch_name)
+  if not public.verify_app_admin(p_admin_id, p_admin_password) then
+    raise exception 'Admin access required';
+  end if;
+  if length(trim(p_password)) < 8 then
+    raise exception 'Password must contain at least 8 characters';
+  end if;
+
+  insert into public.app_users (username, email, role, password, is_active, branch_name, permissions)
+  values (
+    trim(p_username), lower(trim(p_email)), p_role,
+    crypt(p_password, gen_salt('bf')), true,
+    coalesce(nullif(trim(p_branch_name), ''), 'المركز الرئيسي'),
+    coalesce(p_permissions, '{}'::jsonb)
+  )
   returning * into new_user;
 
   return jsonb_build_object(
-    'id', new_user.id,
-    'username', new_user.username,
-    'email', new_user.email,
-    'role', new_user.role,
-    'is_active', new_user.is_active,
-    'supervisor_id', new_user.supervisor_id,
-    'branch_name', new_user.branch_name
+    'id', new_user.id, 'username', new_user.username, 'email', new_user.email,
+    'role', new_user.role, 'branch', new_user.branch_name,
+    'permissions', new_user.permissions, 'source', 'app_users', 'is_active', true
   );
-exception when unique_violation then
-  raise exception 'Username or email already exists';
 end;
 $$;
 
--- 3. Update user role / status / supervisor / branch (admin only).
 create or replace function public.update_app_user(
+  p_admin_id text,
+  p_admin_password text,
   p_user_id uuid,
-  p_role text default null,
-  p_is_active boolean default null,
-  p_supervisor_id uuid default null,
-  p_branch_name text default null
+  p_role text,
+  p_is_active boolean,
+  p_branch_name text,
+  p_permissions jsonb,
+  p_new_password text
 )
 returns jsonb
 language plpgsql
 security definer
+set search_path = public, extensions
 as $$
 declare
   updated_user public.app_users;
 begin
+  if not public.verify_app_admin(p_admin_id, p_admin_password) then
+    raise exception 'Admin access required';
+  end if;
+  if p_new_password is not null and length(p_new_password) < 8 then
+    raise exception 'Password must contain at least 8 characters';
+  end if;
+
   update public.app_users
-  set
-    role = coalesce(p_role, role),
-    is_active = coalesce(p_is_active, is_active),
-    supervisor_id = coalesce(p_supervisor_id, supervisor_id),
-    branch_name = coalesce(p_branch_name, branch_name)
+  set role = coalesce(p_role, role),
+      is_active = coalesce(p_is_active, is_active),
+      branch_name = coalesce(nullif(trim(p_branch_name), ''), branch_name),
+      permissions = coalesce(p_permissions, permissions),
+      password = case when p_new_password is null then password
+                      else crypt(p_new_password, gen_salt('bf')) end
   where id = p_user_id
   returning * into updated_user;
 
+  if updated_user.id is null then
+    raise exception 'User not found';
+  end if;
+
   return jsonb_build_object(
-    'id', updated_user.id,
-    'username', updated_user.username,
-    'email', updated_user.email,
-    'role', updated_user.role,
-    'is_active', updated_user.is_active,
-    'supervisor_id', updated_user.supervisor_id,
-    'branch_name', updated_user.branch_name
+    'id', updated_user.id, 'username', updated_user.username, 'email', updated_user.email,
+    'role', updated_user.role, 'branch', updated_user.branch_name,
+    'permissions', updated_user.permissions, 'source', 'app_users',
+    'is_active', updated_user.is_active
   );
 end;
 $$;
 
--- 4. List all users with their supervisor names (admin dashboard).
-create or replace function public.list_all_users()
-returns jsonb
+revoke all on function public.add_app_user(text, text, text, text, text, text, text, jsonb) from public;
+revoke all on function public.update_app_user(text, text, uuid, text, boolean, text, jsonb, text) from public;
+grant execute on function public.add_app_user(text, text, text, text, text, text, text, jsonb) to anon, authenticated;
+grant execute on function public.update_app_user(text, text, uuid, text, boolean, text, jsonb, text) to anon, authenticated;
+
+create or replace function public.sheet_text(p_row jsonb, p_keys text[])
+returns text
 language sql
-security definer
+immutable
 as $$
-  select coalesce(
-    jsonb_agg(jsonb_build_object(
-      'id', u.id,
-      'username', u.username,
-      'email', u.email,
-      'role', u.role,
-      'is_active', u.is_active,
-      'branch_name', u.branch_name,
-      'supervisor_id', u.supervisor_id,
-      'supervisor_name', s.username,
-      'created_at', u.created_at
-    ) order by u.created_at desc),
-    '[]'::jsonb
-  )
-  from public.app_users u
-  left join public.app_users s on s.id = u.supervisor_id;
+  select value
+  from jsonb_each_text(coalesce(p_row, '{}'::jsonb)) as item(key, value)
+  where lower(trim(key)) = any (select lower(trim(candidate)) from unnest(p_keys) as keys(candidate))
+  limit 1;
 $$;
 
--- 5. List users by role (for supervisor assignment dropdowns).
-create or replace function public.list_users_by_role(p_role text)
-returns jsonb
-language sql
-security definer
+create or replace function public.sheet_number(p_value text)
+returns numeric
+language plpgsql
+immutable
 as $$
-  select coalesce(
-    jsonb_agg(jsonb_build_object(
-      'id', id,
-      'username', username,
-      'email', email,
-      'role', role,
-      'branch_name', branch_name
-    ) order by username),
-    '[]'::jsonb
-  )
-  from public.app_users
-  where role = p_role;
+declare
+  cleaned text;
+begin
+  cleaned := regexp_replace(coalesce(p_value, ''), '[^0-9.\-]', '', 'g');
+  if cleaned = '' or cleaned in ('-', '.') then return 0; end if;
+  return cleaned::numeric;
+exception when invalid_text_representation then
+  return 0;
+end;
 $$;
 
-grant execute on function public.add_app_user(text, text, text, text, uuid, text) to authenticated;
-grant execute on function public.update_app_user(uuid, text, boolean, uuid, text) to authenticated;
-grant execute on function public.list_all_users() to authenticated;
-grant execute on function public.list_users_by_role(text) to authenticated;
+create or replace function public.import_sheet_rows(
+  p_admin_id text,
+  p_admin_password text,
+  p_kind text,
+  p_rows jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+declare
+  row_data jsonb;
+  row_count integer := 0;
+  total_rows integer := 0;
+  row_code text;
+  row_name text;
+  row_email text;
+  found_id text;
+begin
+  if not public.verify_app_admin(p_admin_id, p_admin_password) then
+    raise exception 'Admin access required';
+  end if;
+  if jsonb_typeof(p_rows) <> 'array' or jsonb_array_length(p_rows) > 5000 then
+    raise exception 'Rows must be an array with at most 5000 records';
+  end if;
+
+  total_rows := jsonb_array_length(p_rows);
+
+  for row_data in select value from jsonb_array_elements(p_rows)
+  loop
+    if p_kind = 'products' then
+      row_code := coalesce(nullif(public.sheet_text(row_data, array['code','كود','كود الصنف','كود المنتج']), ''), gen_random_uuid()::text);
+      row_name := public.sheet_text(row_data, array['name','اسم الصنف','الصنف','اسم المنتج']);
+      if coalesce(row_name, '') = '' then continue; end if;
+      insert into public.products (code, name, department, category, price, piece_price, carton_price, stock, main_warehouse_actual, image_url)
+      values (
+        row_code, row_name,
+        coalesce(nullif(public.sheet_text(row_data, array['department','القسم','التصنيف']), ''), 'عام'),
+        coalesce(nullif(public.sheet_text(row_data, array['category','الفئة']), ''), 'عام'),
+        public.sheet_number(public.sheet_text(row_data, array['price','السعر','سعر الكرتونة','carton_price'])),
+        public.sheet_number(public.sheet_text(row_data, array['piece_price','سعر القطعة'])),
+        public.sheet_number(public.sheet_text(row_data, array['carton_price','سعر الكرتونة','price','السعر'])),
+        public.sheet_number(public.sheet_text(row_data, array['stock','المخزون','الرصيد','رصيد المخزن']))::integer,
+        public.sheet_number(public.sheet_text(row_data, array['stock','المخزون','الرصيد','رصيد المخزن']))::integer,
+        public.sheet_text(row_data, array['image_url','image','رابط الصورة','الصورة'])
+      )
+      on conflict (code) where code <> '' do update set
+        name = excluded.name, department = excluded.department, category = excluded.category,
+        price = excluded.price, piece_price = excluded.piece_price,
+        carton_price = excluded.carton_price, stock = excluded.stock,
+        main_warehouse_actual = excluded.main_warehouse_actual,
+        image_url = excluded.image_url;
+    elsif p_kind = 'clients' then
+      row_code := public.sheet_text(row_data, array['client_code','code','كود العميل','كود']);
+      row_name := public.sheet_text(row_data, array['client_name','name','اسم العميل','العميل']);
+      if coalesce(row_code, '') = '' or coalesce(row_name, '') = '' then continue; end if;
+      insert into public.clients (client_code, client_name, phone, address, branch, branch_name, mandoub_name, rep_name, balance, debt, credit_limit, overdue_balance)
+      values (
+        row_code, row_name,
+        public.sheet_text(row_data, array['phone','الهاتف','التليفون','رقم الهاتف']),
+        public.sheet_text(row_data, array['address','العنوان']),
+        public.sheet_text(row_data, array['branch','branch_name','الفرع']),
+        public.sheet_text(row_data, array['branch_name','branch','الفرع']),
+        public.sheet_text(row_data, array['mandoub_name','rep_name','المندوب','اسم المندوب']),
+        public.sheet_text(row_data, array['rep_name','mandoub_name','المندوب','اسم المندوب']),
+        public.sheet_number(public.sheet_text(row_data, array['balance','debt','المديونية','الرصيد'])),
+        public.sheet_number(public.sheet_text(row_data, array['debt','balance','المديونية','الرصيد'])),
+        public.sheet_number(public.sheet_text(row_data, array['credit_limit','حد الائتمان'])),
+        public.sheet_number(public.sheet_text(row_data, array['overdue_balance','المتأخرات']))
+      )
+      on conflict (client_code) where client_code is not null and client_code <> '' do update set
+        client_name = excluded.client_name, phone = excluded.phone, address = excluded.address,
+        branch = excluded.branch, branch_name = excluded.branch_name,
+        mandoub_name = excluded.mandoub_name, rep_name = excluded.rep_name,
+        balance = excluded.balance, debt = excluded.debt,
+        credit_limit = excluded.credit_limit, overdue_balance = excluded.overdue_balance;
+    elsif p_kind = 'reps' then
+      row_name := public.sheet_text(row_data, array['username','name','اسم المندوب','اسم المستخدم','الاسم']);
+      row_email := lower(public.sheet_text(row_data, array['email','البريد','البريد الإلكتروني','الايميل']));
+      if coalesce(row_name, '') = '' then continue; end if;
+      if coalesce(row_email, '') = '' then
+        row_email := lower(regexp_replace(row_name, '[^a-zA-Z0-9]+', '-', 'g')) || '-' || substr(gen_random_uuid()::text, 1, 8) || '@imported.invalid';
+      end if;
+      insert into public.app_users (username, email, role, password, is_active, branch_name, permissions)
+      values (
+        row_name, row_email,
+        coalesce(nullif(public.sheet_text(row_data, array['role','الدور','الوظيفة']), ''), 'sales_rep'),
+        crypt(gen_random_uuid()::text, gen_salt('bf')), true,
+        coalesce(nullif(public.sheet_text(row_data, array['branch_name','branch','الفرع']), ''), 'المركز الرئيسي'),
+        '{}'::jsonb
+      )
+      on conflict (username) do update set
+        email = excluded.email, role = excluded.role, branch_name = excluded.branch_name;
+    elsif p_kind = 'promotions' then
+      row_name := public.sheet_text(row_data, array['name','اسم العرض','العرض']);
+      if coalesce(row_name, '') = '' then continue; end if;
+      row_code := public.sheet_text(row_data, array['product_code','code','كود الصنف','كود المنتج']);
+      select id into found_id from public.promotions
+      where name = row_name and coalesce(product_code, '') = coalesce(row_code, '')
+      limit 1;
+      if found_id is null then
+        insert into public.promotions (name, product_code, branch_name, description, discount, promo_price, start_date, end_date, status)
+        values (
+          row_name, row_code,
+          public.sheet_text(row_data, array['branch_name','branch','الفرع']),
+          public.sheet_text(row_data, array['description','الوصف']),
+          public.sheet_number(public.sheet_text(row_data, array['discount','نسبة الخصم'])),
+          public.sheet_number(public.sheet_text(row_data, array['promo_price','سعر العرض','السعر'])),
+          nullif(public.sheet_text(row_data, array['start_date','تاريخ البداية']), '')::timestamptz,
+          nullif(public.sheet_text(row_data, array['end_date','تاريخ النهاية']), '')::timestamptz,
+          coalesce(nullif(public.sheet_text(row_data, array['status','الحالة']), ''), 'نشط')
+        );
+      else
+        update public.promotions set
+          branch_name = public.sheet_text(row_data, array['branch_name','branch','الفرع']),
+          description = public.sheet_text(row_data, array['description','الوصف']),
+          discount = public.sheet_number(public.sheet_text(row_data, array['discount','نسبة الخصم'])),
+          promo_price = public.sheet_number(public.sheet_text(row_data, array['promo_price','سعر العرض','السعر'])),
+          status = coalesce(nullif(public.sheet_text(row_data, array['status','الحالة']), ''), status)
+        where id = found_id;
+      end if;
+     elsif p_kind = 'suppliers' then
+       row_name := public.sheet_text(row_data, array['name','اسم المورد','المورد']);
+       if coalesce(row_name, '') = '' then continue; end if;
+       row_code := public.sheet_text(row_data, array['code','كود المورد']);
+       insert into public.suppliers (code, name, phone, address, email, tax_number, contact_person, notes, is_active)
+       values (
+         row_code, row_name,
+         public.sheet_text(row_data, array['phone','الهاتف']),
+         public.sheet_text(row_data, array['address','العنوان']),
+         lower(public.sheet_text(row_data, array['email','البريد الإلكتروني'])),
+         public.sheet_text(row_data, array['tax_number','الرقم الضريبي']),
+         public.sheet_text(row_data, array['contact_person','جهة الاتصال']),
+         public.sheet_text(row_data, array['notes','ملاحظات']),
+         coalesce(nullif(public.sheet_text(row_data, array['is_active','الحالة']), ''), 'نشط') = 'نشط'
+       )
+       on conflict (code) where code is not null and code <> '' do update set
+         name = excluded.name, phone = excluded.phone, address = excluded.address,
+         email = excluded.email, tax_number = excluded.tax_number,
+         contact_person = excluded.contact_person, notes = excluded.notes,
+         is_active = excluded.is_active;
+
+     elsif p_kind = 'expenses' then
+       row_name := public.sheet_text(row_data, array['category','الفئة','نوع النفقة']);
+       if coalesce(row_name, '') = '' then continue; end if;
+       insert into public.expenses (branch_name, rep_name, supplier_name, category, amount, payment_method, date, notes)
+       values (
+         coalesce(nullif(public.sheet_text(row_data, array['branch_name','branch','الفرع']), ''), 'المركز الرئيسي'),
+         public.sheet_text(row_data, array['rep_name','المندوب']),
+         public.sheet_text(row_data, array['supplier_name','اسم المورد']),
+         row_name,
+         public.sheet_number(public.sheet_text(row_data, array['amount','المبلغ','المصاريف','quantity','الكمية'])),
+         coalesce(nullif(public.sheet_text(row_data, array['payment_method','طريقة الدفع']), ''), 'نقدي'),
+         nullif(public.sheet_text(row_data, array['date','التاريخ']), '')::date,
+         public.sheet_text(row_data, array['notes','ملاحظات'])
+       );
+     else
+       raise exception 'Unsupported import type';
+     end if;
+     row_count := row_count + 1;
+   end loop;
+
+  return jsonb_build_object(
+    'kind', p_kind,
+    'imported', row_count,
+    'skipped', (total_rows - row_count)
+  );
+end;
+$$;
+
+revoke all on function public.import_sheet_rows(text, text, text, jsonb) from public;
+grant execute on function public.import_sheet_rows(text, text, text, jsonb) to anon, authenticated;
+
+-- ============================================================
+-- دوال مساعدة للموردين والمصروفات
+-- ============================================================
+
+create or replace function public.fetch_suppliers(
+  p_branch_name text default null
+)
+returns jsonb
+language sql
+security invoker
+set search_path = public
+as $$
+  select coalesce(jsonb_agg(row_to_json(s)), '[]'::jsonb)
+  from public.suppliers s
+  where s.is_active
+    and (p_branch_name is null or s.name ilike '%' || p_branch_name || '%')
+  order by s.name;
+$$;
+
+create or replace function public.log_expense(
+  p_branch_name text,
+  p_supplier_id text,
+  p_category text,
+  p_amount numeric,
+  p_payment_method text default 'نقدي',
+  p_date date default current_date,
+  p_notes text default null
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  new_expense public.expenses;
+begin
+  insert into public.expenses (
+    branch_name, supplier_id, supplier_name, category,
+    amount, payment_method, date, notes
+  ) values (
+    p_branch_name, p_supplier_id, null, p_category,
+    p_amount, p_payment_method, p_date, p_notes
+  )
+  returning * into new_expense;
+
+  return to_jsonb(new_expense);
+end;
+$$;
+
+create or replace function public.soft_delete_record(
+  p_table_name text,
+  p_record_id text
+)
+returns boolean
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if p_table_name not in ('products', 'customers', 'invoices', 'visits', 'returns', 'suppliers', 'expenses') then
+    return false;
+  end if;
+
+  execute format('update public.%I set deleted_at = now() where id = $1 and deleted_at is null', p_table_name)
+  using p_record_id;
+
+  return found;
+end;
+$$;
+
+grant execute on function public.fetch_suppliers(text) to anon, authenticated;
+grant execute on function public.log_expense(text, text, text, numeric, text, date, text) to anon, authenticated;
+grant execute on function public.soft_delete_record(text, text) to anon, authenticated;

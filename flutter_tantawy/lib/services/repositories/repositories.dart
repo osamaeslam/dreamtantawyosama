@@ -8,3 +8,4 @@ export 'visit_repository.dart';
 export 'forecast_repository.dart';
 export 'analytics_repository.dart';
 export 'returns_repository.dart';
+export 'supplier_expense_repository.dart';

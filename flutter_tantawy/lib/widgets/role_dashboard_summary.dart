@@ -24,6 +24,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
   List<TargetRecord> _targets = [];
   List<CustomerAnalytics> _customers = [];
   List<ParentProduct> _products = [];
+  double _expensesTotal = 0;
   bool _isLoading = true;
   String? _error;
 
@@ -57,6 +58,8 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
     List<TargetRecord> targets = [];
     List<CustomerAnalytics> customers = [];
     List<ParentProduct> products = [];
+    final isTeamRole =
+        _rbac.isAdmin || _rbac.isSupervisor || _rbac.isBranchManager;
 
     try {
       await Future.wait([
@@ -99,6 +102,15 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
           products = await service.fetchParentProducts(
             branchName: branchName,
           );
+        }(),
+        () async {
+          if (isTeamRole) {
+            _expensesTotal = await service.sumExpenses(
+              branchName: branchName,
+              startDate: _fromDate,
+              endDate: endDateExclusive,
+            );
+          }
         }(),
       ]);
 
@@ -301,13 +313,13 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
             .clamp(0.0, 1.0)
             .toDouble()
         : 0.0;
-    final isTeamRole =
-        _rbac.isAdmin || _rbac.isSupervisor || _rbac.isBranchManager;
     final hasData = _invoices.isNotEmpty ||
         _visits.isNotEmpty ||
         _targets.isNotEmpty ||
         _customers.isNotEmpty ||
         _products.isNotEmpty;
+    final isTeamRole =
+        _rbac.isAdmin || _rbac.isSupervisor || _rbac.isBranchManager;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -458,6 +470,15 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
                         icon: Icons.local_shipping_outlined,
                         color: AppTheme.infoBlue,
                       ),
+                      if (isTeamRole)
+                        _metricCard(
+                          width: width,
+                          title: 'مصروفات الفرع',
+                          value: currency.format(_expensesTotal),
+                          subtitle: 'خلال الفترة المحددة',
+                          icon: Icons.money_off_outlined,
+                          color: AppTheme.roseRed,
+                        ),
                     ],
                   );
                 },
