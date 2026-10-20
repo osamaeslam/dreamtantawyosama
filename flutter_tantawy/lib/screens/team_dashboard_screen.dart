@@ -185,41 +185,40 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: BarChart(
-        BarChartData(
-          borderData: FlBorderData(show: false),
-          gridBars: const FlGridData(show: false),
-          titlesData: FlTitlesData(
-            show: true,
-            topTitles: const AxisTitles(sideTitles: SideTitles(show: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(show: false)),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                show: true,
-                getTitlesWidget: (value, meta) {
-                  final idx = value.toInt();
-                  if (idx < 0 || idx >= _reps.length) return const SizedBox.shrink();
-                  final name = _reps[idx].repName.split(' ').first;
-                  return SideTitleWidget(
-                    child: Text(name,
-                        style: GoogleFonts.cairo(fontSize: 9)),
-                  );
-                },
-              ),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(show: true, getTitlesWidget: _currencyTitle),
-            ),
-          ),
-          barChartGroups: spots.asMap().entries.map((e) {
-            return BarChartGroupData(
-              x: e.key,
-              barRods: [BarChartRodData(toY: e.value.y, color: AppTheme.infoBlue, width: 22)],
-              barTouchData: BarTouchData(enabled: true),
-            );
-          }).toList(),
-        ),
-      ),
+       child: BarChart(
+         BarChartData(
+           borderData: FlBorderData(show: false),
+           gridData: const FlGridData(show: false),
+           titlesData: FlTitlesData(
+             topTitles: AxisTitles(sideTitles: SideTitles(show: false)),
+             rightTitles: AxisTitles(sideTitles: SideTitles(show: false)),
+             bottomTitles: AxisTitles(
+               sideTitles: SideTitles(
+                 show: true,
+                 getTitlesWidget: (value, meta) {
+                   final idx = value.toInt();
+                   if (idx < 0 || idx >= _reps.length) return const SizedBox.shrink();
+                   final name = _reps[idx].repName.split(' ').first;
+                   return SideTitleWidget(
+                     child: Text(name,
+                         style: GoogleFonts.cairo(fontSize: 9)),
+                   );
+                 },
+               ),
+             ),
+             leftTitles: AxisTitles(
+               sideTitles: SideTitles(show: true, getTitlesWidget: _currencyTitle),
+             ),
+           ),
+           barChartGroups: spots.asMap().entries.map((e) {
+             return BarChartGroupData(
+               x: e.key,
+               barRods: [BarChartRodData(toY: e.value.y, color: AppTheme.infoBlue, width: 22)],
+               barTouchData: BarTouchData(enabled: true),
+             );
+           }).toList(),
+         ),
+       ),
     );
   }
 
