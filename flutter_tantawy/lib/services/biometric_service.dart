@@ -15,7 +15,9 @@ class BiometricService {
 
   Future<bool> isAvailable() async {
     try {
-      return await _auth.deviceSupportsBiometricAuth();
+      // Returns true if the device supports any biometric authentication
+      // (Touch ID, Face ID, fingerprint, etc.)
+      return await _auth.isDeviceSupported();
     } catch (e) {
       return false;
     }

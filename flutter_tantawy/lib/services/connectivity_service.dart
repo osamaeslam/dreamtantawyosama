@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
+import '../models/models.dart';
+
 /// **Real** connectivity verification — not just a network-interface signal.
 ///
 /// Many offline-first apps gate on `ConnectivityResult` which merely reports

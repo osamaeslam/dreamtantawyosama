@@ -8,6 +8,9 @@ import '../models/models.dart';
 import 'biometric_service.dart';
 import 'connectivity_service.dart';
 
+/// Signature of the credential-validation callback used by [AuthService.login].
+typedef LoginValidator = Future<AppUser?> Function(String username, String password);
+
 /// Authentication service handling:
 /// 1. **Domain-based login** — credentials validated against YOUR Supabase
 ///    `users` table (configured via AppConfig credentials), not a generic
@@ -46,7 +49,7 @@ class AuthService {
   Future<AppUser?> login({
     required String username,
     required String password,
-    required Future<AppUser?> Function(String, String)> loginFn,
+    required LoginValidator loginFn,
   }) async {
     final isOnline = await _connectivity.pingServer();
     if (!isOnline) {
@@ -166,12 +169,9 @@ class AuthService {
   /// Quick re-entry check: if biometrics enabled + cached session exists,
   /// the user can skip the login screen entirely.
   Future<bool> canQuickUnlock() async {
-    final hasBiometrics = await canUseBiometric();
+    final hasBiometrics = await canUseBiometrics();
     if (!hasBiometrics) return false;
     final cached = await getCachedUser(maxAge: const Duration(days: 7));
     return cached != null;
   }
-
-  // Platform-specific biometric availability check wrapper.
-  Future<bool> canUseBiometric() => _biometrics.isAvailable();
 }

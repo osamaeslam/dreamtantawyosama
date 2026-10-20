@@ -105,7 +105,7 @@ class _VisitsScreenState extends State<VisitsScreen> {
     return visits.where((visit) =>
         visit.date.year == _selectedDate!.year &&
         visit.date.month == _selectedDate!.month &&
-        visit.date.day == _selectedDate!.day);
+        visit.date.day == _selectedDate!.day).toList();
   }
 
   Future<void> _saveCache(List<CustomerVisit> visits) async {

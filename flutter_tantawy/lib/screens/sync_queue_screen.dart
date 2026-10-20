@@ -26,17 +26,15 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
     final cardColor = isDark ? AppTheme.darkCard : Colors.white;
     final borderColor = isDark ? AppTheme.darkBorder : AppTheme.borderColor;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('طابور المزامنة', style: GoogleFonts.cairo()),
-        bottom: AppBar(
-          backgroundColor: isDark ? AppTheme.cardSlate : AppTheme.backgroundLight,
-          title: const ConnectionStatusBar(),
-          automaticallyImplyLeading: false,
-          toolbarHeight: 32,
-        ),
-        bottom: Tab(
-          child: Padding(
+return Scaffold(
+  appBar: AppBar(
+    title: Text('طابور المزامنة', style: GoogleFonts.cairo()),
+    bottom: PreferredSize(
+      preferredSize: const Size.fromHeight(72),
+      child: Column(
+        children: [
+          const ConnectionStatusBar(),
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             child: SegmentedButton<int>(
               style: SegmentedButton.styleFrom(
@@ -49,11 +47,13 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
                 ButtonSegment(value: 2, label: Text('مكتمل')),
               ],
               selected: {_selectedTab},
-              onValueChanged: (v) => setState(() => _selectedTab = v.first),
+              onSelectionChanged: (v) => setState(() => _selectedTab = v.first),
             ),
           ),
-        ),
+        ],
       ),
+    ),
+  ),
       body: Consumer<OfflineQueueService>(
         builder: (context, queue, _) {
           if (queue.allItems.isEmpty && _selectedTab != 0) {
@@ -208,15 +208,15 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.cloud_check,
-            size: 64,
-            color: Theme.of(context).hintColor,
-          ),
+return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cloud_done,
+              size: 64,
+              color: Theme.of(context).hintColor,
+            ),
           const SizedBox(height: 16),
           Text(
             'الطابور فارغ — كل الإجراءات متماثلة',

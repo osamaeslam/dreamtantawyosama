@@ -220,7 +220,13 @@ class OfflineQueueService extends ChangeNotifier {
 
   /// Manual retry for a single failed item, exposed to the UI.
   Future<void> retryItem(String id) async {
-    final action = _queue.firstWhere((e) => e.id == id, orElse: () => null);
+    OfflineAction? action;
+    for (final a in _queue) {
+      if (a.id == id) {
+        action = a;
+        break;
+      }
+    }
     if (action == null) return;
     // Reset status so _drainQueue picks it up
     action.status = OfflineItemStatus.pending;
@@ -236,7 +242,13 @@ class OfflineQueueService extends ChangeNotifier {
 
   /// Manual skip for a single item.
   Future<void> skipItem(String id) async {
-    final action = _queue.firstWhere((e) => e.id == id, orElse: () => null);
+    OfflineAction? action;
+    for (final a in _queue) {
+      if (a.id == id) {
+        action = a;
+        break;
+      }
+    }
     if (action == null) return;
     action.status = OfflineItemStatus.skipped;
     action.updatedAt = DateTime.now();

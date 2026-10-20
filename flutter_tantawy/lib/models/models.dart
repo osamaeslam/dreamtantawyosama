@@ -2895,19 +2895,19 @@ enum OfflineItemStatus { pending, processing, failed, completed, skipped }
 /// عنصر في طابور المزامنة غير المتصل.
 /// يُخزّن في shared_preferences ويُعاد محاكاتها حسب الحاجة.
 class OfflineAction {
-  final String id;
-  final OfflineActionType type;
-  final Map<String, dynamic> payload;
-  final String branchName;
-  final String repName;
-  final String repId;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final OfflineItemStatus status;
-  final String? errorMessage;
-  final int retryCount;
-  final List<String>? attachedImagePaths;
-  final String? serverId;
+  String id;
+  OfflineActionType type;
+  Map<String, dynamic> payload;
+  String branchName;
+  String repName;
+  String repId;
+  DateTime createdAt;
+  DateTime? updatedAt;
+  OfflineItemStatus status;
+  String? errorMessage;
+  int retryCount;
+  List<String>? attachedImagePaths;
+  String? serverId;
 
   OfflineAction({
     required this.id,

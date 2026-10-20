@@ -172,14 +172,14 @@ class RepDashboardScreen extends StatelessWidget {
     ];
   }
 
-   String _roleLabel => switch (currentUser.role) {
-       'admin' => 'الإدارة العامة',
-       'developer' => 'الإدارة العامة',
-       'manager' => 'المدير العام',
-       'branch_manager' => 'مدير الفرع',
-       'supervisor' => 'مشرف المناديب',
-       _ => 'مندوب مبيعات',
-     };
+String _roleLabel() => switch (currentUser.role) {
+        'admin' => 'الإدارة العامة',
+        'developer' => 'الإدارة العامة',
+        'manager' => 'المدير العام',
+        'branch_manager' => 'مدير الفرع',
+        'supervisor' => 'مشرف المناديب',
+        _ => 'مندوب مبيعات',
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +433,7 @@ class RepDashboardScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$_roleLabel  •  ${currentUser.branchName}',
+                  '${_roleLabel()}  •  ${currentUser.branchName}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.cairo(

@@ -114,12 +114,12 @@ class SupabaseService {
     if (storedHash.isEmpty || password.isEmpty) return false;
 
     // Django SHA256 format: sha256$iterations$salt$hash
-    if (storedHash.startsWith('sha256$')) {
+    if (storedHash.startsWith('sha256\$')) {
       return _verifyDjangoSha256(password, storedHash);
     }
 
     // bcrypt format: $2a$, $2b$, $2y$
-    if (storedHash.startsWith('\$2') || storedHash.toLowerCase().startsWith('bcrypt$')) {
+    if (storedHash.startsWith('\$2') || storedHash.toLowerCase().startsWith('bcrypt\$')) {
       return _verifyBcrypt(password, storedHash);
     }
 
@@ -145,7 +145,7 @@ class SupabaseService {
       final salt = parts[2];
       final expectedHash = parts[3];
 
-      var bytes = utf8.encode(password + salt);
+      List<int> bytes = utf8.encode(password + salt);
       for (int i = 0; i < iterations; i++) {
         bytes = sha256.convert(bytes).bytes;
       }
@@ -162,7 +162,7 @@ class SupabaseService {
   bool _verifyBcrypt(String password, String storedHash) {
     try {
       // Handle bcrypt$ prefix format
-      final hash = storedHash.toLowerCase().startsWith('bcrypt$')
+      final hash = storedHash.toLowerCase().startsWith('bcrypt\$')
           ? storedHash.substring(7)
           : storedHash;
 
