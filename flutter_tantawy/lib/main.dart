@@ -57,14 +57,6 @@ class TantawyGroupApp extends StatelessWidget {
   // as soon as the app returns to the foreground.
   @override
   Widget build(BuildContext context) {
-    final defaultUser = AppUser(
-      id: 'usr_001',
-      name: 'مندوب الطنطاوي',
-      username: 'rep_tantawy',
-      role: 'sales_rep',
-      branchName: 'فرع القاهرة الكبرى',
-      phone: '01012345678',
-    );
 
     return Consumer<ThemeModeProvider>(
       builder: (context, themeProvider, child) {

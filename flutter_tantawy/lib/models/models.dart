@@ -41,13 +41,25 @@ class AppUser {
     this.registrationDate,
   });
 
+  static String normalizeUserRole(String? raw) {
+    if (raw == null) return 'sales_rep';
+    final lower = raw.trim().toLowerCase();
+    if (lower == 'ادمن' || lower.contains('admin') || lower == 'مدير عام') return 'admin';
+    if (lower.contains('مشرف') || lower.contains('supervisor')) return 'supervisor';
+    if (lower.contains('مدير فرع') || lower.contains('manager')) return 'branch_manager';
+    if (lower.contains('مندوب') || lower.contains('rep')) return 'sales_rep';
+    return raw;
+  }
+
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    final rawRole = json['role']?.toString();
+    final normalizedRole = normalizeUserRole(rawRole);
     return AppUser(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      username: json['username']?.toString() ?? '',
-      role: json['role']?.toString() ?? 'sales_rep',
-      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString() ?? 'المركز الرئيسي',
+      username: json['username']?.toString() ?? json['email']?.toString() ?? json['id']?.toString() ?? '',
+      role: normalizedRole,
+      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString() ?? json['branch']?.toString() ?? 'المركز الرئيسي',
       phone: json['phone']?.toString() ?? '',
       supervisorName: json['supervisorName']?.toString() ?? json['supervisor_name']?.toString(),
       supervisorId: json['supervisorId']?.toString() ?? json['supervisor_id']?.toString(),
@@ -55,7 +67,7 @@ class AppUser {
       avatar: json['avatar']?.toString(),
       isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
       approvalStatus: json['approvalStatus']?.toString() ?? json['approval_status']?.toString() ?? 'active',
-      code: json['code']?.toString(),
+      code: json['code']?.toString() ?? json['id']?.toString(),
       commissionRate: _toDouble(json['commissionRate'] ?? json['commission_rate']),
       registrationDate: json['registrationDate']?.toString() ?? json['registration_date']?.toString(),
     );
@@ -344,22 +356,28 @@ class Customer {
   bool get isOverCreditLimit => creditLimit > 0 && currentBalance > creditLimit;
 
   factory Customer.fromJson(Map<String, dynamic> json) {
+    final meta = json['metadata'] is Map<String, dynamic> ? json['metadata'] as Map<String, dynamic> : null;
     return Customer(
-      id: json['id']?.toString() ?? '',
-      code: json['code']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      storeName: json['storeName']?.toString() ?? json['store_name']?.toString() ?? json['name']?.toString() ?? '',
-      phone: json['phone']?.toString() ?? '',
-      address: json['address']?.toString(),
-      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString() ?? '',
+      id: json['id']?.toString() ?? json['client_code']?.toString() ?? '',
+      code: json['code']?.toString() ?? json['client_code']?.toString() ?? '',
+      name: json['name']?.toString() ?? json['client_name']?.toString() ?? '',
+      storeName: json['storeName']?.toString() ?? json['store_name']?.toString() ?? json['client_name']?.toString() ?? json['name']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? meta?['phone']?.toString() ?? '',
+      address: json['address']?.toString() ?? meta?['address']?.toString() ?? meta?['district']?.toString(),
+      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString() ?? json['branch']?.toString() ?? meta?['branch']?.toString() ?? '',
       repName: json['repName']?.toString() ??
           json['rep_name']?.toString() ??
+          json['mandoub_name']?.toString() ??
+          json['mandoubName']?.toString() ??
+          meta?['mandoubName']?.toString() ??
+          meta?['mandoub_name']?.toString() ??
           json['salesRepName']?.toString() ??
           json['sales_rep_name']?.toString(),
-      currentBalance: (json['balance'] ?? json['currentBalance'] ?? json['current_balance'] ?? 0).toDouble(),
-      creditLimit: (json['creditLimit'] ?? json['credit_limit'] ?? 0).toDouble(),
+      currentBalance: (json['balance'] ?? json['currentBalance'] ?? json['current_balance'] ?? json['debt'] ?? meta?['debt'] ?? 0).toDouble(),
+      creditLimit: (json['creditLimit'] ?? json['credit_limit'] ?? meta?['creditLimit'] ?? 0).toDouble(),
       overdueBalance: (json['overdueBalance'] ??
               json['overdue_balance'] ??
+              meta?['overdue2026'] ??
               json['totalOverdue'] ??
               json['total_overdue'] ??
               0)
@@ -1000,21 +1018,22 @@ class CustomerVisit {
 
   factory CustomerVisit.fromJson(Map<String, dynamic> json) {
     final location = json['location'] as Map<String, dynamic>?;
+    final dateStr = json['timestamp'] ?? json['date'] ?? json['created_at'];
     return CustomerVisit(
       id: json['id']?.toString() ?? '',
-      customerId: json['customerId']?.toString() ?? json['customer_id']?.toString() ?? '',
-      customerName: json['customerName']?.toString() ?? json['customer_name']?.toString() ?? '',
-      repName: json['repName']?.toString() ?? json['rep_name']?.toString() ?? '',
-      date: json['date'] != null ? DateTime.tryParse(json['date'].toString()) ?? DateTime.now() : DateTime.now(),
-      type: json['type']?.toString() ?? 'زيارة دورية',
-      outcome: json['outcome']?.toString() ?? 'متابعة فقط',
-      collectedAmount: (json['collectedAmount'] ?? json['collected_amount'] ?? 0).toDouble(),
+      customerId: json['client_code']?.toString() ?? json['customerId']?.toString() ?? json['customer_id']?.toString() ?? '',
+      customerName: json['client_name']?.toString() ?? json['customerName']?.toString() ?? json['customer_name']?.toString() ?? '',
+      repName: json['mandoub_name']?.toString() ?? json['repName']?.toString() ?? json['rep_name']?.toString() ?? '',
+      date: dateStr != null ? DateTime.tryParse(dateStr.toString()) ?? DateTime.now() : DateTime.now(),
+      type: json['type']?.toString() ?? 'تحصيل',
+      outcome: json['outcome']?.toString() ?? json['type']?.toString() ?? 'تحصيل',
+      collectedAmount: _toDouble(json['amount'] ?? json['collectedAmount'] ?? json['collected_amount'] ?? 0) ?? 0,
       notes: json['notes']?.toString(),
       latitude: _toDouble(location?['latitude']),
       longitude: _toDouble(location?['longitude']),
-      customerCode: json['customerCode']?.toString() ?? json['customer_code']?.toString(),
-      repId: json['repId']?.toString() ?? json['rep_id']?.toString(),
-      branchName: json['branchName']?.toString() ?? json['branch_name']?.toString(),
+      customerCode: json['client_code']?.toString() ?? json['customerCode']?.toString() ?? json['customer_code']?.toString(),
+      repId: json['mandoub_id']?.toString() ?? json['repId']?.toString() ?? json['rep_id']?.toString(),
+      branchName: json['branch']?.toString() ?? json['branchName']?.toString() ?? json['branch_name']?.toString(),
       supervisorId: json['supervisorId']?.toString() ?? json['supervisor_id']?.toString(),
       supervisorName: json['supervisorName']?.toString() ?? json['supervisor_name']?.toString(),
       status: json['status']?.toString(),

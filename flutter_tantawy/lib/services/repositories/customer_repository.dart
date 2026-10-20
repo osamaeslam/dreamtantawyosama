@@ -10,49 +10,29 @@ class CustomerRepository extends BaseRepository {
     String? repId,
     String? branchName,
   }) async {
+    // 1. Try querying 'clients' table (user's real database table with clients)
     try {
-      if (repName != null &&
-          repName.isNotEmpty &&
-          repId != null &&
-          repId.isNotEmpty) {
-        final byName = client
-            .from('customers')
-            .select()
-            .eq('rep_name', repName);
-        final byId = client
-            .from('customers')
-            .select()
-            .eq('sales_rep_id', repId);
-        final bySalesRepName = client
-            .from('customers')
-            .select()
-            .eq('sales_rep_name', repName);
-        final results = await Future.wait([
-          branchName == null || branchName.isEmpty
-              ? byName.order('name')
-              : byName.eq('branch_name', branchName).order('name'),
-          branchName == null || branchName.isEmpty
-              ? byId.order('name')
-              : byId.eq('branch_name', branchName).order('name'),
-          branchName == null || branchName.isEmpty
-              ? bySalesRepName.order('name')
-              : bySalesRepName
-                  .eq('branch_name', branchName)
-                  .order('name'),
-        ]);
-        final unique = <String, Map<String, dynamic>>{};
-        for (final row in results.expand((result) => result)) {
-          final customer = row as Map<String, dynamic>;
-          unique[customer['id']?.toString() ?? ''] = customer;
-        }
-        return unique.values.map(Customer.fromJson).toList();
+      var query = client.from('clients').select();
+      if (repName != null && repName.isNotEmpty) {
+        query = query.or('mandoub_name.ilike.%$repName%,rep_name.ilike.%$repName%');
       }
+      if (branchName != null && branchName.isNotEmpty && branchName != 'المركز الرئيسي' && branchName != 'كل الفروع') {
+        query = query.ilike('branch', '%$branchName%');
+      }
+      final data = await query.order('client_name');
+      final list = (data as List<dynamic>)
+          .map((e) => Customer.fromJson(e as Map<String, dynamic>))
+          .toList();
+      if (list.isNotEmpty) return list;
+    } catch (e) {
+      logError('fetchCustomers from clients', e);
+    }
 
+    // 2. Fallback to 'customers' table
+    try {
       var query = client.from('customers').select();
       if (repName != null && repName.isNotEmpty) {
         query = query.eq('rep_name', repName);
-      } else if (repId != null && repId.isNotEmpty) {
-        query = query.eq('sales_rep_id', repId);
       }
       if (branchName != null && branchName.isNotEmpty) {
         query = query.eq('branch_name', branchName);
@@ -62,8 +42,8 @@ class CustomerRepository extends BaseRepository {
           .map((e) => Customer.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      logError('fetchCustomers', e);
-      rethrow;
+      logError('fetchCustomers from customers', e);
+      return [];
     }
   }
 

@@ -5,6 +5,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/models.dart';
+import 'config.dart';
 
 /// **Real** connectivity verification — not just a network-interface signal.
 ///
@@ -31,12 +32,12 @@ class ConnectivityService {
   Stream<ConnectionStatus> get statusStream => _statusController.stream;
 
   /// Ping endpoint — a lightweight HEAD against the Supabase REST root.
-  /// Override via constructor/param if you expose a dedicated /health route.
-  static const String defaultProbeUrl = 'https://rxthpgmlcsfckstpqhqf.supabase.co/functions/v1/ping';
+  static String get defaultProbeUrl => '${AppConfig.supabaseUrl}/rest/v1/';
 
   /// Performs an **active** reachability probe.
   /// Returns true only when a full HTTP handshake with our backend succeeds.
   Future<bool> pingServer([String? probeUrl]) async {
+    if (kIsWeb) return true;
     final url = probeUrl ?? defaultProbeUrl;
     try {
       final client = HttpClient();

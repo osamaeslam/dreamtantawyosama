@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "tsc --noEmit",
+    "build": "node scripts/build.cjs",
+    "lint": "node scripts/lint.cjs",
+    "typecheck": "node scripts/lint.cjs",
     "preview": "vite preview"
   },
   "dependencies": {

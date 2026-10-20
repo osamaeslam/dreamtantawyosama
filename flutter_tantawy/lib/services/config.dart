@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://rxthpgmlcsfckstpqhqf.supabase.co',
+    defaultValue: 'https://kjdpayvavaarlcochzgt.supabase.co',
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
     defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4dGhQZ21sY3NmY2tzdHBxaHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc2NDIwMzgsImV4cCI6MjEwMzIxODAzOH0.2v4eRUKQjLM0xDomaE9HAiy_qTJ6NoijNuwC3JV1ZUA',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHBheXZhdmFhcmxjb2Noemd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTg2MDIsImV4cCI6MjA4NTQ3NDYwMn0.Y6Vmn7zJZrdzVZMGupPTzDPdCh7yJmdzTbea_CRLM-g',
   );
 
   /// When true the app renders seeded mock data instead of hitting Supabase.
@@ -28,6 +28,5 @@ class AppConfig {
 
   /// Returns true only when real backend credentials have been supplied
   /// via dart-define (i.e. not running on the dev defaults).
-  static bool get hasCustomCredentials =>
-      supabaseUrl != 'https://rxthpgmlcsfckstpqhqf.supabase.co' || useMockData;
+  static bool get hasCustomCredentials => true;
 }

@@ -15,40 +15,36 @@ class VisitRepository extends BaseRepository {
   }) async {
     try {
       var query = client.from('visits').select();
-      if (repName != null) {
-        query = query.eq('rep_name', repName);
+      if (repName != null && repName.isNotEmpty) {
+        query = query.or('mandoub_name.ilike.%$repName%,rep_name.ilike.%$repName%');
       }
-      if (branchName != null && branchName.isNotEmpty) {
-        query = query.eq('branch_name', branchName);
+      if (branchName != null && branchName.isNotEmpty && branchName != 'المركز الرئيسي' && branchName != 'كل الفروع') {
+        query = query.ilike('branch', '%$branchName%');
       }
-      if (date != null) {
-        final start = DateTime(date.year, date.month, date.day);
-        final end = start.add(const Duration(days: 1));
-        query = query
-            .gte('date', start.toIso8601String())
-            .lt('date', end.toIso8601String());
-      } else {
-        if (startDate != null) {
-          query = query.gte('date', startDate.toIso8601String());
-        }
-        if (endDateExclusive != null) {
-          query = query.lt('date', endDateExclusive.toIso8601String());
-        }
-      }
-      query = query.or('is_archived.is.null,is_archived.eq.false');
-      final data = await query.order('date', ascending: false);
+      final data = await query.order('id', ascending: false);
       return (data as List<dynamic>)
           .map((e) => CustomerVisit.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
       logError('fetchVisits', e);
-      rethrow;
+      return [];
     }
   }
 
   Future<bool> logVisit(CustomerVisit visit) async {
     try {
-      await client.from('visits').insert(visit.toJson());
+      final payload = {
+        'mandoub_id': visit.repId ?? '',
+        'mandoub_name': visit.repName,
+        'client_code': visit.customerCode ?? visit.customerId,
+        'client_name': visit.customerName,
+        'type': visit.type,
+        'amount': visit.collectedAmount,
+        'notes': visit.notes ?? '',
+        'timestamp': DateTime.now().toIso8601String(),
+        'branch': visit.branchName ?? 'المركز الرئيسي',
+      };
+      await client.from('visits').insert(payload);
       return true;
     } catch (e) {
       logError('logVisit', e);

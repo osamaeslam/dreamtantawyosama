@@ -78,27 +78,32 @@ class SupabaseService {
   // ===================== تسجيل الدخول والمصادقة (Authentication) =====================
   Future<AppUser?> login(String username, String password) async {
     final clean = username.trim();
+    final cleanPass = password.trim();
     try {
-      final response = await client
+      final responseList = await client
           .from('users')
           .select()
-          .or('username.eq.$clean,phone.eq.$clean,email.eq.$clean')
-          .maybeSingle();
+          .or('email.ilike.%$clean%,name.ilike.%$clean%,id.eq.$clean')
+          .limit(1);
 
-      if (response != null) {
+      if (responseList.isNotEmpty) {
+        final response = Map<String, dynamic>.from(responseList.first);
         final storedHash = response['password']?.toString() ?? '';
-        final isActive = response['is_active'] as bool? ??
-            (response['is_active'] == 1);
+        final isActive = response['is_active'] == null
+            ? true
+            : (response['is_active'] == true ||
+                response['is_active'] == 1 ||
+                response['is_active'] == 'active');
 
-        if (isActive && _verifyPassword(password, storedHash)) {
-          return AppUser.fromJson(Map<String, dynamic>.from(response));
+        if (isActive && (storedHash == cleanPass || _verifyPassword(cleanPass, storedHash))) {
+          return AppUser.fromJson(response);
         }
 
         debugPrint('Login failed for $clean — password mismatch or inactive user');
         return null;
       }
     } catch (e) {
-      debugPrint('Supabase login query error (or offline mode): $e');
+      debugPrint('Supabase login query error: $e');
     }
 
     return null;

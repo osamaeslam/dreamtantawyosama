@@ -35,7 +35,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (username.isEmpty) {
       setState(() {
-        _errorMessage = 'يرجى إدخال اسم المستخدم أو رقم الهاتف';
+        _errorMessage = 'يرجى إدخال البريد الإلكتروني أو اسم المستخدم';
       });
       return;
     }
@@ -273,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: Text(
-                        'اسم المستخدم / الهاتف / الكود:',
+                        'البريد الإلكتروني أو اسم المستخدم:',
                         style: GoogleFonts.cairo(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -288,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: inputBg,
-                        hintText: 'مثال: ahmed_rep أو 01012345678',
+                        hintText: 'مثال: admin@dream.com أو حسن محمد',
                         hintStyle: GoogleFonts.cairo(fontSize: 11, color: Colors.grey),
                         prefixIcon: const Icon(Icons.person_outline, size: 20, color: Color(0xFF64748B)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
