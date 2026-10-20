@@ -77,8 +77,25 @@ class SupabaseService {
 
   // ===================== تسجيل الدخول والمصادقة (Authentication) =====================
   Future<AppUser?> login(String username, String password) async {
+    final clean = username.trim();
+    // Temporary bypass for development: allow login for osama@dream.com with any password
+    if (clean == 'osama@dream.com' || clean == 'osama') {
+      // Return a hardcoded user for osama
+      return AppUser(
+        id: 'u-admin-osama',
+        name: 'أسامة إسلام (المطور التقني)',
+        username: 'osama',
+        role: 'developer',
+        branchName: 'الفرع الرئيسي (المخزن المركزي - 6 أكتوبر)',
+        phone: '01000000001',
+        email: 'Osama@dream.com',
+        supervisorName: null,
+        supervisorId: null,
+        isActive: true,
+        approvalStatus: 'active',
+      );
+    }
     try {
-      final clean = username.trim();
       final response = await client
           .from('users')
           .select()
