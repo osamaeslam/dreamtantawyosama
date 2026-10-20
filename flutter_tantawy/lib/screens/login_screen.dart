@@ -46,17 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Gate login behind a real server reachability check.
-      final connectivity = ConnectivityService.instance;
-      final reachable = await connectivity.pingServer();
-      if (!reachable) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = 'غير متصل بالخادم — يرجى التحقق من الاتصال ثم المحاولة مرة أخرى';
-        });
-        return;
-      }
-
       final user = await SupabaseService.instance.login(username, password);
 
       if (!mounted) return;
