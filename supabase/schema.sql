@@ -653,3 +653,131 @@ end;
 $$;
 
 grant execute on function public.reserve_product_stock(text, integer) to anon, authenticated;
+
+-- ============================================================
+-- User hierarchy & admin management RPCs
+-- ============================================================
+
+-- 1. Add hierarchy columns to app_users (idempotent).
+alter table public.app_users
+  add column if not exists supervisor_id uuid references public.app_users(id) on delete set null,
+  add column if not exists branch_name text default '';
+
+-- 2. Add user (admin only). SECURITY DEFINER so RLS never blocks it.
+create or replace function public.add_app_user(
+  p_username text,
+  p_email text,
+  p_role text,
+  p_password text,
+  p_supervisor_id uuid default null,
+  p_branch_name text default null
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  new_user public.app_users;
+begin
+  insert into public.app_users (username, email, role, password, is_active, supervisor_id, branch_name)
+  values (p_username, p_email, p_role, p_password, true, p_supervisor_id, p_branch_name)
+  returning * into new_user;
+
+  return jsonb_build_object(
+    'id', new_user.id,
+    'username', new_user.username,
+    'email', new_user.email,
+    'role', new_user.role,
+    'is_active', new_user.is_active,
+    'supervisor_id', new_user.supervisor_id,
+    'branch_name', new_user.branch_name
+  );
+exception when unique_violation then
+  raise exception 'Username or email already exists';
+end;
+$$;
+
+-- 3. Update user role / status / supervisor / branch (admin only).
+create or replace function public.update_app_user(
+  p_user_id uuid,
+  p_role text default null,
+  p_is_active boolean default null,
+  p_supervisor_id uuid default null,
+  p_branch_name text default null
+)
+returns jsonb
+language plpgsql
+security definer
+as $$
+declare
+  updated_user public.app_users;
+begin
+  update public.app_users
+  set
+    role = coalesce(p_role, role),
+    is_active = coalesce(p_is_active, is_active),
+    supervisor_id = coalesce(p_supervisor_id, supervisor_id),
+    branch_name = coalesce(p_branch_name, branch_name)
+  where id = p_user_id
+  returning * into updated_user;
+
+  return jsonb_build_object(
+    'id', updated_user.id,
+    'username', updated_user.username,
+    'email', updated_user.email,
+    'role', updated_user.role,
+    'is_active', updated_user.is_active,
+    'supervisor_id', updated_user.supervisor_id,
+    'branch_name', updated_user.branch_name
+  );
+end;
+$$;
+
+-- 4. List all users with their supervisor names (admin dashboard).
+create or replace function public.list_all_users()
+returns jsonb
+language sql
+security definer
+as $$
+  select coalesce(
+    jsonb_agg(jsonb_build_object(
+      'id', u.id,
+      'username', u.username,
+      'email', u.email,
+      'role', u.role,
+      'is_active', u.is_active,
+      'branch_name', u.branch_name,
+      'supervisor_id', u.supervisor_id,
+      'supervisor_name', s.username,
+      'created_at', u.created_at
+    ) order by u.created_at desc),
+    '[]'::jsonb
+  )
+  from public.app_users u
+  left join public.app_users s on s.id = u.supervisor_id;
+$$;
+
+-- 5. List users by role (for supervisor assignment dropdowns).
+create or replace function public.list_users_by_role(p_role text)
+returns jsonb
+language sql
+security definer
+as $$
+  select coalesce(
+    jsonb_agg(jsonb_build_object(
+      'id', id,
+      'username', username,
+      'email', email,
+      'role', role,
+      'branch_name', branch_name
+    ) order by username),
+    '[]'::jsonb
+  )
+  from public.app_users
+  where role = p_role;
+$$;
+
+grant execute on function public.add_app_user(text, text, text, text, uuid, text) to authenticated;
+grant execute on function public.update_app_user(uuid, text, boolean, uuid, text) to authenticated;
+grant execute on function public.list_all_users() to authenticated;
+grant execute on function public.list_users_by_role(text) to authenticated;
