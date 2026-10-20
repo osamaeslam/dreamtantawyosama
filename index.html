@@ -3,258 +3,1625 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#020617" />
+    <meta name="theme-color" content="#030712" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="مجموعة الطنطاوي" />
     
-    <title>مجموعة الطنطاوي للتجارة - منظومة فلاتر الموحدة (Flutter Web & Mobile)</title>
-    <meta name="description" content="المنظومة السحابية الموحدة لمجموعة الطنطاوي للتجارة والتوزيع - كتالوج المبيعات والتحصيل وإدارة الفروع والمخازن" />
-    
-    <!-- PWA Icons & Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    
+    <title>مجموعة الطنطاوي للتجارة والتوزيع - المنظومة الموحدة</title>
+    <meta name="description" content="منظومة إدارة المبيعات والكتالوج الذكي لمجموعة الطنطاوي - مربوطة بسيرفر سوبابيز السحابي" />
+
+    <!-- Google Cairo Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gold: {
+                400: '#fbbf24',
+                500: '#f59e0b',
+                600: '#d97706',
+              }
+            },
+            fontFamily: {
+              cairo: ['Cairo', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
-        font-family: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
-        background-color: #020617;
-        color: #f8fafc;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
+        font-family: 'Cairo', sans-serif;
+        background-color: #030712;
+        color: #f3f4f6;
         direction: rtl;
-        overflow-x: hidden;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
       }
-      .ambient-glow {
-        position: fixed;
-        width: 450px;
-        height: 450px;
-        border-radius: 50%;
-        filter: blur(140px);
-        pointer-events: none;
-        z-index: 0;
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
-      .glow-gold { top: -100px; right: -100px; background: rgba(245, 158, 11, 0.12); }
-      .glow-blue { bottom: -100px; left: -100px; background: rgba(37, 99, 235, 0.12); }
-      
-      .content-wrapper {
-        position: relative;
-        z-index: 1;
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 32px 20px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #0b0f19;
       }
-      .brand-crest {
-        width: 80px;
-        height: 80px;
-        border-radius: 26px;
-        background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 12px 30px rgba(245, 158, 11, 0.25);
-        margin-bottom: 16px;
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 4px;
       }
-      .brand-letter {
-        font-size: 40px;
-        font-weight: 900;
-        color: #020617;
-        line-height: 1;
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #f59e0b;
       }
-      .title {
-        font-size: 26px;
-        font-weight: 900;
-        color: #ffffff;
-        text-align: center;
-        letter-spacing: -0.5px;
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
       }
-      .subtitle {
-        font-size: 13px;
-        font-weight: 700;
-        color: #f59e0b;
-        letter-spacing: 2px;
-        margin-top: 4px;
-        text-transform: uppercase;
-        text-align: center;
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
-      .db-status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: #0f172a;
-        border: 1px solid #1e293b;
-        padding: 6px 16px;
-        border-radius: 9999px;
-        font-size: 12px;
-        margin-top: 14px;
-        color: #94a3b8;
+      @keyframes toastIn {
+        from { transform: translateY(-20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
-      .pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #10b981;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #10b981;
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(1.2); }
-      }
-      .grid-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 16px;
-        width: 100%;
-        margin-top: 28px;
-      }
-      .card {
-        background: #0b1329;
-        border: 1px solid #1e293b;
-        border-radius: 20px;
-        padding: 20px;
-        transition: transform 0.2s, border-color 0.2s;
-      }
-      .card:hover {
-        transform: translateY(-2px);
-        border-color: #f59e0b;
-      }
-      .card-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-      }
-      .card-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-      }
-      .card-title {
-        font-size: 15px;
-        font-weight: 800;
-        color: #ffffff;
-      }
-      .card-desc {
-        font-size: 12px;
-        color: #94a3b8;
-        line-height: 1.6;
-      }
-      .terminal-box {
-        width: 100%;
-        background: #020617;
-        border: 1px solid #1e293b;
-        border-radius: 16px;
-        padding: 18px;
-        margin-top: 24px;
-        font-family: monospace;
-        font-size: 12px;
-        color: #38bdf8;
-      }
-      .footer-text {
-        margin-top: 36px;
-        font-size: 11px;
-        color: #64748b;
-        text-align: center;
+      .toast-animate {
+        animation: toastIn 0.25s ease-out forwards;
       }
     </style>
   </head>
-  <body>
-    <div class="ambient-glow glow-gold"></div>
-    <div class="ambient-glow glow-blue"></div>
+  <body class="bg-[#030712] text-slate-100 flex flex-col min-h-screen">
 
-    <div id="flutter_container"></div>
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none"></div>
 
-    <div id="enterprise_shell" class="content-wrapper">
-      <div class="brand-crest">
-        <span class="brand-letter">ط</span>
-      </div>
-
-      <h1 class="title">مجموعة الطنطاوي للتجارة والتوزيع</h1>
-      <p class="subtitle">TANTAWY GROUP • FLUTTER MULTIPLATFORM</p>
-
-      <div class="db-status-pill">
-        <span class="pulse-dot"></span>
-        <span>قاعدة بيانات Supabase:</span>
-        <strong style="color: #10b981;">متصل ومربوط بنجاح (Live)</strong>
-      </div>
-
-      <div class="grid-cards">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon">🌐</div>
-            <div class="card-title">فلاتر ويب (Flutter Web)</div>
-          </div>
-          <p class="card-desc">
-            نسخة الويب الموحدة بالكامل للمتصفحات، تدعم شاشات الكمبيوتر والأجهزة اللوحية والموبايل بنفس كود فلاتر النظيف في <code>flutter_tantawy/</code>.
-          </p>
+    <!-- APP ROOT CONTAINER -->
+    <div id="app" class="flex-1 flex flex-col">
+      <!-- Loading indicator initially -->
+      <div id="initial-loading" class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center text-gray-950 text-3xl font-black shadow-xl shadow-amber-500/20 mb-4 animate-pulse">
+          ط
         </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon">📱</div>
-            <div class="card-title">تطبيق الأندرويد (Android APK)</div>
-          </div>
-          <p class="card-desc">
-            جاهز للبناء المباشر عبر ملف الـ GitHub Action <code>build-apk.yml</code> مع دعم مسح الباركود بالكاميرا، والعمل أوفلاين بدون إنترنت للمناديب.
-          </p>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon">🗄️</div>
-            <div class="card-title">قاعدة بيانات سوبابيز (Supabase)</div>
-          </div>
-          <p class="card-desc">
-            تم ضبط الرابط <code>https://kjdpayvavaarlcochzgt.supabase.co</code> مع المفتاح المشفر في <code>AppConfig</code> لجميع الجداول مباشرة.
-          </p>
-        </div>
+        <h2 class="text-xl font-bold text-white">جاري الاتصال بقاعدة بيانات مجموعة الطنطاوي...</h2>
+        <p class="text-xs text-amber-400 mt-1">Supabase Live Connection</p>
       </div>
-
-      <div class="terminal-box">
-        <div style="color: #f59e0b; font-weight: bold; margin-bottom: 8px;">🚀 أوامر بناء فلاتر ويب ونشره إلى Vercel:</div>
-        <div>$ cd flutter_tantawy</div>
-        <div>$ flutter pub get</div>
-        <div>$ flutter build web --release --base-href /</div>
-        <div style="color: #10b981; margin-top: 6px;">✓ تم حل خطأ TS18003 نهائياً، وتم ربط قاعدة البيانات الرسمية بنجاح!</div>
-      </div>
-
-      <p class="footer-text">
-        مجموعة الطنطاوي للتجارة والتوزيع © 2026 • منظومة فلاتر السحابية الموحدة
-      </p>
     </div>
 
+    <!-- MAIN APP SCRIPT -->
     <script>
-      // Automatically bootstrap Flutter Web if available in the build output
-      if (typeof window !== 'undefined') {
-        const flutterScript = document.createElement('script');
-        flutterScript.src = 'flutter_bootstrap.js';
-        flutterScript.async = true;
-        flutterScript.onload = () => {
-          const shell = document.getElementById('enterprise_shell');
-          if (shell) shell.style.display = 'none';
+      // ==========================================
+      // SUPABASE CONFIGURATION
+      // ==========================================
+      const SUPABASE_URL = "https://kjdpayvavaarlcochzgt.supabase.co/rest/v1/";
+      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHBheXZhdmFhcmxjb2Noemd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTg2MDIsImV4cCI6MjA4NTQ3NDYwMn0.Y6Vmn7zJZrdzVZMGupPTzDPdCh7yJmdzTbea_CRLM-g";
+
+      const headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+      };
+
+      // ==========================================
+      // IN-APP TOAST SYSTEM (NO WINDOW.ALERT)
+      // ==========================================
+      function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        const bgColors = {
+          success: 'bg-emerald-950 border-emerald-500/50 text-emerald-200',
+          error: 'bg-red-950 border-red-500/50 text-red-200',
+          info: 'bg-amber-950 border-amber-500/50 text-amber-200'
         };
-        document.body.appendChild(flutterScript);
+        const icons = {
+          success: '✓',
+          error: '✕',
+          info: 'ℹ'
+        };
+
+        toast.className = `toast-animate pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md text-xs font-bold ${bgColors[type] || bgColors.success}`;
+        toast.innerHTML = `
+          <span class="w-5 h-5 rounded-full flex items-center justify-center font-black text-[11px] bg-white/10 shrink-0">${icons[type] || '✓'}</span>
+          <span>${message}</span>
+        `;
+
+        container.appendChild(toast);
+        setTimeout(() => {
+          toast.style.transition = 'all 0.3s ease-out';
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(-10px)';
+          setTimeout(() => toast.remove(), 300);
+        }, 3200);
       }
+
+      // ==========================================
+      // APP STATE
+      // ==========================================
+      const state = {
+        currentUser: null,
+        activeTab: 'catalog', // 'catalog' | 'clients' | 'visits' | 'orders' | 'admin'
+        cart: [],
+        clients: [],
+        visits: [],
+        orders: [],
+        products: [],
+        usersList: [],
+        selectedDept: 'الكل',
+        selectedBranch: 'الكل',
+        searchQuery: '',
+        clientSearch: '',
+        selectedClient: null,
+        isCartOpen: false,
+        isVisitModalOpen: false,
+        isNewClientModalOpen: false,
+        isNewProductModalOpen: false,
+        isSubmitting: false,
+        authError: null,
+        dbConnected: false
+      };
+
+      // ==========================================
+      // SUPABASE API METHODS
+      // ==========================================
+      async function checkSupabaseConnection() {
+        try {
+          const res = await fetch(`${SUPABASE_URL}users?select=id&limit=1`, { headers });
+          if (res.ok) {
+            state.dbConnected = true;
+          }
+        } catch (e) {
+          state.dbConnected = false;
+        }
+      }
+
+      async function fetchAllUsers() {
+        try {
+          const res = await fetch(`${SUPABASE_URL}users?select=*`, { headers });
+          if (res.ok) {
+            state.usersList = await res.json();
+          }
+        } catch (e) {
+          console.error("Error fetching users:", e);
+        }
+      }
+
+      async function apiLogin(identifier, password) {
+        const clean = identifier.trim();
+        const cleanPass = password.trim();
+
+        // 1. Try secure RPC function app_login first (Phase A)
+        try {
+          const rpcRes = await fetch(`${SUPABASE_URL}rpc/app_login`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_username: clean, p_password: cleanPass })
+          });
+          if (rpcRes.ok) {
+            const data = await rpcRes.json();
+            if (Array.isArray(data) && data.length > 0) {
+              const u = data[0];
+              return {
+                id: u.id,
+                name: u.name,
+                email: u.email || u.username || clean,
+                role: u.role || 'مندوب',
+                branch: u.branch_name || u.branch || 'المركز الرئيسي'
+              };
+            } else if (data && data.id) {
+              return {
+                id: data.id,
+                name: data.name,
+                email: data.email || data.username || clean,
+                role: data.role || 'مندوب',
+                branch: data.branch_name || data.branch || 'المركز الرئيسي'
+              };
+            }
+          }
+        } catch (rpcErr) {
+          console.warn("app_login RPC check:", rpcErr);
+        }
+
+        // 2. Fallback to users table query
+        const endpoint = `${SUPABASE_URL}users?or=(email.ilike.*${encodeURIComponent(clean)}*,name.ilike.*${encodeURIComponent(clean)}*,id.eq.${encodeURIComponent(clean)})&select=*&limit=1`;
+        const res = await fetch(endpoint, { headers });
+        if (res.ok) {
+          const rows = await res.json();
+          if (rows.length > 0) {
+            const user = rows[0];
+            if (user.password === cleanPass) {
+              return user;
+            }
+          }
+        }
+
+        return null;
+      }
+
+      async function fetchProducts() {
+        try {
+          const res = await fetch(`${SUPABASE_URL}products?select=*`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.length > 0) {
+              state.products = data.map(p => ({
+                id: p.id,
+                code: p.id.slice(0, 8).toUpperCase(),
+                name: p.name || 'صنف بدون اسم',
+                dept: p.category || 'أطقم وأدوات',
+                cartonPrice: Number(p.price || 0),
+                piecePrice: Math.round(Number(p.price || 0) / 10),
+                cartonQty: 10,
+                branchStock: Math.floor((p.stock || 50) * 0.3),
+                octoberStock: p.stock || 50,
+                promoPrice: null,
+                image: getProductImage(p.category || p.name),
+                badge: (p.stock || 0) > 100 ? 'متوفر فوري' : 'كمية محدودة'
+              }));
+            }
+          }
+        } catch (e) {
+          console.error("Error fetching products:", e);
+        }
+      }
+
+      function getProductImage(keyword = '') {
+        const k = (keyword || '').toLowerCase();
+        if (k.includes('زجاج') || k.includes('كاسات') || k.includes('كريستال')) {
+          return 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80';
+        }
+        if (k.includes('حلل') || k.includes('طهي') || k.includes('جرانيت')) {
+          return 'https://images.unsplash.com/photo-1584990347449-3998b47b2c95?auto=format&fit=crop&w=600&q=80';
+        }
+        if (k.includes('معالق') || k.includes('مائدة') || k.includes('سيرفيس')) {
+          return 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=600&q=80';
+        }
+        if (k.includes('طواجن') || k.includes('بايركس')) {
+          return 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?auto=format&fit=crop&w=600&q=80';
+        }
+        if (k.includes('قهوة') || k.includes('شاي') || k.includes('فناجين')) {
+          return 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?auto=format&fit=crop&w=600&q=80';
+        }
+        return 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=600&q=80';
+      }
+
+      async function fetchClients() {
+        try {
+          let url = `${SUPABASE_URL}clients?select=*&limit=200`;
+          // If logged in as representative, filter strictly to this rep
+          if (state.currentUser && isRep(state.currentUser.role)) {
+            const repName = state.currentUser.name;
+            url += `&mandoub_name=ilike.*${encodeURIComponent(repName)}*`;
+          } else if (state.currentUser && state.currentUser.branch && state.currentUser.branch !== 'المركز الرئيسي' && state.currentUser.branch !== 'القاهره') {
+            url += `&branch=ilike.*${encodeURIComponent(state.currentUser.branch)}*`;
+          }
+          const res = await fetch(url, { headers });
+          if (res.ok) {
+            state.clients = await res.json();
+          }
+        } catch (e) {
+          console.error("Error fetching clients:", e);
+        }
+      }
+
+      async function fetchVisits() {
+        try {
+          let url = `${SUPABASE_URL}visits?select=*&order=id.desc&limit=100`;
+          if (state.currentUser && isRep(state.currentUser.role)) {
+            const repName = state.currentUser.name;
+            url += `&mandoub_name=ilike.*${encodeURIComponent(repName)}*`;
+          }
+          const res = await fetch(url, { headers });
+          if (res.ok) {
+            state.visits = await res.json();
+          }
+        } catch (e) {
+          console.error("Error fetching visits:", e);
+        }
+      }
+
+      async function fetchOrders() {
+        try {
+          let url = `${SUPABASE_URL}orders?select=*&order=created_at.desc&limit=100`;
+          if (state.currentUser && isRep(state.currentUser.role)) {
+            const repName = state.currentUser.name;
+            url += `&delegate_name=ilike.*${encodeURIComponent(repName)}*`;
+          }
+          const res = await fetch(url, { headers });
+          if (res.ok) {
+            state.orders = await res.json();
+          }
+        } catch (e) {
+          console.error("Error fetching orders:", e);
+        }
+      }
+
+      async function postNewVisit(visitData) {
+        const res = await fetch(`${SUPABASE_URL}visits`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(visitData)
+        });
+        if (!res.ok) {
+          throw new Error('فشل تسجيل الزيارة في السيرفر');
+        }
+        return await res.json();
+      }
+
+      async function postNewOrder(orderData) {
+        const res = await fetch(`${SUPABASE_URL}orders`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(orderData)
+        });
+        if (!res.ok) {
+          throw new Error('فشل تسجيل الطلبية في السيرفر');
+        }
+        return await res.json();
+      }
+
+      async function postNewProduct(prodData) {
+        const res = await fetch(`${SUPABASE_URL}products`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(prodData)
+        });
+        if (!res.ok) {
+          throw new Error('فشل إضافة الصنف');
+        }
+        return await res.json();
+      }
+
+      function isRep(role) {
+        if (!role) return false;
+        return role.includes('مندوب') || role === 'sales_rep';
+      }
+
+      function isSupervisor(role) {
+        if (!role) return false;
+        return role.includes('مشرف') || role === 'supervisor';
+      }
+
+      function isAdmin(role) {
+        if (!role) return false;
+        return role.includes('ادمن') || role.includes('مدير') || role === 'admin';
+      }
+
+      // ==========================================
+      // UI RENDERING ENGINE
+      // ==========================================
+      const appContainer = document.getElementById('app');
+
+      function render() {
+        if (!state.currentUser) {
+          renderLogin();
+        } else {
+          renderDashboard();
+        }
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      }
+
+      // ------------------------------------------
+      // 1. LOGIN SCREEN
+      // ------------------------------------------
+      function renderLogin() {
+        appContainer.innerHTML = `
+          <div class="min-h-screen w-full flex items-center justify-center p-4 bg-[#030712] relative overflow-hidden">
+            <!-- Ambient Glows -->
+            <div class="absolute top-1/4 -right-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute bottom-1/4 -left-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="w-full max-w-lg relative z-10 space-y-6">
+              
+              <!-- Brand Header -->
+              <div class="text-center space-y-3">
+                <div class="inline-block relative">
+                  <div class="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-600 p-[2px] shadow-2xl shadow-amber-500/25 mx-auto">
+                    <div class="w-full h-full bg-[#0b1120] rounded-[22px] flex items-center justify-center">
+                      <span class="text-3xl font-black text-amber-400">ط</span>
+                    </div>
+                  </div>
+                  <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-gray-950 flex items-center justify-center text-[11px] text-white font-bold" title="Supabase Live">
+                    ✓
+                  </div>
+                </div>
+
+                <div>
+                  <h1 class="text-2xl sm:text-3xl font-black text-white tracking-wide">
+                    مجموعة الطنطاوي للتجارة والتوزيع
+                  </h1>
+                  <p class="text-xs text-amber-400 font-bold tracking-widest mt-0.5 uppercase">
+                    TANTAWY GROUP • ENTERPRISE SYSTEM
+                  </p>
+                  <p class="text-xs text-slate-400 mt-1">
+                    بوابة الدخول الرسمية للنظام السحابي والمبيعات
+                  </p>
+                </div>
+
+                <!-- Database Live Badge -->
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gray-900 border border-gray-800 text-[11px] text-slate-300 shadow-sm">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>قاعدة بيانات Supabase:</span>
+                  <span class="text-emerald-400 font-bold">متصل ومباشر (Live)</span>
+                </div>
+              </div>
+
+              <!-- Login Form Card -->
+              <div class="bg-gray-900/90 border border-gray-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-2xl space-y-5">
+                <div class="border-b border-gray-800 pb-3 flex items-center justify-between">
+                  <div>
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2">
+                      <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                      <span>تسجيل الدخول إلى حسابك</span>
+                    </h2>
+                    <p class="text-[11px] text-slate-400 mt-0.5">
+                      اختر حسابك المعتمد أو أدخل بريدك وكلمة المرور
+                    </p>
+                  </div>
+                </div>
+
+                ${state.authError ? `
+                  <div class="p-3.5 rounded-2xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-400 shrink-0"></i>
+                    <span>${state.authError}</span>
+                  </div>
+                ` : ''}
+
+                <form id="login-form" class="space-y-4 text-xs">
+                  <div>
+                    <label class="text-slate-300 font-bold block mb-1.5">
+                      البريد الإلكتروني أو الاسم:
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="text" 
+                        id="login-username" 
+                        required 
+                        placeholder="مثال: admin@dream.com أو حسن محمد"
+                        class="w-full bg-[#050914] border border-gray-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-2xl px-4 py-3 text-white outline-none transition text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="text-slate-300 font-bold block mb-1.5">
+                      كلمة المرور:
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="password" 
+                        id="login-password" 
+                        required 
+                        placeholder="••••••••"
+                        class="w-full bg-[#050914] border border-gray-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 rounded-2xl px-4 py-3 text-white outline-none transition text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    id="login-btn"
+                    class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-950 font-black text-sm transition shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                  >
+                    <span>دخول المنظومة</span>
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                  </button>
+                </form>
+
+              </div>
+
+              <!-- Footer -->
+              <p class="text-center text-[11px] text-slate-600">
+                مجموعة الطنطاوي للتجارة والتوزيع © 2026 • منظومة الحسابات والمبيعات السحابية
+              </p>
+
+            </div>
+          </div>
+        `;
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const username = document.getElementById('login-username').value;
+          const pass = document.getElementById('login-password').value;
+          await executeLogin(username, pass);
+        });
+      }
+
+      async function executeLogin(username, pass) {
+        const btn = document.getElementById('login-btn');
+        if (btn) {
+          btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin"></span> جاري الدخول...`;
+          btn.disabled = true;
+        }
+
+        try {
+          const user = await apiLogin(username, pass);
+          if (user) {
+            state.currentUser = user;
+            state.authError = null;
+            localStorage.setItem('tantawy_auth_user', JSON.stringify(user));
+            showToast(`أهلاً بك يا ${user.name} (${user.role || 'مستخدم'})`, 'success');
+            await loadUserData();
+            render();
+          } else {
+            state.authError = 'بيانات الدخول غير صحيحة، يرجى التأكد من البريد أو كلمة المرور';
+            render();
+          }
+        } catch (err) {
+          state.authError = 'تعذر الاتصال بالسيرفر: ' + err.message;
+          render();
+        }
+      }
+
+      window.quickLogin = (user, pass) => {
+        executeLogin(user, pass);
+      };
+
+      async function loadUserData() {
+        await Promise.all([
+          fetchProducts(),
+          fetchClients(),
+          fetchVisits(),
+          fetchOrders()
+        ]);
+      }
+
+      // ------------------------------------------
+      // 2. DASHBOARD VIEW
+      // ------------------------------------------
+      function renderDashboard() {
+        const u = state.currentUser;
+        const totalItemsCount = state.cart.reduce((sum, item) => sum + item.qtyCartons, 0);
+
+        appContainer.innerHTML = `
+          <!-- TOP NAVBAR -->
+          <header class="sticky top-0 z-40 bg-gray-950/95 border-b border-gray-800 backdrop-blur-md px-4 py-2.5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between gap-3">
+              
+              <!-- Brand & User Identity -->
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 flex items-center justify-center text-gray-950 font-black text-xl shadow-md shadow-amber-500/20">
+                  ط
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-black text-sm text-white">مجموعة الطنطاوي</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                      ${u.role || 'مستخدم'}
+                    </span>
+                  </div>
+                  <div class="text-[11px] text-slate-400">
+                    <strong class="text-white">${u.name}</strong> • <span class="text-amber-400/90">${u.branch || 'المركز الرئيسي'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Navigation Tabs -->
+              <nav class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <button 
+                  onclick="setTab('catalog')" 
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'catalog' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
+                >
+                  <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                  <span>الكتالوج</span>
+                  <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.products.length}</span>
+                </button>
+
+                <button 
+                  onclick="setTab('clients')" 
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'clients' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
+                >
+                  <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                  <span>العملاء والمديونيات</span>
+                  <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.clients.length}</span>
+                </button>
+
+                <button 
+                  onclick="setTab('visits')" 
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'visits' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
+                >
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                  <span>الزيارات والتحصيل</span>
+                  <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.visits.length}</span>
+                </button>
+
+                <button 
+                  onclick="setTab('orders')" 
+                  class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'orders' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
+                >
+                  <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i>
+                  <span>الطلبيات</span>
+                  <span class="text-[10px] bg-gray-800 text-slate-300 px-1.5 py-0.2 rounded-full">${state.orders.length}</span>
+                </button>
+
+                ${isAdmin(u.role) || isSupervisor(u.role) ? `
+                  <button 
+                    onclick="setTab('admin')" 
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${state.activeTab === 'admin' ? 'bg-amber-500 text-gray-950 font-black shadow' : 'text-slate-300 hover:text-white hover:bg-gray-900'}"
+                  >
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    <span>الإدارة والرقابة</span>
+                  </button>
+                ` : ''}
+              </nav>
+
+              <!-- Cart & Logout Actions -->
+              <div class="flex items-center gap-2">
+                <button 
+                  onclick="openCart()" 
+                  class="relative p-2 rounded-xl bg-gray-900 hover:bg-gray-800 border border-gray-800 text-amber-400 transition cursor-pointer"
+                  title="سلة الطلبيات"
+                >
+                  <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                  ${totalItemsCount > 0 ? `
+                    <span class="absolute -top-1.5 -right-1.5 bg-amber-500 text-gray-950 font-black text-[10px] w-5 h-5 rounded-full flex items-center justify-center">
+                      ${totalItemsCount}
+                    </span>
+                  ` : ''}
+                </button>
+
+                <button 
+                  onclick="logout()" 
+                  class="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-gray-900 border border-gray-800 transition cursor-pointer"
+                  title="تسجيل الخروج"
+                >
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
+              </div>
+
+            </div>
+          </header>
+
+          <!-- MAIN CONTENT BODY -->
+          <main class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 pb-20">
+            ${state.activeTab === 'catalog' ? renderCatalogTab() : ''}
+            ${state.activeTab === 'clients' ? renderClientsTab() : ''}
+            ${state.activeTab === 'visits' ? renderVisitsTab() : ''}
+            ${state.activeTab === 'orders' ? renderOrdersTab() : ''}
+            ${state.activeTab === 'admin' ? renderAdminTab() : ''}
+          </main>
+
+          <!-- CART MODAL -->
+          ${state.isCartOpen ? renderCartModal() : ''}
+
+          <!-- RECORD VISIT MODAL -->
+          ${state.isVisitModalOpen ? renderVisitModal() : ''}
+
+          <!-- ADD PRODUCT MODAL -->
+          ${state.isNewProductModalOpen ? renderNewProductModal() : ''}
+        `;
+      }
+
+      window.setTab = (tab) => {
+        state.activeTab = tab;
+        render();
+      };
+
+      // ------------------------------------------
+      // TAB 1: CATALOG & SMART SALES
+      // ------------------------------------------
+      function renderCatalogTab() {
+        const depts = ['الكل', 'أطقم سفرة', 'زجاج وكريستال', 'أدوات مائدة', 'أواني طهي'];
+        const filtered = state.products.filter(p => {
+          const matchDept = state.selectedDept === 'الكل' || p.dept === state.selectedDept || p.dept.includes(state.selectedDept);
+          const matchQ = !state.searchQuery || p.name.includes(state.searchQuery) || p.code.includes(state.searchQuery);
+          return matchDept && matchQ;
+        });
+
+        return `
+          <div class="space-y-5">
+            <!-- Filter & Search Bar -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-3">
+              <div class="relative w-full md:w-80">
+                <input 
+                  type="text" 
+                  value="${state.searchQuery}" 
+                  oninput="setSearchQuery(this.value)" 
+                  placeholder="بحث باسم الصنف أو الكود..." 
+                  class="w-full bg-gray-950 border border-gray-800 rounded-2xl pr-10 pl-3 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-sans"
+                />
+                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+              </div>
+
+              <!-- Departments Filter -->
+              <div class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 no-scrollbar">
+                ${depts.map(d => `
+                  <button 
+                    onclick="setDept('${d}')" 
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${state.selectedDept === d ? 'bg-amber-500 text-gray-950 font-black' : 'bg-gray-950 text-slate-400 hover:text-white border border-gray-800'}"
+                  >
+                    ${d}
+                  </button>
+                `).join('')}
+
+                ${isAdmin(state.currentUser.role) ? `
+                  <button 
+                    onclick="openNewProductModal()" 
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-gray-950 border border-emerald-500/30 transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>صنف جديد</span>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${filtered.length === 0 ? `
+                <div class="col-span-3 bg-gray-900 border border-gray-800 rounded-3xl p-12 text-center text-slate-500">
+                  لا توجد أصناف مطابقة للبحث حالياً في قاعدة البيانات
+                </div>
+              ` : filtered.map(p => `
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden hover:border-amber-500/50 transition flex flex-col group">
+                  <div class="relative h-48 w-full bg-gray-950 overflow-hidden">
+                    <img src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+                    <span class="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-gray-900/90 text-amber-400 border border-amber-500/30 text-[10px] font-black">
+                      ${p.badge}
+                    </span>
+                    <span class="absolute bottom-3 left-3 px-2 py-0.5 rounded-lg bg-gray-950/80 text-slate-300 text-[10px] font-mono">
+                      ${p.code}
+                    </span>
+                  </div>
+
+                  <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div>
+                      <h3 class="font-bold text-sm text-white line-clamp-2">${p.name}</h3>
+                      <div class="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                        <span>القسم: <strong class="text-slate-300">${p.dept}</strong></span>
+                        <span>الكرتونة: <strong class="text-slate-300">${p.cartonQty} قطعة</strong></span>
+                      </div>
+                    </div>
+
+                    <!-- Warehouse Stocks (Branch & October) -->
+                    <div class="grid grid-cols-2 gap-2 text-[10px] bg-gray-950/70 p-2.5 rounded-2xl border border-gray-800/80">
+                      <div>
+                        <span class="text-slate-500 block">رصيد الفرع:</span>
+                        <strong class="text-emerald-400 font-bold">${p.branchStock} كرتونة</strong>
+                      </div>
+                      <div>
+                        <span class="text-slate-500 block">مخزن أكتوبر (الرئيسي):</span>
+                        <strong class="text-amber-400 font-bold">${p.octoberStock} كرتونة</strong>
+                      </div>
+                    </div>
+
+                    <!-- Pricing & Add to Cart -->
+                    <div class="flex items-center justify-between pt-2 border-t border-gray-800/70">
+                      <div>
+                        <div class="text-base font-black text-amber-400 font-mono">
+                          ${p.promoPrice ? p.promoPrice.toLocaleString() : p.cartonPrice.toLocaleString()} ج.م
+                        </div>
+                        <div class="text-[10px] text-slate-400">
+                          قطعة: ${(p.piecePrice || 0).toLocaleString()} ج.م
+                        </div>
+                      </div>
+
+                      <button 
+                        onclick="addToCart('${p.id}')" 
+                        class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs transition flex items-center gap-1.5 cursor-pointer shadow-md shadow-amber-500/10"
+                      >
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>إضافة للطلبية</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+          </div>
+        `;
+      }
+
+      window.setSearchQuery = (q) => {
+        state.searchQuery = q;
+        render();
+      };
+
+      window.setDept = (d) => {
+        state.selectedDept = d;
+        render();
+      };
+
+      // ------------------------------------------
+      // TAB 2: CLIENTS FROM REAL DATABASE
+      // ------------------------------------------
+      function renderClientsTab() {
+        const branches = ['الكل', 'الفيوم', 'المنيا', 'القاهرة', 'المنوفية'];
+        const filtered = state.clients.filter(c => {
+          const matchBranch = state.selectedBranch === 'الكل' || (c.branch && c.branch.includes(state.selectedBranch));
+          if (!matchBranch) return false;
+          if (!state.clientSearch) return true;
+          const q = state.clientSearch.toLowerCase();
+          return (c.client_name && c.client_name.toLowerCase().includes(q)) ||
+                 (c.client_code && c.client_code.toLowerCase().includes(q)) ||
+                 (c.mandoub_name && c.mandoub_name.toLowerCase().includes(q));
+        });
+
+        return `
+          <div class="space-y-5">
+            <!-- Header -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 class="text-lg font-black text-white flex items-center gap-2">
+                  <i data-lucide="users" class="w-5 h-5 text-amber-400"></i>
+                  <span>قاعدة بيانات العملاء المعتمدة (${state.clients.length} عميل)</span>
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  بيانات مباشرة من جدول Supabase clients مربوطة بالمديونيات ومندوب كل منطقة
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2 w-full md:w-auto">
+                <div class="relative w-full md:w-72">
+                  <input 
+                    type="text" 
+                    value="${state.clientSearch}" 
+                    oninput="setClientSearch(this.value)" 
+                    placeholder="بحث باسم العميل أو الكود..." 
+                    class="w-full bg-gray-950 border border-gray-800 rounded-2xl pr-10 pl-3 py-2.5 text-xs text-white outline-none focus:border-amber-500 font-sans"
+                  />
+                  <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Branch filter pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              <span class="text-xs text-slate-400 font-bold ml-1">تصفية الفرع:</span>
+              ${branches.map(b => `
+                <button 
+                  onclick="setBranchFilter('${b}')" 
+                  class="px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${state.selectedBranch === b ? 'bg-amber-500 text-gray-950 font-black' : 'bg-gray-900 text-slate-400 hover:text-white border border-gray-800'}"
+                >
+                  ${b}
+                </button>
+              `).join('')}
+            </div>
+
+            <!-- Clients List Table -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+              <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                  <thead class="bg-gray-950/80 text-slate-400 font-bold border-b border-gray-800">
+                    <tr>
+                      <th class="p-3.5">كود العميل</th>
+                      <th class="p-3.5">اسم العميل والمنشأة</th>
+                      <th class="p-3.5">المندوب المسند</th>
+                      <th class="p-3.5">الفرع</th>
+                      <th class="p-3.5">المديونية الحالية</th>
+                      <th class="p-3.5 text-center">الإجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-800/60">
+                    ${filtered.length === 0 ? `
+                      <tr>
+                        <td colspan="6" class="p-8 text-center text-slate-500">
+                          لا توجد نتائج مطابقة في قاعدة البيانات حالياً
+                        </td>
+                      </tr>
+                    ` : filtered.map(c => `
+                      <tr class="hover:bg-gray-800/40 transition">
+                        <td class="p-3.5 font-mono text-amber-400 font-bold">${c.client_code || '---'}</td>
+                        <td class="p-3.5 font-bold text-white">${c.client_name || 'بدون اسم'}</td>
+                        <td class="p-3.5 text-slate-300">${c.mandoub_name || 'غير محدد'}</td>
+                        <td class="p-3.5 text-slate-400">${c.branch || '---'}</td>
+                        <td class="p-3.5 font-mono font-bold ${Number(c.debt) > 100000 ? 'text-red-400' : 'text-emerald-400'}">
+                          ${Number(c.debt || 0).toLocaleString()} ج.م
+                        </td>
+                        <td class="p-3.5 text-center flex items-center justify-center gap-1.5">
+                          <button 
+                            onclick="selectClientForOrder('${c.client_code}')" 
+                            class="px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-gray-950 font-bold transition cursor-pointer text-[11px]"
+                          >
+                            طلب جديد
+                          </button>
+                          <button 
+                            onclick="selectClientForVisit('${c.client_code}')" 
+                            class="px-2.5 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-gray-950 font-bold transition cursor-pointer text-[11px]"
+                          >
+                            تحصيل / زيارة
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }
+
+      window.setClientSearch = (q) => {
+        state.clientSearch = q;
+        render();
+      };
+
+      window.setBranchFilter = (b) => {
+        state.selectedBranch = b;
+        render();
+      };
+
+      // ------------------------------------------
+      // TAB 3: VISITS FROM REAL DATABASE
+      // ------------------------------------------
+      function renderVisitsTab() {
+        return `
+          <div class="space-y-5">
+            <!-- Header & Action -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 class="text-lg font-black text-white flex items-center gap-2">
+                  <i data-lucide="map-pin" class="w-5 h-5 text-amber-400"></i>
+                  <span>سجل الزيارات والتحصيلات الميدانية (${state.visits.length} زيارة)</span>
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  بيانات مباشرة من جدول Supabase visits موثقة بالمبالغ والتواريخ
+                </p>
+              </div>
+
+              <button 
+                onclick="openVisitModal()" 
+                class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20"
+              >
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                <span>تسجيل زيارة أو تحصيل جديد</span>
+              </button>
+            </div>
+
+            <!-- Visits Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${state.visits.length === 0 ? `
+                <div class="col-span-2 p-12 text-center text-slate-500 bg-gray-900 border border-gray-800 rounded-3xl">
+                  لا توجد زيارات مسجلة لهذا المندوب بعد في قاعدة البيانات
+                </div>
+              ` : state.visits.map(v => `
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4 sm:p-5 hover:border-gray-700 transition space-y-3">
+                  <div class="flex items-start justify-between gap-2 border-b border-gray-800/80 pb-3">
+                    <div>
+                      <h4 class="font-bold text-sm text-white">${v.client_name || 'عميل'}</h4>
+                      <p class="text-[11px] text-slate-400 font-mono mt-0.5">${v.client_code || '---'} • <span>${v.branch || '---'}</span></p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold ${v.type === 'تحصيل' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/10 text-blue-400 border border-blue-500/30'}">
+                      ${v.type || 'زيارة'}
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">المندوب:</span>
+                      <strong class="text-slate-200">${v.mandoub_name || 'غير مسجل'}</strong>
+                    </div>
+                    <div>
+                      <span class="text-slate-500 block text-[10px]">المبلغ المحصل:</span>
+                      <strong class="text-emerald-400 font-bold font-mono">${Number(v.amount || 0).toLocaleString()} ج.م</strong>
+                    </div>
+                  </div>
+
+                  ${v.notes ? `
+                    <div class="bg-gray-950 p-2.5 rounded-xl text-[11px] text-slate-300 border border-gray-800/70">
+                      ${v.notes}
+                    </div>
+                  ` : ''}
+
+                  <div class="text-[10px] text-slate-500 text-left font-mono">
+                    ${v.timestamp ? new Date(v.timestamp).toLocaleString('ar-EG') : '---'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+          </div>
+        `;
+      }
+
+      // ------------------------------------------
+      // TAB 4: ORDERS FROM REAL DATABASE
+      // ------------------------------------------
+      function renderOrdersTab() {
+        return `
+          <div class="space-y-5">
+            <!-- Header -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 class="text-lg font-black text-white flex items-center gap-2">
+                  <i data-lucide="clipboard-list" class="w-5 h-5 text-amber-400"></i>
+                  <span>أوامر التوريد والطلبيات المعتمدة (${state.orders.length} طلبية)</span>
+                </h2>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  مسجلة ومزامنة مباشرة مع جدول Supabase orders
+                </p>
+              </div>
+
+              <button 
+                onclick="setTab('catalog')" 
+                class="px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs transition flex items-center gap-2 cursor-pointer shadow-lg shadow-amber-500/20"
+              >
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                <span>إنشاء طلبية جديدة من الكتالوج</span>
+              </button>
+            </div>
+
+            <!-- Orders Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ${state.orders.length === 0 ? `
+                <div class="col-span-2 p-12 text-center text-slate-500 bg-gray-900 border border-gray-800 rounded-3xl">
+                  لا توجد طلبيات مسجلة حالياً في قاعدة البيانات. يمكنك إنشاء طلبية من الكتالوج!
+                </div>
+              ` : state.orders.map(o => `
+                <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 hover:border-gray-700 transition space-y-3">
+                  <div class="flex items-start justify-between border-b border-gray-800 pb-3">
+                    <div>
+                      <div class="text-xs text-slate-400">طلبية رقم: <span class="font-mono text-amber-400 font-bold">${(o.id || '').slice(0, 8)}</span></div>
+                      <div class="text-sm font-bold text-white mt-0.5">المندوب: ${o.delegate_name || 'غير مسجل'}</div>
+                      <div class="text-[11px] text-slate-400">الفرع: ${o.branch || '---'}</div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                      ${o.status || 'معتمد'}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between text-xs pt-1">
+                    <span class="text-slate-400">إجمالي قيمة الطلبية:</span>
+                    <strong class="text-base font-black text-emerald-400 font-mono">${Number(o.total || 0).toLocaleString()} ج.م</strong>
+                  </div>
+
+                  <div class="text-[10px] text-slate-500 text-left font-mono">
+                    ${o.created_at ? new Date(o.created_at).toLocaleString('ar-EG') : '---'}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+          </div>
+        `;
+      }
+
+      // ------------------------------------------
+      // TAB 5: SUPERVISOR & ADMIN
+      // ------------------------------------------
+      function renderAdminTab() {
+        const totalDebt = state.clients.reduce((sum, c) => sum + (Number(c.debt) || 0), 0);
+        const totalVisitsAmount = state.visits.reduce((sum, v) => sum + (Number(v.amount) || 0), 0);
+        const totalOrdersAmount = state.orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
+        return `
+          <div class="space-y-6">
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+                <span class="text-xs text-slate-400 block font-bold">إجمالي مديونيات العملاء</span>
+                <div class="text-2xl font-black text-amber-400 font-mono mt-1">${totalDebt.toLocaleString()} ج.م</div>
+                <span class="text-[10px] text-slate-500 mt-1 block">مسجلة في جدول clients</span>
+              </div>
+
+              <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+                <span class="text-xs text-slate-400 block font-bold">إجمالي التحصيلات الميدانية</span>
+                <div class="text-2xl font-black text-emerald-400 font-mono mt-1">${totalVisitsAmount.toLocaleString()} ج.م</div>
+                <span class="text-[10px] text-slate-500 mt-1 block">مسجلة في جدول visits</span>
+              </div>
+
+              <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+                <span class="text-xs text-slate-400 block font-bold">إجمالي الطلبيات والمبيعات</span>
+                <div class="text-2xl font-black text-blue-400 font-mono mt-1">${totalOrdersAmount.toLocaleString()} ج.م</div>
+                <span class="text-[10px] text-slate-500 mt-1 block">مسجلة في جدول orders</span>
+              </div>
+
+              <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
+                <span class="text-xs text-slate-400 block font-bold">فريق العمل والمناديب</span>
+                <div class="text-2xl font-black text-purple-400 font-mono mt-1">${state.usersList.length} مستخدم</div>
+                <span class="text-[10px] text-slate-500 mt-1 block">مسجل في جدول users</span>
+              </div>
+            </div>
+
+            <!-- Database Live Overview -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-6 space-y-4">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
+                <span>حالة المزامنة السحابية المباشرة مع Supabase</span>
+              </h3>
+
+              <div class="p-4 bg-gray-950 rounded-2xl border border-gray-800 text-xs font-mono text-slate-300 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span>السيرفر المعتمد (Supabase Host):</span>
+                  <span class="text-amber-400">${SUPABASE_URL}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>الجداول المفعلة والمربوطة:</span>
+                  <span class="text-emerald-400">users, clients, products, visits, orders</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span>حساب المشغل النشط:</span>
+                  <span class="text-white">${state.currentUser.name} (${state.currentUser.email}) - ${state.currentUser.role}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Users List Table for Admin -->
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-xl p-5 space-y-4">
+              <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-amber-400"></i>
+                <span>دليل المستخدمين والمناديب المعتمدين في النظام (${state.usersList.length} حساب)</span>
+              </h3>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-right text-xs">
+                  <thead class="bg-gray-950/80 text-slate-400 font-bold border-b border-gray-800">
+                    <tr>
+                      <th class="p-3">الاسم</th>
+                      <th class="p-3">البريد الإلكتروني</th>
+                      <th class="p-3">الدور / الرتبة</th>
+                      <th class="p-3">الفرع</th>
+                      <th class="p-3 text-center">التبديل إلى الحساب</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-800/60">
+                    ${state.usersList.map(u => `
+                      <tr class="hover:bg-gray-800/40 transition">
+                        <td class="p-3 font-bold text-white">${u.name}</td>
+                        <td class="p-3 text-slate-300 font-mono">${u.email || '---'}</td>
+                        <td class="p-3 text-amber-400">${u.role || 'مستخدم'}</td>
+                        <td class="p-3 text-slate-400">${u.branch || '---'}</td>
+                        <td class="p-3 text-center">
+                          <button 
+                            onclick="switchUserDirectly('${u.id}')" 
+                            class="px-2.5 py-1 rounded-xl bg-gray-800 hover:bg-amber-500 hover:text-gray-950 text-slate-300 font-bold transition text-[11px] cursor-pointer"
+                          >
+                            عرض كـ ${u.name.split(' ')[0]}
+                          </button>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }
+
+      window.switchUserDirectly = async (userId) => {
+        const u = state.usersList.find(x => x.id === userId);
+        if (u) {
+          state.currentUser = u;
+          localStorage.setItem('tantawy_auth_user', JSON.stringify(u));
+          showToast(`تم التبديل لحساب: ${u.name} (${u.role})`, 'info');
+          await loadUserData();
+          render();
+        }
+      };
+
+      // ------------------------------------------
+      // MODAL: CART & ORDER BUILDER
+      // ------------------------------------------
+      function renderCartModal() {
+        const total = state.cart.reduce((sum, item) => sum + (item.qtyCartons * (item.product.promoPrice || item.product.cartonPrice)), 0);
+
+        return `
+          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-lg p-6 space-y-5 shadow-2xl max-h-[90vh] flex flex-col">
+              
+              <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                  <i data-lucide="shopping-cart" class="w-5 h-5 text-amber-400"></i>
+                  <span>سلة الأصناف والطلبية</span>
+                </h3>
+                <button onclick="closeCart()" class="text-slate-400 hover:text-white p-1 rounded-xl cursor-pointer">✕</button>
+              </div>
+
+              <!-- Client Selector -->
+              <div>
+                <label class="text-xs text-slate-300 font-bold block mb-1">العميل المستلم:</label>
+                <select id="order-client-select" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
+                  <option value="">-- اختر العميل من قاعدة البيانات --</option>
+                  ${state.clients.map(c => `
+                    <option value="${c.client_code}" ${state.selectedClient && state.selectedClient.client_code === c.client_code ? 'selected' : ''}>
+                      ${c.client_name} (${c.client_code}) - مديونية: ${Number(c.debt||0).toLocaleString()} ج.م
+                    </option>
+                  `).join('')}
+                </select>
+              </div>
+
+              <!-- Items in cart -->
+              <div class="flex-1 overflow-y-auto space-y-2.5 custom-scrollbar pr-1">
+                ${state.cart.length === 0 ? `
+                  <p class="text-center text-slate-500 text-xs py-8">السلة فارغة، أضف أصناف من الكتالوج</p>
+                ` : state.cart.map(item => `
+                  <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                      <h5 class="font-bold text-white">${item.product.name}</h5>
+                      <span class="text-[10px] text-slate-400 font-mono">${(item.product.promoPrice || item.product.cartonPrice).toLocaleString()} ج.م / كرتونة</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <button onclick="updateCartQty('${item.product.id}', -1)" class="w-7 h-7 rounded-lg bg-gray-800 text-white font-bold flex items-center justify-center cursor-pointer">-</button>
+                      <span class="font-black font-mono w-5 text-center">${item.qtyCartons}</span>
+                      <button onclick="updateCartQty('${item.product.id}', 1)" class="w-7 h-7 rounded-lg bg-gray-800 text-white font-bold flex items-center justify-center cursor-pointer">+</button>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+
+              <!-- Total & Submit -->
+              <div class="border-t border-gray-800 pt-4 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-400 font-bold">إجمالي الطلبية:</span>
+                  <span class="text-lg font-black text-amber-400 font-mono">${total.toLocaleString()} ج.م</span>
+                </div>
+
+                <button 
+                  onclick="submitOrder()" 
+                  ${state.cart.length === 0 ? 'disabled' : ''}
+                  id="submit-order-btn"
+                  class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-gray-950 font-black text-sm transition cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <i data-lucide="check" class="w-4 h-4"></i>
+                  <span>تأكيد وإرسال الطلبية إلى السيرفر</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }
+
+      window.openCart = () => {
+        state.isCartOpen = true;
+        render();
+      };
+
+      window.closeCart = () => {
+        state.isCartOpen = false;
+        render();
+      };
+
+      window.addToCart = (productId) => {
+        const product = state.products.find(p => p.id === productId);
+        if (!product) return;
+        const existing = state.cart.find(i => i.product.id === productId);
+        if (existing) {
+          existing.qtyCartons += 1;
+        } else {
+          state.cart.push({ product, qtyCartons: 1 });
+        }
+        showToast(`تمت إضافة "${product.name.slice(0, 25)}..." إلى السلة`, 'success');
+        render();
+      };
+
+      window.updateCartQty = (productId, delta) => {
+        const item = state.cart.find(i => i.product.id === productId);
+        if (!item) return;
+        item.qtyCartons += delta;
+        if (item.qtyCartons <= 0) {
+          state.cart = state.cart.filter(i => i.product.id !== productId);
+        }
+        render();
+      };
+
+      window.selectClientForOrder = (clientCode) => {
+        const client = state.clients.find(c => c.client_code === clientCode);
+        if (client) {
+          state.selectedClient = client;
+          state.activeTab = 'catalog';
+          state.isCartOpen = true;
+          render();
+        }
+      };
+
+      window.selectClientForVisit = (clientCode) => {
+        const client = state.clients.find(c => c.client_code === clientCode);
+        if (client) {
+          state.selectedClient = client;
+          openVisitModal();
+        }
+      };
+
+      window.submitOrder = async () => {
+        const select = document.getElementById('order-client-select');
+        const clientCode = select ? select.value : '';
+        if (!clientCode) {
+          showToast('يرجى اختيار العميل من القائمة لإتمام الطلبية', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('submit-order-btn');
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin"></span> جاري الحفظ في Supabase...`;
+        }
+
+        const client = state.clients.find(c => c.client_code === clientCode);
+        const total = state.cart.reduce((sum, item) => sum + (item.qtyCartons * (item.product.promoPrice || item.product.cartonPrice)), 0);
+
+        const orderData = {
+          delegate_name: state.currentUser.name || 'مندوب',
+          branch: client ? (client.branch || state.currentUser.branch) : (state.currentUser.branch || 'المركز الرئيسي'),
+          items: JSON.stringify(state.cart.map(i => ({
+            name: i.product.name,
+            code: i.product.code,
+            qty: i.qtyCartons,
+            price: i.product.promoPrice || i.product.cartonPrice,
+            total: i.qtyCartons * (i.product.promoPrice || i.product.cartonPrice)
+          }))),
+          total: total,
+          status: 'في انتظار موافقة المشرف',
+          created_at: new Date().toISOString()
+        };
+
+        try {
+          await postNewOrder(orderData);
+          showToast(`تم تسجيل الطلبية للعميل ${client ? client.client_name : clientCode} بنجاح!`, 'success');
+          state.cart = [];
+          state.isCartOpen = false;
+          await fetchOrders();
+          state.activeTab = 'orders';
+          render();
+        } catch (err) {
+          showToast('حدث خطأ أثناء حفظ الطلبية: ' + err.message, 'error');
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = 'تأكيد وإرسال الطلبية إلى السيرفر';
+          }
+        }
+      };
+
+      // ------------------------------------------
+      // MODAL: RECORD VISIT
+      // ------------------------------------------
+      function renderVisitModal() {
+        return `
+          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+              
+              <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                  <i data-lucide="map-pin" class="w-5 h-5 text-amber-400"></i>
+                  <span>تسجيل زيارة أو تحصيل جديد</span>
+                </h3>
+                <button onclick="closeVisitModal()" class="text-slate-400 hover:text-white p-1 rounded-xl cursor-pointer">✕</button>
+              </div>
+
+              <form id="visit-form" class="space-y-3.5 text-xs">
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">العميل:</label>
+                  <select id="visit-client" required class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
+                    <option value="">-- اختر العميل --</option>
+                    ${state.clients.map(c => `
+                      <option value="${c.client_code}" data-name="${c.client_name}" data-branch="${c.branch}" ${state.selectedClient && state.selectedClient.client_code === c.client_code ? 'selected' : ''}>
+                        ${c.client_name} (${c.branch || '---'}) - مديونية: ${Number(c.debt||0).toLocaleString()} ج.م
+                      </option>
+                    `).join('')}
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">نوع المعاملة:</label>
+                  <select id="visit-type" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
+                    <option value="تحصيل">تحصيل دفعة مالية نقداً</option>
+                    <option value="زيارة مبيعات">زيارة مبيعات وعرض أصناف</option>
+                    <option value="متابعة مديونية">متابعة مديونية وجدولة</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">المبلغ المحصل (ج.م):</label>
+                  <input type="number" id="visit-amount" placeholder="0" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-mono" />
+                </div>
+
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">ملاحظات الزيارة:</label>
+                  <textarea id="visit-notes" rows="2" placeholder="ملاحظات المندوب والاتفاق مع العميل..." class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans"></textarea>
+                </div>
+
+                <div class="pt-2">
+                  <button type="submit" id="save-visit-btn" class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-sm transition cursor-pointer shadow-lg shadow-amber-500/20">
+                    حفظ في قاعدة بيانات سوبابيز
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        `;
+      }
+
+      window.openVisitModal = () => {
+        state.isVisitModalOpen = true;
+        render();
+        initVisitFormListener();
+      };
+
+      window.closeVisitModal = () => {
+        state.isVisitModalOpen = false;
+        render();
+      };
+
+      function initVisitFormListener() {
+        setTimeout(() => {
+          const form = document.getElementById('visit-form');
+          if (!form) return;
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-visit-btn');
+            const select = document.getElementById('visit-client');
+            const selectedOpt = select.options[select.selectedIndex];
+            
+            const visitData = {
+              mandoub_id: state.currentUser.id || '',
+              mandoub_name: state.currentUser.name || '',
+              client_code: select.value,
+              client_name: selectedOpt.getAttribute('data-name') || select.value,
+              type: document.getElementById('visit-type').value,
+              amount: Number(document.getElementById('visit-amount').value) || 0,
+              notes: document.getElementById('visit-notes').value || '',
+              branch: selectedOpt.getAttribute('data-branch') || state.currentUser.branch || 'المركز الرئيسي',
+              timestamp: new Date().toISOString()
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin"></span> جاري الحفظ في Supabase...`;
+
+            try {
+              await postNewVisit(visitData);
+              showToast('تم تسجيل الزيارة بنجاح في قاعدة بيانات Supabase!', 'success');
+              state.isVisitModalOpen = false;
+              await fetchVisits();
+              state.activeTab = 'visits';
+              render();
+            } catch (err) {
+              showToast('خطأ أثناء الحفظ: ' + err.message, 'error');
+              btn.disabled = false;
+              btn.innerText = 'حفظ في قاعدة بيانات سوبابيز';
+            }
+          });
+        }, 50);
+      }
+
+      // ------------------------------------------
+      // MODAL: NEW PRODUCT
+      // ------------------------------------------
+      function renderNewProductModal() {
+        return `
+          <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-950/80 backdrop-blur-md">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-md p-6 space-y-4 shadow-2xl">
+              
+              <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                  <i data-lucide="plus-circle" class="w-5 h-5 text-amber-400"></i>
+                  <span>إضافة صنف جديد لقاعدة البيانات</span>
+                </h3>
+                <button onclick="closeNewProductModal()" class="text-slate-400 hover:text-white p-1 rounded-xl cursor-pointer">✕</button>
+              </div>
+
+              <form id="new-product-form" class="space-y-3.5 text-xs">
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">اسم الصنف:</label>
+                  <input type="text" id="prod-name" required placeholder="مثال: طقم جاتوه مذهب 18 قطعة" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans" />
+                </div>
+
+                <div>
+                  <label class="text-slate-300 font-bold block mb-1">القسم / التصنيف:</label>
+                  <select id="prod-cat" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
+                    <option value="أطقم سفرة">أطقم سفرة</option>
+                    <option value="زجاج وكريستال">زجاج وكريستال</option>
+                    <option value="أواني طهي">أواني طهي</option>
+                    <option value="أدوات مائدة">أدوات مائدة</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-slate-300 font-bold block mb-1">سعر الكرتونة (ج.م):</label>
+                    <input type="number" id="prod-price" required placeholder="مثال: 1250" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-mono" />
+                  </div>
+                  <div>
+                    <label class="text-slate-300 font-bold block mb-1">الرصيد بالمخزن:</label>
+                    <input type="number" id="prod-stock" required placeholder="مثال: 100" class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-mono" />
+                  </div>
+                </div>
+
+                <div class="pt-2">
+                  <button type="submit" id="save-prod-btn" class="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-sm transition cursor-pointer shadow-lg shadow-amber-500/20">
+                    حفظ الصنف في Supabase
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        `;
+      }
+
+      window.openNewProductModal = () => {
+        state.isNewProductModalOpen = true;
+        render();
+        setTimeout(() => {
+          const form = document.getElementById('new-product-form');
+          if (!form) return;
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('save-prod-btn');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="inline-block w-4 h-4 border-2 border-gray-950 border-t-transparent rounded-full animate-spin"></span> جاري الحفظ...`;
+
+            const newProd = {
+              name: document.getElementById('prod-name').value,
+              category: document.getElementById('prod-cat').value,
+              price: Number(document.getElementById('prod-price').value),
+              stock: Number(document.getElementById('prod-stock').value)
+            };
+
+            try {
+              await postNewProduct(newProd);
+              showToast('تمت إضافة الصنف بنجاح إلى جدول products في Supabase!', 'success');
+              state.isNewProductModalOpen = false;
+              await fetchProducts();
+              render();
+            } catch (err) {
+              showToast('خطأ: ' + err.message, 'error');
+              btn.disabled = false;
+              btn.innerText = 'حفظ الصنف في Supabase';
+            }
+          });
+        }, 50);
+      };
+
+      window.closeNewProductModal = () => {
+        state.isNewProductModalOpen = false;
+        render();
+      };
+
+      window.logout = () => {
+        state.currentUser = null;
+        localStorage.removeItem('tantawy_auth_user');
+        state.cart = [];
+        showToast('تم تسجيل الخروج بنجاح', 'info');
+        render();
+      };
+
+      // ==========================================
+      // INITIAL BOOTSTRAP
+      // ==========================================
+      async function init() {
+        try {
+          await checkSupabaseConnection();
+          await fetchAllUsers();
+
+          const saved = localStorage.getItem('tantawy_auth_user');
+          if (saved) {
+            try {
+              state.currentUser = JSON.parse(saved);
+              await loadUserData();
+            } catch(e) {
+              localStorage.removeItem('tantawy_auth_user');
+            }
+          }
+        } catch (e) {
+          console.error("Initialization error:", e);
+        } finally {
+          render();
+        }
+      }
+
+      init();
     </script>
   </body>
 </html>

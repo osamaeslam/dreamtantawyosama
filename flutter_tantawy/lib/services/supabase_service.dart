@@ -80,6 +80,24 @@ class SupabaseService {
     final clean = username.trim();
     final cleanPass = password.trim();
     try {
+      // 1. Try secure RPC function app_login first (Phase A)
+      try {
+        final res = await client.rpc(
+          'app_login',
+          params: {'p_username': clean, 'p_password': cleanPass},
+        );
+        if (res != null) {
+          if (res is List && res.isNotEmpty) {
+            return AppUser.fromJson(Map<String, dynamic>.from(res.first));
+          } else if (res is Map && res.isNotEmpty) {
+            return AppUser.fromJson(Map<String, dynamic>.from(res));
+          }
+        }
+      } catch (rpcErr) {
+        debugPrint('app_login RPC unavailable or returned error, using fallback: $rpcErr');
+      }
+
+      // 2. Fallback to direct query on users table
       final responseList = await client
           .from('users')
           .select()
