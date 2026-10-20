@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../services/connectivity_service.dart';
 import '../services/offline_queue_service.dart';
 import '../theme/app_theme.dart';
+import '../models/models.dart';
 
 /// A persistent status bar shown at the top of every screen.
 ///
