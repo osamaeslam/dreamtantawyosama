@@ -172,13 +172,14 @@ class RepDashboardScreen extends StatelessWidget {
     ];
   }
 
-  String _roleLabel => switch (currentUser.role) {
-        'admin' || 'developer' => 'الإدارة العامة',
-        'manager' => 'المدير العام',
-        'branch_manager' => 'مدير الفرع',
-        'supervisor' => 'مشرف المناديب',
-        _ => 'مندوب مبيعات',
-      };
+   String _roleLabel => switch (currentUser.role) {
+       'admin' => 'الإدارة العامة',
+       'developer' => 'الإدارة العامة',
+       'manager' => 'المدير العام',
+       'branch_manager' => 'مدير الفرع',
+       'supervisor' => 'مشرف المناديب',
+       _ => 'مندوب مبيعات',
+     };
 
   @override
   Widget build(BuildContext context) {
