@@ -136,13 +136,13 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // شبكة التبويبات
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, bottom: 24),
-              child: _buildQuickActionsGrid(context, cart.items.length),
-            ),
-          ),
+           // شبكة التبويبات
+           SliverToBoxAdapter(
+             child: Padding(
+               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
+               child: _buildQuickActionsGrid(context, cart.items.length),
+             ),
+           ),
         ],
       ),
     );
@@ -164,19 +164,22 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           if (showPhoto) ...[
-            // صورة الموظف للمندوب والمشرف المباشر
-            Container(
-              width: 60,
-              height: 60,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppTheme.primaryGold.withOpacity(0.4),
-                  width: 2,
-                ),
-                image: const NetworkImage(''),
-              ),
-            ),
+             // صورة الموظف للمندوب والمشرف المباشر
+             Container(
+               width: 60,
+               height: 60,
+               decoration: BoxDecoration(
+                 shape: BoxShape.circle,
+                 border: Border.all(
+                   color: AppTheme.primaryGold.withOpacity(0.4),
+                   width: 2,
+                 ),
+                 image: const DecorationImage(
+                   image: NetworkImage(''),
+                   fit: BoxFit.cover,
+                 ),
+               ),
+             ),
             const SizedBox(width: 14),
           ] else ...[
             const SizedBox(width: 6),
