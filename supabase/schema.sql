@@ -535,69 +535,94 @@ create table if not exists public.app_users (
     created_at timestamp with time zone default now()
 );
 
--- 3. Seed the developer/admin account (idempotent).
-insert into public.app_users (username, email, role, password, is_active)
-values (
-    'osama',
-    'osama@dream.com',
-    'admin',
-    '123456',
-    true
-)
-on conflict (username) do nothing;
+alter table public.app_users enable row level security;
 
--- 4. Secure login RPC.
---    SECURITY DEFINER so the anonymous role can never read the
---    password column directly; RLS on app_users stays enabled.
+-- Passwords are never returned by this RPC. It supports both the web
+-- app's app_users table and the Flutter app's legacy users table.
 create or replace function public.app_login(p_username text, p_password text)
 returns jsonb
 language sql
 security definer
 set search_path = public, extensions
 as $$
-  select jsonb_build_object(
-      'id', u.id,
-      'name', u.username,
-      'username', u.username,
-      'email', u.email,
-      'role', u.role,
-      'is_active', u.is_active,
-      'created_at', u.created_at
-    ) - 'password'
-  from public.app_users u
-  where coalesce(u.is_active, true)
-    and (lower(coalesce(u.username,'')) = lower(trim(p_username))
-         or lower(coalesce(u.email,'')) = lower(trim(p_username)))
-    and (u.password = p_password
-         or u.password = crypt(p_password, u.password))
+  with matching_accounts as (
+    select
+      jsonb_build_object(
+        'id', u.id,
+        'name', u.username,
+        'username', u.username,
+        'email', u.email,
+        'role', u.role,
+        'branch_name', 'المركز الرئيسي',
+        'is_active', coalesce(u.is_active, true)
+      ) as profile,
+      1 as priority
+    from public.app_users u
+    where coalesce(u.is_active, true)
+      and (lower(u.username) = lower(trim(p_username))
+        or lower(u.email) = lower(trim(p_username)))
+      and (u.password = p_password
+        or (u.password like '$2%' and crypt(p_password, u.password) = u.password))
+
+    union all
+
+    select
+      to_jsonb(u) - 'password' as profile,
+      2 as priority
+    from public.users u
+    where u.is_active
+      and (lower(coalesce(u.username, '')) = lower(trim(p_username))
+        or lower(coalesce(u.email, '')) = lower(trim(p_username))
+        or u.id = trim(p_username)
+        or lower(u.name) = lower(trim(p_username)))
+      and (u.password = p_password
+        or (u.password like '$2%' and crypt(p_password, u.password) = u.password))
+  )
+  select profile
+  from matching_accounts
+  order by priority
   limit 1;
 $$;
 
 revoke all on function public.app_login(text, text) from public;
 grant execute on function public.app_login(text, text) to anon, authenticated;
 
--- 5. List application users (password excluded). Used by the admin
---    dashboard in the web app. SECURITY DEFINER so RLS on app_users
---    never blocks the listing.
+-- List safe profile fields for the admin dashboard; passwords are excluded.
 create or replace function public.list_app_users()
 returns jsonb
 language sql
 security definer
 set search_path = public
 as $$
-  select coalesce(
-    jsonb_agg(jsonb_build_object(
+  with profiles as (
+    select jsonb_build_object(
       'id', id,
       'username', username,
       'email', coalesce(email, username),
       'role', role,
+      'branch', 'المركز الرئيسي',
+      'is_active', coalesce(is_active, true),
+      'created_at', created_at
+    ) as profile, created_at
+    from public.app_users
+    where coalesce(is_active, true)
+
+    union all
+
+    select jsonb_build_object(
+      'id', id,
+      'username', coalesce(username, email, name),
+      'email', email,
+      'role', role,
+      'branch', branch_name,
       'is_active', is_active,
       'created_at', created_at
-    ) order by created_at desc),
-    '[]'::jsonb
+    ) as profile, created_at
+    from public.users
+    where is_active
   )
-  from public.app_users
-  where coalesce(is_active, true);
+  select coalesce(jsonb_agg(profile order by created_at desc), '[]'::jsonb)
+  from profiles;
 $$;
 
 revoke all on function public.list_app_users() from public;
