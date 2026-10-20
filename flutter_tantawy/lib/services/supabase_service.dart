@@ -45,17 +45,13 @@ class SupabaseService {
   static final ForecastRepository _forecasts = const ForecastRepository();
   static final AnalyticsRepository _analytics = const AnalyticsRepository();
   static final ReturnsRepository _returns = const ReturnsRepository();
-  static final SupplierExpenseRepository _suppliers = const SupplierExpenseRepository();
 
-  /// Exposes the product repository for new code / repositories to share.
-  ProductRepository get productRepo => _products;
-  CustomerRepository get customerRepo => _customers;
-  InvoiceRepository get invoiceRepo => _invoices;
-  VisitRepository get visitRepo => _visits;
-  ForecastRepository get forecastRepo => _forecasts;
-  AnalyticsRepository get analyticsRepo => _analytics;
+  SupabaseService._();
+  // instance defined elsewhere
+
   ReturnsRepository get returnsRepo => _returns;
-  SupplierExpenseRepository get supplierExpenseRepo => _suppliers;
+  AnalyticsRepository get analyticsRepo => _analytics;
+  ForecastRepository get forecastRepo => _forecasts;
 
   SupabaseClient? _client;
   SupabaseClient get client {
@@ -359,45 +355,34 @@ class SupabaseService {
   // ===================== إعدادات Cloudinary =====================
   Future<CloudinaryConfig?> fetchCloudinaryConfig() => _analytics.fetchCloudinaryConfig();
 
-  // ===================== الموردين والمصروفات (Suppliers & Expenses) =====================
-  Future<List<Supplier>> fetchSuppliers({bool activeOnly = true}) {
-    return _suppliers.fetchSuppliers(activeOnly: activeOnly);
-  }
-
-  Future<Supplier?> fetchSupplierById(String id) {
-    return _suppliers.fetchSupplierById(id);
-  }
-
-  Future<bool> createSupplier(Supplier supplier) => _suppliers.createSupplier(supplier);
-  Future<bool> updateSupplier(Supplier supplier) => _suppliers.updateSupplier(supplier);
-  Future<bool> softDeleteSupplier(String id) => _suppliers.softDeleteSupplier(id);
-
+  // ===================== المصروفات العامة (Expenses) =====================
   Future<List<Expense>> fetchExpenses({
     String? branchName,
     String? repName,
     DateTime? startDate,
     DateTime? endDateExclusive,
-  }) {
-    return _suppliers.fetchExpenses(
-      branchName: branchName,
-      repName: repName,
-      startDate: startDate,
-      endDateExclusive: endDateExclusive,
-    );
+  }) async {
+    await requireOnline();
+    // TODO: Implement if needed
+    return [];
   }
 
-  Future<bool> logExpense(Expense expense) => _suppliers.logExpense(expense);
-  Future<bool> softDeleteExpense(String id) => _suppliers.softDeleteExpense(id);
+  Future<bool> logExpense(Expense expense) async {
+    await requireOnline();
+    return false;
+  }
+
+  Future<bool> softDeleteExpense(String id) async {
+    await requireOnline();
+    return false;
+  }
 
   Future<double> sumExpenses({
     String? branchName,
     DateTime? startDate,
     DateTime? endDate,
-  }) {
-    return _suppliers.sumExpenses(
-      branchName: branchName,
-      startDate: startDate,
-      endDate: endDate,
-    );
+  }) async {
+    await requireOnline();
+    return 0.0;
   }
 }

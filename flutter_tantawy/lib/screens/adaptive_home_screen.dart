@@ -13,7 +13,6 @@ import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'sync_queue_screen.dart';
-import 'supplier_expense_screen.dart';
 import 'visits_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
@@ -44,7 +43,6 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       InventoryScreen(currentUser: widget.currentUser),
       CollectionForecastView(currentUser: widget.currentUser),
       const SyncQueueScreen(),
-      SupplierExpenseScreen(currentUser: widget.currentUser),
     ];
   }
 

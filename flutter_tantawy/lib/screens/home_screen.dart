@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'google_sheets_import_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +21,6 @@ import 'returns_screen.dart';
 import 'sync_queue_screen.dart';
 import 'target_performance_screen.dart';
 import 'visits_screen.dart';
-import 'supplier_expense_screen.dart';
 
 /// HomeScreen موحدة - الصفحة الرئيسية لكل الأدوار
 ///
@@ -454,12 +453,12 @@ class _HomeScreenState extends State<HomeScreen> {
         buildScreen: () => const SyncQueueScreen(),
       ),
       HomeMenuItem(
-        title: 'الموردين والمصروفات',
-        subtitle: 'إدارة المشتريات والمصروفات',
-        icon: Icons.receipt_long_outlined,
+        title: 'مزامنة من Google Sheets',
+        subtitle: 'رفع ومزامنة البيانات الذكية',
+        icon: Icons.cloud_upload_outlined,
         color: AppTheme.emeraldGreen,
         allowedRoles: managementRoles,
-        buildScreen: () => SupplierExpenseScreen(currentUser: widget.currentUser),
+        buildScreen: () => const GoogleSheetsImportScreen(),
       ),
     ];
   }
