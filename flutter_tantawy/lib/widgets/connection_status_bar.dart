@@ -86,7 +86,7 @@ class ConnectionStatusBar extends StatelessWidget {
         return (Icons.cloud_off, 'غير متصل بالخادم', AppTheme.roseRed);
       case ConnectionStatus.disconnected:
         return (
-          Icons.signal_wifi_statusbar_connected_no_internet_rounded,
+          Icons.wifi_off,
           'بدون اتصال',
           AppTheme.roseRed,
         );
