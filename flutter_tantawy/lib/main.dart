@@ -30,11 +30,11 @@ void main() async {
   final connectivity = ConnectivityService.instance;
   final queueService = OfflineQueueService(connectivity);
 
-  // Eagerly check connectivity + load queued actions before first frame.
-  WidgetsBinding.instance.addPostFrameCallback((_) async {
-    await queueService.init();
-    await connectivity.startWatching(interval: const Duration(seconds: 30));
-  });
+   // Eagerly check connectivity + load queued actions before first frame.
+   WidgetsBinding.instance.addPostFrameCallback((_) async {
+     await queueService.init();
+     connectivity.startWatching(interval: const Duration(seconds: 30));
+   });
 
   runApp(
     MultiProvider(
