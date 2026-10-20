@@ -12,7 +12,7 @@ class AppConfig {
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
     defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVnZmlwd2ljZmZuYmppb21yeHllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0NzQ2OTQsImV4cCI6MjEwODA1MDY5NH0.fNpdb2tBroDWFXCkw6Q_dPqcF2lY-Hy33Kw2ILeDSH4',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHBheXZhdmFhcmxjb2Noemd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTg2MDIsImV4cCI6MjA4NTQ3NDYwMn0.Y6Vmn7zJZrdzVZMGupPTzDPdCh7yJmdzTbea_CRLM-g',
   );
 
   /// When true the app renders seeded mock data instead of hitting Supabase.
