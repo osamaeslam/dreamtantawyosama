@@ -565,3 +565,57 @@ end;
 $$;
 
 grant execute on function public.reserve_product_stock(text, integer) to anon, authenticated;
+
+-- ============================================================
+-- App login system (app_users table + app_login RPC)
+-- ============================================================
+
+-- 1. Ensure the pgcrypto extension is available for crypt().
+create extension if not exists pgcrypto with schema extensions;
+
+-- 2. Dedicated application-users table.
+--    Kept separate from the legacy `users` table so the sales-app
+--    credentials never touch the broader user directory.
+create table if not exists public.app_users (
+    id uuid primary key default gen_random_uuid(),
+    username text unique not null,
+    email text unique not null,
+    role text not null default 'rep',
+    password text not null,
+    is_active boolean default true,
+    created_at timestamp with time zone default now()
+);
+
+-- 3. Seed the developer/admin account (idempotent).
+insert into public.app_users (username, email, role, password, is_active)
+values (
+    'osama',
+    'osama@dream.com',
+    'admin',
+    '123456',
+    true
+)
+on conflict (username) do nothing;
+
+-- 4. Secure login RPC.
+--    SECURITY DEFINER so the anonymous role can never read the
+--    password column directly; RLS on app_users stays enabled.
+create or replace function public.app_login(p_username text, p_password text)
+returns jsonb
+language sql
+security definer
+set search_path = public, extensions
+as $$
+  select to_jsonb(u) - 'password'
+  from public.app_users u
+  where coalesce(u.is_active, true)
+    and (lower(coalesce(u.username,'')) = lower(trim(p_username))
+         or lower(coalesce(u.email,'')) = lower(trim(p_username)))
+    and (u.password = p_password
+         or u.password = crypt(p_password, u.password))
+  limit 1;
+$$;
+
+revoke all on function public.app_login(text, text) from public;
+grant execute on function public.app_login(text, text) to anon;
+grant execute on function public.app_login(text, text) to authenticated;
