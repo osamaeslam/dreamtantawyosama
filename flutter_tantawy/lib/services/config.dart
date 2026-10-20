@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://ugfipwicffnbjiomrxye.supabase.co',
+    defaultValue: 'https://papxbfmgxnhbmagvqtje.supabase.co',
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
     defaultValue:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHBheXZhdmFhcmxjb2Noemd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTg2MDIsImV4cCI6MjA4NTQ3NDYwMn0.Y6Vmn7zJZrdzVZMGupPTzDPdCh7yJmdzTbea_CRLM-g',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhcHhiZm1neG5oYm1hZ3ZxdGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI0ODcyNjUsImV4cCI6MjEwODA2MzI2NX0.m7l5Y7gwpuLaUDqP0o-to11MqfPSvuCFz_s2w2TqDMc',
   );
 
   /// When true the app renders seeded mock data instead of hitting Supabase.
