@@ -47,21 +47,12 @@ if (fs.existsSync(flutterWebBuild) && fs.existsSync(path.join(flutterWebBuild, '
   process.exit(0);
 }
 
-// Fallback: copy public assets and root web entry to dist/
-console.log('🌐 Packaging production web distribution...');
-const filesToCopy = ['index.html', 'favicon.png', 'manifest.json', 'icon.svg'];
-filesToCopy.forEach(file => {
-  const src = path.resolve(__dirname, '..', file);
-  if (fs.existsSync(src)) {
-    fs.copyFileSync(src, path.join(distDir, file));
-  }
+// Fallback: build the static web app and its production CSS bundle with Vite.
+console.log('🌐 Building production web distribution with Vite...');
+execSync('npx vite build --outDir dist', {
+  cwd: path.resolve(__dirname, '..'),
+  stdio: 'inherit',
 });
-
-const publicDir = path.resolve(__dirname, '../public');
-if (fs.existsSync(publicDir)) {
-  copyFolderSync(publicDir, distDir);
-}
-
 console.log('✅ Web distribution package prepared successfully in dist/');
 
 function copyFolderSync(from, to) {

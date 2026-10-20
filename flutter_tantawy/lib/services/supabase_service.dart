@@ -76,54 +76,32 @@ class SupabaseService {
   }
 
   // ===================== تسجيل الدخول والمصادقة (Authentication) =====================
+  /// Validates credentials against the secure [app_login] RPC.
+  ///
+  /// The RPC is `security definer` so the anonymous role never reads the
+  /// password column directly; RLS on [app_users] stays enabled and there
+  /// is no client-side fallback query (which would be rejected by RLS).
   Future<AppUser?> login(String username, String password) async {
     final clean = username.trim();
     final cleanPass = password.trim();
+    if (clean.isEmpty || cleanPass.isEmpty) return null;
+
     try {
-      // 1. Try secure RPC function app_login first (Phase A)
-      try {
-        final res = await client.rpc(
-          'app_login',
-          params: {'p_username': clean, 'p_password': cleanPass},
-        );
-        if (res != null) {
-          if (res is List && res.isNotEmpty) {
-            return AppUser.fromJson(Map<String, dynamic>.from(res.first));
-          } else if (res is Map && res.isNotEmpty) {
-            return AppUser.fromJson(Map<String, dynamic>.from(res));
-          }
-        }
-      } catch (rpcErr) {
-        debugPrint('app_login RPC unavailable or returned error, using fallback: $rpcErr');
+      final res = await client.rpc(
+        'app_login',
+        params: {'p_username': clean, 'p_password': cleanPass},
+      );
+
+      if (res == null) return null;
+      if (res is List && res.isNotEmpty) {
+        return AppUser.fromJson(Map<String, dynamic>.from(res.first));
       }
-
-      // 2. Fallback to direct query on users table
-      final responseList = await client
-          .from('users')
-          .select()
-          .or('email.ilike.%$clean%,name.ilike.%$clean%,id.eq.$clean')
-          .limit(1);
-
-      if (responseList.isNotEmpty) {
-        final response = Map<String, dynamic>.from(responseList.first);
-        final storedHash = response['password']?.toString() ?? '';
-        final isActive = response['is_active'] == null
-            ? true
-            : (response['is_active'] == true ||
-                response['is_active'] == 1 ||
-                response['is_active'] == 'active');
-
-        if (isActive && (storedHash == cleanPass || _verifyPassword(cleanPass, storedHash))) {
-          return AppUser.fromJson(response);
-        }
-
-        debugPrint('Login failed for $clean — password mismatch or inactive user');
-        return null;
+      if (res is Map && res.isNotEmpty) {
+        return AppUser.fromJson(Map<String, dynamic>.from(res));
       }
     } catch (e) {
-      debugPrint('Supabase login query error: $e');
+      debugPrint('Supabase login RPC error: $e');
     }
-
     return null;
   }
 

@@ -17,26 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              gold: {
-                400: '#fbbf24',
-                500: '#f59e0b',
-                600: '#d97706',
-              }
-            },
-            fontFamily: {
-              cairo: ['Cairo', 'sans-serif'],
-            }
-          }
-        }
-      }
-    </script>
+    <link rel="stylesheet" href="/styles.css" />
 
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -103,8 +84,12 @@
       // ==========================================
       // SUPABASE CONFIGURATION
       // ==========================================
-      const SUPABASE_URL = "https://ugfipwicffnbjiomrxye.supabase.co/rest/v1/";
-      const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZHBheXZhdmFhcmxjb2Noemd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk4OTg2MDIsImV4cCI6MjA4NTQ3NDYwMn0.Y6Vmn7zJZrdzVZMGupPTzDPdCh7yJmdzTbea_CRLM-g";
+      const SUPABASE_PROJECT_URL = "%VITE_SUPABASE_URL%";
+      const SUPABASE_KEY = "%VITE_SUPABASE_ANON_KEY%";
+      const SUPABASE_CONFIGURED = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_PROJECT_URL)
+        && SUPABASE_KEY.length > 20
+        && !SUPABASE_KEY.includes('%');
+      const SUPABASE_URL = `${SUPABASE_PROJECT_URL.replace(/\/+$/, '')}/rest/v1/`;
 
       const headers = {
         "apikey": SUPABASE_KEY,
@@ -177,19 +162,30 @@
       // SUPABASE API METHODS
       // ==========================================
       async function checkSupabaseConnection() {
+        if (!SUPABASE_CONFIGURED) {
+          state.dbConnected = false;
+          return;
+        }
         try {
-          const res = await fetch(`${SUPABASE_URL}users?select=id&limit=1`, { headers });
-          if (res.ok) {
-            state.dbConnected = true;
-          }
+          const res = await fetch(`${SUPABASE_URL}rpc/app_login`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_username: '__connection_check__', p_password: '__connection_check__' })
+          });
+          state.dbConnected = res.ok;
         } catch (e) {
           state.dbConnected = false;
         }
       }
 
       async function fetchAllUsers() {
+        if (!SUPABASE_CONFIGURED) return;
         try {
-          const res = await fetch(`${SUPABASE_URL}users?select=*`, { headers });
+          const res = await fetch(`${SUPABASE_URL}rpc/list_app_users`, {
+            method: 'POST',
+            headers,
+            body: '{}'
+          });
           if (res.ok) {
             state.usersList = await res.json();
           }
@@ -199,55 +195,30 @@
       }
 
       async function apiLogin(identifier, password) {
+        if (!SUPABASE_CONFIGURED) {
+          throw new Error('إعدادات Supabase غير مكتملة. أضف VITE_SUPABASE_URL وVITE_SUPABASE_ANON_KEY في إعدادات Vercel.');
+        }
         const clean = identifier.trim();
         const cleanPass = password.trim();
 
-        // 1. Try secure RPC function app_login first (Phase A)
-        try {
-          const rpcRes = await fetch(`${SUPABASE_URL}rpc/app_login`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ p_username: clean, p_password: cleanPass })
-          });
-          if (rpcRes.ok) {
-            const data = await rpcRes.json();
-            if (Array.isArray(data) && data.length > 0) {
-              const u = data[0];
-              return {
-                id: u.id,
-                name: u.name,
-                email: u.email || u.username || clean,
-                role: u.role || 'مندوب',
-                branch: u.branch_name || u.branch || 'المركز الرئيسي'
-              };
-            } else if (data && data.id) {
-              return {
-                id: data.id,
-                name: data.name,
-                email: data.email || data.username || clean,
-                role: data.role || 'مندوب',
-                branch: data.branch_name || data.branch || 'المركز الرئيسي'
-              };
-            }
-          }
-        } catch (rpcErr) {
-          console.warn("app_login RPC check:", rpcErr);
+        const rpcRes = await fetch(`${SUPABASE_URL}rpc/app_login`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ p_username: clean, p_password: cleanPass })
+        });
+        if (!rpcRes.ok) {
+          throw new Error(`Supabase رفض الطلب (${rpcRes.status}). تحقق من عنوان المشروع ومفتاح anon.`);
         }
 
-        // 2. Fallback to users table query
-        const endpoint = `${SUPABASE_URL}users?or=(email.ilike.*${encodeURIComponent(clean)}*,name.ilike.*${encodeURIComponent(clean)}*,id.eq.${encodeURIComponent(clean)})&select=*&limit=1`;
-        const res = await fetch(endpoint, { headers });
-        if (res.ok) {
-          const rows = await res.json();
-          if (rows.length > 0) {
-            const user = rows[0];
-            if (user.password === cleanPass) {
-              return user;
-            }
-          }
-        }
-
-        return null;
+        const user = await rpcRes.json();
+        if (!user || Array.isArray(user) || !user.id) return null;
+        return {
+          id: user.id,
+          name: user.username,
+          email: user.email || user.username || clean,
+          role: user.role || 'مندوب',
+          branch: user.branch || 'المركز الرئيسي'
+        };
       }
 
       async function fetchProducts() {
@@ -1175,7 +1146,7 @@
                   <tbody class="divide-y divide-gray-800/60">
                     ${state.usersList.map(u => `
                       <tr class="hover:bg-gray-800/40 transition">
-                        <td class="p-3 font-bold text-white">${u.name}</td>
+                        <td class="p-3 font-bold text-white">${u.username}</td>
                         <td class="p-3 text-slate-300 font-mono">${u.email || '---'}</td>
                         <td class="p-3 text-amber-400">${u.role || 'مستخدم'}</td>
                         <td class="p-3 text-slate-400">${u.branch || '---'}</td>
@@ -1184,7 +1155,7 @@
                             onclick="switchUserDirectly('${u.id}')" 
                             class="px-2.5 py-1 rounded-xl bg-gray-800 hover:bg-amber-500 hover:text-gray-950 text-slate-300 font-bold transition text-[11px] cursor-pointer"
                           >
-                            عرض كـ ${u.name.split(' ')[0]}
+                            عرض كـ ${u.username.split(' ')[0]}
                           </button>
                         </td>
                       </tr>
@@ -1203,7 +1174,7 @@
         if (u) {
           state.currentUser = u;
           localStorage.setItem('tantawy_auth_user', JSON.stringify(u));
-          showToast(`تم التبديل لحساب: ${u.name} (${u.role})`, 'info');
+          showToast(`تم التبديل لحساب: ${u.username} (${u.role})`, 'info');
           await loadUserData();
           render();
         }

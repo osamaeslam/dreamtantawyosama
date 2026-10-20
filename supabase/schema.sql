@@ -515,57 +515,6 @@ create index if not exists idx_audit_log_timestamp on public.audit_log (timestam
 -- Keep user records private; sign-in is exposed through the sanitized RPC below.
 alter table public.users enable row level security;
 
-create or replace function public.app_login(p_username text, p_password text)
-returns jsonb
-language sql
-security definer
-set search_path = public, extensions
-as $$
-  select to_jsonb(account) - 'password'
-  from public.users as account
-  where account.is_active
-    and (
-      lower(coalesce(account.username, '')) = lower(trim(p_username))
-      or lower(coalesce(account.email, '')) = lower(trim(p_username))
-      or account.id = trim(p_username)
-      or lower(account.name) = lower(trim(p_username))
-    )
-    and (
-      account.password = p_password
-      or crypt(p_password, account.password) = account.password
-    )
-  limit 1;
-$$;
-
-revoke all on function public.app_login(text, text) from public;
-grant execute on function public.app_login(text, text) to anon, authenticated;
-
-create or replace function public.reserve_product_stock(p_id text, quantity integer)
-returns boolean
-language plpgsql
-security invoker
-set search_path = public
-as $$
-declare
-  updated_rows integer;
-begin
-  if quantity <= 0 then
-    return false;
-  end if;
-
-  update public.product_stocks
-  set quantity_reserved = quantity_reserved + reserve_product_stock.quantity,
-      updated_at = now()
-  where product_id = p_id
-    and quantity_actual - quantity_reserved >= reserve_product_stock.quantity;
-
-  get diagnostics updated_rows = row_count;
-  return updated_rows > 0;
-end;
-$$;
-
-grant execute on function public.reserve_product_stock(text, integer) to anon, authenticated;
-
 -- ============================================================
 -- App login system (app_users table + app_login RPC)
 -- ============================================================
@@ -606,7 +555,15 @@ language sql
 security definer
 set search_path = public, extensions
 as $$
-  select to_jsonb(u) - 'password'
+  select jsonb_build_object(
+      'id', u.id,
+      'name', u.username,
+      'username', u.username,
+      'email', u.email,
+      'role', u.role,
+      'is_active', u.is_active,
+      'created_at', u.created_at
+    ) - 'password'
   from public.app_users u
   where coalesce(u.is_active, true)
     and (lower(coalesce(u.username,'')) = lower(trim(p_username))
@@ -617,5 +574,57 @@ as $$
 $$;
 
 revoke all on function public.app_login(text, text) from public;
-grant execute on function public.app_login(text, text) to anon;
-grant execute on function public.app_login(text, text) to authenticated;
+grant execute on function public.app_login(text, text) to anon, authenticated;
+
+-- 5. List application users (password excluded). Used by the admin
+--    dashboard in the web app. SECURITY DEFINER so RLS on app_users
+--    never blocks the listing.
+create or replace function public.list_app_users()
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    jsonb_agg(jsonb_build_object(
+      'id', id,
+      'username', username,
+      'email', coalesce(email, username),
+      'role', role,
+      'is_active', is_active,
+      'created_at', created_at
+    ) order by created_at desc),
+    '[]'::jsonb
+  )
+  from public.app_users
+  where coalesce(is_active, true);
+$$;
+
+revoke all on function public.list_app_users() from public;
+grant execute on function public.list_app_users() to anon, authenticated;
+
+create or replace function public.reserve_product_stock(p_id text, quantity integer)
+returns boolean
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  updated_rows integer;
+begin
+  if quantity <= 0 then
+    return false;
+  end if;
+
+  update public.product_stocks
+  set quantity_reserved = quantity_reserved + reserve_product_stock.quantity,
+      updated_at = now()
+  where product_id = p_id
+    and quantity_actual - quantity_reserved >= reserve_product_stock.quantity;
+
+  get diagnostics updated_rows = row_count;
+  return updated_rows > 0;
+end;
+$$;
+
+grant execute on function public.reserve_product_stock(text, integer) to anon, authenticated;
