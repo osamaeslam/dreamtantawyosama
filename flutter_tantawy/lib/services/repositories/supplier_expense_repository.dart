@@ -155,7 +155,8 @@ class SupplierExpenseRepository extends BaseRepository {
       final rows = data as List<dynamic>;
       double sum = 0;
       for (final row in rows) {
-        sum += _toDouble((row as Map<String, dynamic>)['amount']) ?? 0;
+        final val = (row as Map<String, dynamic>)['amount'];
+        sum += (val is num) ? val.toDouble() : (double.tryParse(val?.toString() ?? '0') ?? 0);
       }
       return sum;
     } catch (e) {
