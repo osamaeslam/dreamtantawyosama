@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
+import '../services/google_sheets_sync_service.dart';
 
 class GoogleSheetsImportScreen extends StatefulWidget {
   const GoogleSheetsImportScreen({super.key});
@@ -19,6 +20,9 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
 
   bool _isSyncing = false;
   String _statusMessage = '';
+  String _currentSheet = '';
+  int _progressCurrent = 0;
+  int _progressTotal = 0;
   int _added = 0;
   int _updated = 0;
   int _skipped = 0;
@@ -56,12 +60,27 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      final result = await GoogleSheetsSyncService.instance.syncAll(
+        productsUrl: _productsUrlController.text.isEmpty ? null : _productsUrlController.text,
+        customersUrl: _customersUrlController.text.isEmpty ? null : _customersUrlController.text,
+        targetsUrl: _targetsUrlController.text.isEmpty ? null : _targetsUrlController.text,
+        offersUrl: _offersUrlController.text.isEmpty ? null : _offersUrlController.text,
+        onProgress: (sheetName, current, total) {
+          setState(() {
+            _currentSheet = sheetName;
+            _progressCurrent = current;
+            _progressTotal = total;
+          });
+        },
+      );
+
       setState(() {
-        _statusMessage = 'تمت المزامنة بنجاح';
-        _added = 15;
-        _updated = 7;
-        _skipped = 42;
+        _statusMessage = result.message.isNotEmpty
+            ? result.message
+            : 'تمت المزامنة بنجاح';
+        _added = result.added;
+        _updated = result.updated;
+        _skipped = result.skipped;
       });
     } catch (e) {
       setState(() {
@@ -215,6 +234,24 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                         ),
                       ],
                     ),
+                    if (_isSyncing && _progressTotal > 0) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'المعالجة حالياً: $_currentSheet',
+                        style: GoogleFonts.cairo(fontSize: 13, color: mutedColor),
+                      ),
+                      const SizedBox(height: 8),
+                      LinearProgressIndicator(
+                        value: _progressTotal > 0 ? _progressCurrent / _progressTotal : 0,
+                        backgroundColor: mutedColor.withOpacity(0.2),
+                        color: AppTheme.primaryGold,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$_progressCurrent / $_progressTotal',
+                        style: GoogleFonts.cairo(fontSize: 12, color: mutedColor),
+                      ),
+                    ],
                     if (!_isSyncing && (_added > 0 || _updated > 0 || _skipped > 0)) ...[
                       const SizedBox(height: 16),
                       Row(
