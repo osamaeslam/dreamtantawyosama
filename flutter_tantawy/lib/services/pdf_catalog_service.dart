@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -13,6 +14,22 @@ class PdfCatalogService {
     final boldFont = await rootBundle.load('assets/fonts/Cairo-Bold.ttf');
     final ttfRegular = pw.Font.ttf(regularFont);
     final ttfBold = pw.Font.ttf(boldFont);
+    final imageData = <String, Uint8List>{};
+    final imageUrls = products
+        .expand((product) => product.variants)
+        .map((variant) => variant.imageUrl)
+        .whereType<String>()
+        .where((url) => url.isNotEmpty)
+        .toSet();
+
+    await Future.wait(imageUrls.map((url) async {
+      try {
+        final response = await http.get(Uri.parse(url)).timeout(
+              const Duration(seconds: 8),
+            );
+        if (response.statusCode == 200) imageData[url] = response.bodyBytes;
+      } catch (_) {}
+    }));
 
     pdf.addPage(
       pw.MultiPage(
@@ -25,11 +42,10 @@ class PdfCatalogService {
             style: pw.TextStyle(font: ttfBold, fontSize: 24, fontWeight: pw.FontWeight.bold),
           ),
         ),
-        body: (context) => products.asMap().entries.map((entry) {
-          final product = entry.value;
+        build: (context) => products.map((product) {
           return pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 24),
-            child: _buildProductBlock(product, ttfRegular, ttfBold),
+            child: _buildProductBlock(product, ttfRegular, ttfBold, imageData),
           );
         }).toList(growable: false),
       ),
@@ -38,7 +54,12 @@ class PdfCatalogService {
     return pdf.save();
   }
 
-  static pw.Widget _buildProductBlock(ParentProduct product, pw.Font font, pw.Font boldFont) {
+  static pw.Widget _buildProductBlock(
+    ParentProduct product,
+    pw.Font font,
+    pw.Font boldFont,
+    Map<String, Uint8List> imageData,
+  ) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
@@ -85,7 +106,7 @@ class PdfCatalogService {
                       border: pw.Border.all(color: PdfColors.grey300, width: 1),
                       borderRadius: pw.BorderRadius.circular(8),
                     ),
-                    child: _buildVariantImage(variant),
+                    child: _buildVariantImage(variant, imageData),
                   ),
                   pw.SizedBox(height: 4),
                   pw.Text(variant.code, style: pw.TextStyle(font: boldFont, fontSize: 9)),
@@ -115,8 +136,12 @@ class PdfCatalogService {
     );
   }
 
-  static pw.Widget _buildVariantImage(ProductVariant variant) {
-    if (variant.imageUrl == null || variant.imageUrl!.isEmpty) {
+  static pw.Widget _buildVariantImage(
+    ProductVariant variant,
+    Map<String, Uint8List> imageData,
+  ) {
+    final bytes = variant.imageUrl == null ? null : imageData[variant.imageUrl!];
+    if (bytes == null) {
       return pw.Icon(
         pw.IconData(0xe033),
         size: 48,
@@ -124,18 +149,10 @@ class PdfCatalogService {
       );
     }
     return pw.Image(
-      pw.NetworkImage(variant.imageUrl!),
+      pw.MemoryImage(bytes),
       fit: pw.BoxFit.contain,
       width: 120,
       height: 100,
-      loadingBuilder: (context, event) => pw.Center(
-        child: pw.Text('', style: pw.TextStyle(fontSize: 8)),
-      ),
-      errorBuilder: (context, error, stackTrace) => pw.Icon(
-        pw.IconData(0xe033),
-        size: 48,
-        color: PdfColors.grey400,
-      ),
     );
   }
 

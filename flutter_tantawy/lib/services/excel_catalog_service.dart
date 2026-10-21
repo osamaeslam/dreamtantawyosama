@@ -5,7 +5,7 @@ import '../models/models.dart';
 
 class ExcelCatalogService {
   static Future<Uint8List> buildCatalogExcel(List<ParentProduct> products) async {
-    final excel = Excel.createEmptyExcel();
+    final excel = Excel.createExcel();
     final sheet = excel['كتالوج المنتجات'];
 
     _writeHeader(sheet, 0);
@@ -46,24 +46,18 @@ class ExcelCatalogService {
       'الخصم %', 'مخزون فرع', 'مخزون مخزن', 'حالة النفاذ', 'الأولوية',
     ];
 
-    final headerStyle = sheet.createTextStyle(
-      bold: true,
-      fontSize: 11,
-      color: ExcelColor.fromColAlpha(255, 255, 255),
-    );
-
-    final headerFill = ExcelColor.fromColAlpha(26, 115, 179);
     final headerCellStyle = CellStyle(
       bold: true,
       fontSize: 11,
-      fontColor: ExcelColor.fromColAlpha(255, 255, 255),
-      bgColor: ExcelColor.fromColAlpha(26, 115, 179),
-      horizontalAlign: HorizontalAlign.center,
+      fontColorHex: ExcelColor.white,
+      backgroundColorHex: ExcelColor.fromHexString('FF1A73B3'),
+      horizontalAlign: HorizontalAlign.Center,
+      verticalAlign: VerticalAlign.Center,
     );
 
     for (int col = 0; col < headers.length; col++) {
-      final cell = sheet.cell(CellIndex.indexByColumn(columnIndex: col, rowIndex: row));
-      cell.value = headers[col];
+      final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+      cell.value = TextCellValue(headers[col]);
       cell.cellStyle = headerCellStyle;
     }
 
@@ -88,14 +82,13 @@ class ExcelCatalogService {
     final productStyle = CellStyle(
       bold: true,
       fontSize: 10,
-      fontColor: ExcelColor.fromColAlpha(26, 115, 179),
-      verticalAlign: VerticalAlignment.center,
+      fontColorHex: ExcelColor.fromHexString('FF1A73B3'),
+      verticalAlign: VerticalAlign.Center,
     );
 
-    final variantStyle = CellStyle(fontSize: 9, verticalAlign: VerticalAlignment.center);
+    final variantStyle = CellStyle(fontSize: 9, verticalAlign: VerticalAlign.Center);
 
     int col = 0;
-    final cells = sheet.getAllColumns();
 
     _setCell(sheet, row, col++, product.name, productStyle, rowspan: rowspan);
     _setCell(sheet, row, col++, product.primaryCode, variantStyle);
@@ -123,10 +116,10 @@ class ExcelCatalogService {
       final stockStatus = variant.availableForOrder > 0 ? 'متوفر' : 'نفاد';
       final statusStyle = CellStyle(
         fontSize: 9,
-        fontColor: variant.availableForOrder > 0
-            ? ExcelColor.fromColAlpha(34, 139, 71)
-            : ExcelColor.fromColAlpha(220, 38, 38),
-        verticalAlign: VerticalAlignment.center,
+        fontColorHex: variant.availableForOrder > 0
+            ? ExcelColor.fromHexString('FF228B47')
+            : ExcelColor.fromHexString('FFDC2626'),
+        verticalAlign: VerticalAlign.Center,
       );
       _setCell(sheet, row, col++, stockStatus, statusStyle);
       _setCell(sheet, row, col++, product.salesPriority, variantStyle);
@@ -140,22 +133,16 @@ class ExcelCatalogService {
   }
 
   static void _setCell(Sheet sheet, int row, int col, String value, CellStyle style, {int rowspan = 1}) {
-    final cell = sheet.cell(CellIndex.indexByColumn(columnIndex: col, rowIndex: row));
-    cell.value = value;
+    final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
+    cell.value = TextCellValue(value);
     cell.cellStyle = style;
 
     if (rowspan > 1 && value.isNotEmpty) {
-      sheet.setRowProperty(row, 'height', 20);
-      for (int r = 1; r < rowspan; r++) {
-        final mergeCell = sheet.cell(CellIndex.indexByColumn(columnIndex: col, rowIndex: row + r));
-        mergeCell.value = value;
-        mergeCell.cellStyle = style;
-      }
-      try {
-        sheet.merge(CellIndex.indexByColumn(columnIndex: col, rowIndex: row),
-            CellIndex.indexByColumn(columnIndex: col, rowIndex: row + rowspan - 1));
-      } catch (e) {
-      }
+      sheet.setRowHeight(row, 20);
+      sheet.merge(
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row),
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row + rowspan - 1),
+      );
     }
   }
 
@@ -163,7 +150,7 @@ class ExcelCatalogService {
     for (int col = 0; col < 15; col++) {
       double maxWidth = 10;
       for (int row = 0; row <= maxRow; row++) {
-        final cell = sheet.cell(CellIndex.indexByColumn(columnIndex: col, rowIndex: row));
+        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
         final text = cell.value?.toString() ?? '';
         if (text.length > maxWidth) maxWidth = text.length.toDouble();
       }
@@ -174,20 +161,20 @@ class ExcelCatalogService {
   static void _applyAlternatingRowColors(Sheet sheet, int maxRow) {
     final dataCellStyle = CellStyle(
       fontSize: 9,
-      bgColor: ExcelColor.fromColAlpha(248, 250, 252),
-      verticalAlign: VerticalAlignment.center,
+      backgroundColorHex: ExcelColor.fromHexString('FFF8FAFC'),
+      verticalAlign: VerticalAlign.Center,
     );
 
     final whiteCellStyle = CellStyle(
       fontSize: 9,
-      bgColor: ExcelColor.fromColAlpha(255, 255, 255),
-      verticalAlign: VerticalAlignment.center,
+      backgroundColorHex: ExcelColor.white,
+      verticalAlign: VerticalAlign.Center,
     );
 
     for (int row = 1; row <= maxRow; row++) {
       final style = row % 2 == 0 ? dataCellStyle : whiteCellStyle;
       for (int col = 0; col < 15; col++) {
-        final cell = sheet.cell(CellIndex.indexByColumn(columnIndex: col, rowIndex: row));
+        final cell = sheet.cell(CellIndex.indexByColumnRow(columnIndex: col, rowIndex: row));
         if (cell.value?.toString().isNotEmpty ?? false) {
           cell.cellStyle = style;
         }

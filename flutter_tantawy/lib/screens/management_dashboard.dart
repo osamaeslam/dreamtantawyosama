@@ -493,16 +493,13 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                   topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                barTouchData: BarTouchData(
-                  touchCallback: (event, response) {
-                    if (event != null && event is FlTapEvent && response != null) {
-                    }
-                  },
-                ),
-              ),
-            ),
-          ),
-        ],
+                 barTouchData: BarTouchData(
+                   touchCallback: (event, response) {}
+                 ),
+               ),
+             ),
+           ),
+       ],
       ),
     );
   }
@@ -556,8 +553,10 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
         title: '${percentage.toStringAsFixed(0)}%',
         titleStyle: GoogleFonts.cairo(
             fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
-        borderColor: isOverdue ? AppTheme.errorRed : Colors.transparent,
-        borderWidth: isOverdue ? 2 : 0,
+        borderSide: BorderSide(
+          color: isOverdue ? AppTheme.errorRed : Colors.transparent,
+          width: isOverdue ? 2 : 0,
+        ),
         radius: 44,
       ));
     }
@@ -585,9 +584,6 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                 sections: sections,
                 borderData: FlBorderData(show: false),
                 pieTouchData: PieTouchData(touchCallback: (event, resp) {}),
-                centerText: '',
-                centerStyle: GoogleFonts.cairo(
-                    fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.darkText),
               ),
             ),
             Column(

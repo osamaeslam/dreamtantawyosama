@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
+import '../services/repositories/forecast_repository.dart';
 import '../services/role_access_controller.dart';
 import '../theme/app_theme.dart';
 

@@ -135,8 +135,12 @@ class ExpenseRepository extends BaseRepository {
 
   Future<List<String>> fetchExpenseCategories() async {
     try {
-      final data = await client.from('expenses').select('category').unique().order('category');
-      return (data as List<dynamic>).map((e) => e['category'] as String).toList();
+      final data = await client.from('expenses').select('category').order('category');
+      return data
+          .map((row) => row['category'] as String?)
+          .whereType<String>()
+          .toSet()
+          .toList();
     } catch (e) {
       logError('fetchExpenseCategories', e);
       return [];

@@ -283,7 +283,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                ),
              ),
           ],
-        )),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
