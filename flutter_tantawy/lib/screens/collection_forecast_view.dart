@@ -6,6 +6,8 @@ import '../services/supabase_service.dart';
 import '../services/repositories/forecast_repository.dart';
 import '../services/role_access_controller.dart';
 import '../theme/app_theme.dart';
+import 'visits_dashboard_screen.dart';
+import 'returns_screen.dart';
 
 class CollectionForecastView extends StatefulWidget {
   final AppUser currentUser;
@@ -18,6 +20,9 @@ class CollectionForecastView extends StatefulWidget {
 
 class _CollectionForecastViewState extends State<CollectionForecastView> {
   List<CollectionForecastRecord> _forecasts = [];
+  List<CollectionForecastRecord> _allForecasts = [];
+  List<Customer> _customers = [];
+  List<AppUser> _representatives = [];
   ForecastMonthPlan? _monthPlan;
   bool _isLoading = true;
   String _selectedMonthKey = DateFormat('yyyy-MM').format(DateTime.now());
@@ -32,72 +37,106 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
     _loadData();
   }
 
-  void _loadData() async {
-    setState(() => _isLoading = true);
-
-    final monthPlan = await SupabaseService.instance.fetchForecastMonthPlan(_selectedMonthKey);
-    final data = await SupabaseService.instance.fetchForecasts(
-      monthKey: _selectedMonthKey,
-      status: _selectedStatus,
-    );
-
-    if (mounted) {
-      setState(() {
-        _monthPlan = monthPlan;
-        _forecasts = data.isNotEmpty ? data : _generateMockForecasts();
-        _isLoading = false;
-      });
+  Future<void> _openForecastForm() async {
+    if (_customers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('لا يوجد عملاء مسندون للمندوب', style: GoogleFonts.cairo())),
+      );
+      return;
     }
+    final entry = await showDialog<_ForecastEntryData>(
+      context: context,
+      builder: (context) => _ForecastEntryDialog(
+        customers: _customers,
+        weeks: _monthPlan?.weeks ?? const [],
+      ),
+    );
+    if (entry == null || !mounted) return;
+
+    final now = DateTime.now().toIso8601String();
+    final rep = widget.currentUser;
+    final record = CollectionForecastRecord(
+      id: 'forecast_${rep.id}_${entry.customer.id}_${_selectedMonthKey}_${entry.weekIndex}',
+      monthKey: _selectedMonthKey,
+      weekIndex: entry.weekIndex,
+      repId: rep.id,
+      repName: rep.name,
+      branchName: rep.branchName,
+      supervisorId: rep.supervisorId,
+      customerId: entry.customer.id,
+      customerCode: entry.customer.code,
+      customerName: entry.customer.name,
+      collectionForecast: entry.collectionAmount,
+      salesForecast: entry.salesAmount,
+      repCollectionForecast: entry.collectionAmount,
+      repSalesForecast: entry.salesAmount,
+      status: ForecastStatusType.submitted,
+      collectionMethod: entry.collectionMethod,
+      returnExpected: entry.returnExpected,
+      returnExpectedAmount: entry.returnAmount,
+      submittedAt: now,
+      approvalStage: rep.supervisorId != null || rep.supervisorName != null
+          ? 'pending_supervisor'
+          : 'pending_branch_manager',
+      returnStatus: entry.returnExpected || entry.collectionAmount == 0
+          ? 'pending_review'
+          : 'none',
+    );
+    final success = await SupabaseService.instance.submitForecast(
+      record,
+      hasSupervisor: rep.supervisorId != null || rep.supervisorName != null,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'تم إرسال التوقع للمراجعة' : 'تعذر حفظ التوقع على الخادم',
+          style: GoogleFonts.cairo(),
+        ),
+        backgroundColor: success ? AppTheme.emeraldGreen : AppTheme.errorRed,
+      ),
+    );
+    if (success) await _loadData();
   }
 
-  List<CollectionForecastRecord> _generateMockForecasts() {
-    return [
-      CollectionForecastRecord(
-        id: 'f1',
-        monthKey: _selectedMonthKey,
-        weekIndex: 0,
-        repId: 'rep_1',
-        repName: 'محمد على',
-        branchName: widget.currentUser.branchName,
-        customerId: 'cust_1',
-        customerCode: 'CUST-001',
-        customerName: 'مخازن البتروز',
-        collectionForecast: 45000,
-        salesForecast: 50000,
-        status: ForecastStatusType.submitted,
-        submittedAt: '${_selectedMonthKey}-01T10:00:00',
-      ),
-      CollectionForecastRecord(
-        id: 'f2',
-        monthKey: _selectedMonthKey,
-        weekIndex: 0,
-        repId: 'rep_1',
-        repName: 'محمد على',
-        branchName: widget.currentUser.branchName,
-        customerId: 'cust_2',
-        customerCode: 'CUST-002',
-        customerName: 'مجموعة السادة الكبرى',
-        collectionForecast: 62000,
-        salesForecast: 70000,
-        status: ForecastStatusType.submitted,
-        submittedAt: '${_selectedMonthKey}-01T10:15:00',
-      ),
-      CollectionForecastRecord(
-        id: 'f3',
-        monthKey: _selectedMonthKey,
-        weekIndex: 0,
-        repId: 'rep_2',
-        repName: 'أحمد حسن',
-        branchName: widget.currentUser.branchName,
-        customerId: 'cust_3',
-        customerCode: 'CUST-003',
-        customerName: 'سوبر ماركت النيل',
-        collectionForecast: 28000,
-        salesForecast: 32000,
-        status: ForecastStatusType.submitted,
-        submittedAt: '${_selectedMonthKey}-01T11:00:00',
-      ),
-    ];
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+    final rbac = RoleAccessController(widget.currentUser);
+    try {
+      final monthPlan = await SupabaseService.instance.fetchForecastMonthPlan(_selectedMonthKey);
+      final forecasts = await SupabaseService.instance.fetchForecasts(monthKey: _selectedMonthKey);
+      final customers = await SupabaseService.instance.fetchCustomers(
+        repName: rbac.isSalesRep ? widget.currentUser.name : null,
+        branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+      );
+      final representatives = await SupabaseService.instance.fetchUsers(
+        branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
+        role: 'sales_rep',
+      );
+      if (!mounted) return;
+      setState(() {
+        _monthPlan = monthPlan;
+        _customers = rbac.filterCustomerAccounts(customers);
+        _representatives = representatives;
+        _allForecasts = rbac.filterForecasts(forecasts);
+        _forecasts = _allForecasts
+            .where((forecast) => forecast.status == _selectedStatus)
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _monthPlan = null;
+        _customers = [];
+        _allForecasts = [];
+        _forecasts = [];
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تحميل التوقعات: $e', style: GoogleFonts.cairo())),
+      );
+    }
   }
 
   void _selectMonth() async {
@@ -183,8 +222,16 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
     final rbac = RoleAccessController(widget.currentUser);
     final canConfigureWeeks = rbac.isAdmin || rbac.isBranchManager;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final totalCollection = _forecasts.fold<double>(0, (s, f) => s + f.collectionForecast);
-    final totalSales = _forecasts.fold<double>(0, (s, f) => s + f.salesForecast);
+    final approvedForecasts = _allForecasts
+      .where((forecast) => forecast.approvalStage == 'approved')
+      .toList();
+    final totalCollection = approvedForecasts.fold<double>(0, (sum, forecast) => sum + forecast.collectionForecast);
+    final totalSales = approvedForecasts.fold<double>(0, (sum, forecast) => sum + forecast.salesForecast);
+    final totalCheques = approvedForecasts
+      .where((forecast) => forecast.collectionMethod == 'cheque')
+      .fold<double>(0, (sum, forecast) => sum + forecast.collectionForecast);
+    final openReturns = _allForecasts.where((forecast) => forecast.returnStatus == 'pending_review').toList();
+    final totalReturnAmount = openReturns.fold<double>(0, (sum, forecast) => sum + forecast.returnExpectedAmount);
 
     return Scaffold(
       backgroundColor: isDark ? AppTheme.darkBackground : AppTheme.backgroundLight,
@@ -318,6 +365,17 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                     ],
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildSummaryMetric('الشيكات', totalCheques, AppTheme.warningAmber),
+                      _buildSummaryMetric('مرتجعات معلقة (${openReturns.length})', totalReturnAmount, AppTheme.errorRed),
+                    ],
+                  ),
+                ),
                 const Divider(height: 1),
 
                 // Forecast records list
@@ -345,6 +403,15 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                 ),
               ],
             ),
+      floatingActionButton: rbac.isSalesRep
+          ? FloatingActionButton.extended(
+              onPressed: _openForecastForm,
+              icon: const Icon(Icons.add),
+              label: Text('إضافة توقع', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+              backgroundColor: AppTheme.primaryGold,
+              foregroundColor: AppTheme.darkSlate,
+            )
+          : null,
     );
   }
 
@@ -472,10 +539,319 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                   style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.warningAmber),
                 ),
               ),
+            if (record.approvalStage != 'approved')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _approvalStageLabel(record.approvalStage),
+                  style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.infoBlue),
+                ),
+              ),
+            if (record.collectionMethod == 'cheque')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text('متوقع بشيك', style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.warningAmber)),
+              ),
+            if (record.returnExpected || record.collectionForecast == 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'حالة المرتجع: ${_returnStatusLabel(record.returnStatus)}',
+                  style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.errorRed),
+                ),
+              ),
+            if (record.legalReferralStatus != 'none')
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  'الشؤون القانونية: ${record.legalReferralNote ?? 'تمت الإحالة'}',
+                  style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.errorRed),
+                ),
+              ),
+            _buildForecastActions(record),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildSummaryMetric(String label, double amount, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label, style: GoogleFonts.cairo(fontSize: 11, color: color)),
+          const SizedBox(width: 8),
+          Text(_currencyFmt.format(amount),
+              style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+        ],
+      ),
+    );
+  }
+
+  String _approvalStageLabel(String stage) {
+    switch (stage) {
+      case 'pending_supervisor':
+        return 'بانتظار اعتماد المشرف';
+      case 'pending_branch_manager':
+        return 'بانتظار اعتماد مدير الفرع';
+      case 'rep_changes_required':
+        return 'مطلوب تعديل المندوب';
+      default:
+        return 'توقع مقدم';
+    }
+  }
+
+  String _returnStatusLabel(String status) {
+    switch (status) {
+      case 'pending_review':
+        return 'قيد الإفادة';
+      case 'received':
+        return 'تم استلام المرتجع';
+      case 'no_return':
+        return 'لا يوجد مرتجع';
+      default:
+        return 'لا يوجد';
+    }
+  }
+
+  Widget _buildForecastActions(CollectionForecastRecord record) {
+    final rbac = RoleAccessController(widget.currentUser);
+    final canReview = rbac.isAdmin || rbac.isSupervisor || rbac.isBranchManager;
+    final canApproveAsSupervisor = (rbac.isSupervisor || rbac.isAdmin) &&
+        record.approvalStage == 'pending_supervisor';
+    final canApproveAsManager = (rbac.isBranchManager || rbac.isAdmin) &&
+        record.approvalStage == 'pending_branch_manager';
+    final canSchedule = (rbac.isSupervisor || rbac.isBranchManager || rbac.isAdmin) &&
+        record.approvalStage == 'approved' && record.scheduledVisitId == null;
+    final hasActions = canApproveAsSupervisor || canApproveAsManager ||
+        (canReview && record.approvalStage.startsWith('pending_')) ||
+        (canReview && record.returnStatus == 'pending_review') ||
+        record.legalReferralStatus == 'none' || canSchedule;
+    if (!hasActions) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          if (canApproveAsSupervisor)
+            OutlinedButton.icon(
+              onPressed: () => _reviewForecast(record, supervisor: true),
+              icon: const Icon(Icons.fact_check_outlined, size: 16),
+              label: Text('اعتماد المشرف', style: GoogleFonts.cairo(fontSize: 10)),
+            ),
+          if (canApproveAsManager)
+            FilledButton.tonalIcon(
+              onPressed: () => _reviewForecast(record, supervisor: false),
+              icon: const Icon(Icons.verified_outlined, size: 16),
+              label: Text('اعتماد نهائي', style: GoogleFonts.cairo(fontSize: 10)),
+            ),
+          if (canReview && record.approvalStage.startsWith('pending_'))
+            TextButton.icon(
+              onPressed: () => _requestForecastChanges(record),
+              icon: const Icon(Icons.edit_note, size: 16),
+              label: Text('طلب تعديل', style: GoogleFonts.cairo(fontSize: 10)),
+            ),
+          if (canReview && record.returnStatus == 'pending_review')
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ReturnsScreen(currentUser: widget.currentUser),
+              )),
+              icon: const Icon(Icons.assignment_return_outlined, size: 16, color: AppTheme.errorRed),
+              label: Text('متابعة المرتجع', style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.errorRed)),
+            ),
+          if (record.legalReferralStatus == 'none')
+            TextButton.icon(
+              onPressed: () => _referToLegal(record),
+              icon: const Icon(Icons.gavel_outlined, size: 16, color: AppTheme.errorRed),
+              label: Text('إحالة قانونية', style: GoogleFonts.cairo(fontSize: 10, color: AppTheme.errorRed)),
+            ),
+          if (canSchedule)
+            TextButton.icon(
+              onPressed: () => _scheduleCustomerVisit(record),
+              icon: const Icon(Icons.event_available_outlined, size: 16),
+              label: Text('جدولة زيارة', style: GoogleFonts.cairo(fontSize: 10)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _reviewForecast(
+    CollectionForecastRecord record, {
+    required bool supervisor,
+  }) async {
+    final collectionController = TextEditingController(text: record.collectionForecast.toStringAsFixed(0));
+    final salesController = TextEditingController(text: record.salesForecast.toStringAsFixed(0));
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(supervisor ? 'مراجعة المشرف' : 'اعتماد مدير الفرع', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: collectionController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: 'المبلغ المتوقع للتحصيل', labelStyle: GoogleFonts.cairo()),
+            ),
+            TextField(
+              controller: salesController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(labelText: 'المبلغ المتوقع للمبيعات', labelStyle: GoogleFonts.cairo()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text('رجوع', style: GoogleFonts.cairo())),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: Text('اعتماد', style: GoogleFonts.cairo())),
+        ],
+      ),
+    );
+    if (approved != true || !mounted) return;
+
+    final collection = double.tryParse(collectionController.text.trim());
+    final sales = double.tryParse(salesController.text.trim());
+    collectionController.dispose();
+    salesController.dispose();
+    final success = supervisor
+        ? await SupabaseService.instance.approveForecastBySupervisor(
+            forecastId: record.id,
+            supervisorName: widget.currentUser.name,
+            collectionForecast: collection,
+            salesForecast: sales,
+          )
+        : await SupabaseService.instance.approveForecastByBranchManager(
+            forecastId: record.id,
+            managerName: widget.currentUser.name,
+            collectionForecast: collection,
+            salesForecast: sales,
+          );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(success ? 'تم تسجيل الاعتماد' : 'تعذر الاعتماد: راجع صلاحية المرحلة أو الاتصال', style: GoogleFonts.cairo()),
+    ));
+    if (success) await _loadData();
+  }
+
+  Future<void> _requestForecastChanges(CollectionForecastRecord record) async {
+    final controller = TextEditingController();
+    final note = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('سبب طلب التعديل', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(labelText: 'اكتب المطلوب تعديله', labelStyle: GoogleFonts.cairo()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo())),
+          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: Text('إرسال', style: GoogleFonts.cairo())),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (note == null || note.isEmpty || !mounted) return;
+    final success = await SupabaseService.instance.requestForecastChanges(
+      forecastId: record.id,
+      reviewerName: widget.currentUser.name,
+      note: note,
+      currentStage: record.approvalStage,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(success ? 'تم إرسال طلب التعديل للمندوب' : 'تعذر تسجيل طلب التعديل', style: GoogleFonts.cairo()),
+    ));
+    if (success) await _loadData();
+  }
+
+  Future<void> _referToLegal(CollectionForecastRecord record) async {
+    final controller = TextEditingController();
+    final note = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('إحالة العميل للشؤون القانونية', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          maxLines: 3,
+          decoration: InputDecoration(labelText: 'سبب الإحالة', labelStyle: GoogleFonts.cairo()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo())),
+          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: Text('إحالة', style: GoogleFonts.cairo())),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (note == null || note.isEmpty || !mounted) return;
+    final success = await SupabaseService.instance.updateForecastLegalReferral(
+      forecastId: record.id,
+      status: 'referred',
+      handledBy: widget.currentUser.name,
+      note: note,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(success ? 'تم تسجيل الإحالة القانونية' : 'تعذر تسجيل الإحالة', style: GoogleFonts.cairo()),
+    ));
+    if (success) await _loadData();
+  }
+
+  Future<void> _scheduleCustomerVisit(CollectionForecastRecord record) async {
+    final customer = _customers.where((item) => item.code == record.customerCode || item.id == record.customerId).firstOrNull;
+    final representative = _representatives.where((item) =>
+        item.id == record.repId || item.name == record.repName).firstOrNull;
+    if (customer == null || representative == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر تحديد العميل أو المندوب من قاعدة البيانات', style: GoogleFonts.cairo())),
+      );
+      return;
+    }
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      locale: const Locale('ar', 'EG'),
+    );
+    if (picked == null || !mounted) return;
+    final visitId = await SupabaseService.instance.scheduleVisit(
+      customer: customer,
+      representative: representative,
+      scheduledAt: picked,
+      scheduledBy: widget.currentUser.name,
+      forecastId: record.id,
+    );
+    if (visitId == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذر حفظ الزيارة المجدولة', style: GoogleFonts.cairo())),
+      );
+      return;
+    }
+    final linked = await SupabaseService.instance.linkForecastScheduledVisit(
+      forecastId: record.id,
+      visitId: visitId,
+      visitDate: DateFormat('yyyy-MM-dd').format(picked),
+      scheduledBy: widget.currentUser.name,
+    );
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        linked ? 'تمت جدولة الزيارة وربطها بالتوقع' : 'تم حفظ الزيارة لكن تعذر ربطها بالتوقع',
+        style: GoogleFonts.cairo(),
+      ),
+    ));
+    if (linked) await _loadData();
   }
 
   String _statusLabel(ForecastStatusType status) {
@@ -494,6 +870,194 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
       case ForecastStatusType.approved: return AppTheme.emeraldGreen;
       case ForecastStatusType.changeRequested: return AppTheme.warningAmber;
     }
+  }
+}
+
+class _ForecastEntryData {
+  final Customer customer;
+  final int weekIndex;
+  final double collectionAmount;
+  final double salesAmount;
+  final String collectionMethod;
+  final bool returnExpected;
+  final double returnAmount;
+
+  const _ForecastEntryData({
+    required this.customer,
+    required this.weekIndex,
+    required this.collectionAmount,
+    required this.salesAmount,
+    required this.collectionMethod,
+    required this.returnExpected,
+    required this.returnAmount,
+  });
+}
+
+class _ForecastEntryDialog extends StatefulWidget {
+  final List<Customer> customers;
+  final List<ForecastWeek> weeks;
+
+  const _ForecastEntryDialog({required this.customers, required this.weeks});
+
+  @override
+  State<_ForecastEntryDialog> createState() => _ForecastEntryDialogState();
+}
+
+class _ForecastEntryDialogState extends State<_ForecastEntryDialog> {
+  late Customer _customer = widget.customers.first;
+  int _weekIndex = 0;
+  String _collectionMethod = 'cash';
+  bool _returnExpected = false;
+  final _collectionController = TextEditingController();
+  final _salesController = TextEditingController();
+  final _returnController = TextEditingController();
+
+  @override
+  void dispose() {
+    _collectionController.dispose();
+    _salesController.dispose();
+    _returnController.dispose();
+    super.dispose();
+  }
+
+  double _amount(TextEditingController controller) =>
+      double.tryParse(controller.text.trim()) ?? 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final weeks = widget.weeks;
+    final balance = _customer.balance ?? _customer.currentBalance;
+    final guarantee = _customer.guaranteeAmount ?? 0;
+
+    return AlertDialog(
+      title: Text('توقع تحصيل العميل', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DropdownButtonFormField<Customer>(
+                initialValue: _customer,
+                decoration: InputDecoration(
+                  labelText: 'العميل',
+                  labelStyle: GoogleFonts.cairo(),
+                  border: const OutlineInputBorder(),
+                ),
+                items: widget.customers.map((customer) => DropdownMenuItem(
+                  value: customer,
+                  child: Text('${customer.name} • ${customer.code}',
+                      overflow: TextOverflow.ellipsis, style: GoogleFonts.cairo(fontSize: 12)),
+                )).toList(),
+                onChanged: (customer) {
+                  if (customer != null) setState(() => _customer = customer);
+                },
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  Chip(label: Text('المديونية ${balance.toStringAsFixed(0)} ج.م')),
+                  Chip(label: Text('الحد الائتماني ${_customer.creditLimit.toStringAsFixed(0)} ج.م')),
+                  Chip(label: Text('الضمان ${guarantee.toStringAsFixed(0)} ج.م')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int>(
+                initialValue: _weekIndex,
+                decoration: InputDecoration(
+                  labelText: 'الفترة',
+                  labelStyle: GoogleFonts.cairo(),
+                  border: const OutlineInputBorder(),
+                ),
+                items: [
+                  const DropdownMenuItem(value: 0, child: Text('الشهر بالكامل')),
+                  ...weeks.asMap().entries.map((entry) => DropdownMenuItem(
+                    value: entry.key,
+                    child: Text(entry.value.label ?? 'الأسبوع ${entry.key + 1}'),
+                  )),
+                ],
+                onChanged: (value) => setState(() => _weekIndex = value ?? 0),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _salesController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'متوقع المبيعات',
+                  suffixText: 'ج.م',
+                  labelStyle: GoogleFonts.cairo(),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _collectionController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'متوقع التحصيل',
+                  suffixText: 'ج.م',
+                  labelStyle: GoogleFonts.cairo(),
+                  border: const OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              SegmentedButton<String>(
+                segments: const [
+                  ButtonSegment(value: 'cash', label: Text('نقدي')),
+                  ButtonSegment(value: 'cheque', label: Text('شيك')),
+                ],
+                selected: {_collectionMethod},
+                style: ButtonStyle(
+                  foregroundColor: WidgetStatePropertyAll(
+                    _collectionMethod == 'cheque' ? AppTheme.warningAmber : AppTheme.darkSlate,
+                  ),
+                ),
+                onSelectionChanged: (value) => setState(() => _collectionMethod = value.first),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _returnExpected,
+                title: Text('يوجد مرتجع متوقع', style: GoogleFonts.cairo(fontSize: 12)),
+                activeColor: AppTheme.errorRed,
+                onChanged: (value) => setState(() => _returnExpected = value ?? false),
+              ),
+              if (_returnExpected)
+                TextField(
+                  controller: _returnController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'قيمة المرتجع المتوقعة',
+                    suffixText: 'ج.م',
+                    labelStyle: GoogleFonts.cairo(),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text('إلغاء', style: GoogleFonts.cairo())),
+        FilledButton(
+          onPressed: () => Navigator.pop(
+            context,
+            _ForecastEntryData(
+              customer: _customer,
+              weekIndex: _weekIndex,
+              collectionAmount: _amount(_collectionController),
+              salesAmount: _amount(_salesController),
+              collectionMethod: _collectionMethod,
+              returnExpected: _returnExpected,
+              returnAmount: _amount(_returnController),
+            ),
+          ),
+          child: Text('إرسال للمشرف', style: GoogleFonts.cairo()),
+        ),
+      ],
+    );
   }
 }
 

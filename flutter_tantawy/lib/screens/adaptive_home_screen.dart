@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
+import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_navigation.dart';
 import '../widgets/responsive_layout.dart';
@@ -17,7 +18,7 @@ import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'sync_queue_screen.dart';
 import 'tasks_roles_screen.dart';
-import 'visits_screen.dart';
+import 'visits_dashboard_screen.dart';
 import 'offers_notifications_screen.dart';
 import 'users_management_screen.dart';
 
@@ -45,7 +46,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       CatalogScreen(currentUser: widget.currentUser),
       OrderBuilderScreen(currentUser: widget.currentUser),
       InvoicesScreen(currentUser: widget.currentUser),
-      VisitsScreen(currentUser: widget.currentUser),
+      VisitsDashboardScreen(currentUser: widget.currentUser),
       InventoryScreen(currentUser: widget.currentUser),
       CollectionForecastView(currentUser: widget.currentUser),
       const SyncQueueScreen(),

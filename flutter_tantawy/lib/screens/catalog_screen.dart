@@ -30,6 +30,8 @@ class _CatalogViewState extends State<CatalogScreen>
   CatalogViewMode _viewMode = CatalogViewMode.grid;
   SortBy _sortBy = SortBy.recommended;
   final _searchController = TextEditingController();
+  List<ParentProduct> _searchSuggestions = [];
+  bool _showSuggestions = false;
 
   final List<String> _departments = [
     'الكل',
@@ -52,6 +54,7 @@ class _CatalogViewState extends State<CatalogScreen>
         _applyFilter();
       }
     });
+    _searchController.addListener(_onSearchChanged);
     _loadProducts();
   }
 
@@ -92,6 +95,41 @@ class _CatalogViewState extends State<CatalogScreen>
         .replaceAll(RegExp('[ىي]'), 'ي')
         .replaceAll(RegExp(r'[\u064B-\u065F]'), '')
         .trim();
+  }
+
+  void _onSearchChanged() {
+    final query = _normalizeSearchText(_searchController.text);
+    if (query.isEmpty) {
+      setState(() {
+        _searchSuggestions = [];
+        _showSuggestions = false;
+      });
+      return;
+    }
+
+    final suggestions = _allProducts.where((p) {
+      if (_selectedDepartment != 'الكل' &&
+          (_selectedDepartment == 'عروض ترويجية'
+              ? !p.hasPromo
+              : p.department != _selectedDepartment)) {
+        return false;
+      }
+      final normalizedName = _normalizeSearchText(p.name);
+      final normalizedCode = _normalizeSearchText(p.primaryCode);
+      final normalizedUnifiedCode = _normalizeSearchText(p.unifiedCode ?? '');
+      final normalizedCategory = _normalizeSearchText(p.category);
+      final normalizedColor = p.variants.any((v) => _normalizeSearchText(v.color).contains(query));
+      return normalizedName.contains(query) ||
+          normalizedCode.contains(query) ||
+          normalizedUnifiedCode.contains(query) ||
+          normalizedCategory.contains(query) ||
+          normalizedColor;
+    }).take(8).toList();
+
+    setState(() {
+      _searchSuggestions = suggestions;
+      _showSuggestions = _searchController.text.isNotEmpty && suggestions.isNotEmpty;
+    });
   }
 
   void _applyFilter() {
@@ -1132,36 +1170,151 @@ class _CatalogViewState extends State<CatalogScreen>
           ),
         ],
       ),
-      body: Column(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          if (_showSuggestions) {
+            setState(() {
+              _showSuggestions = false;
+              _searchSuggestions = [];
+            });
+            FocusScope.of(context).unfocus();
+          }
+        },
+        child: Column(
         children: [
           // شريط البحث الذكي
           Container(
             color: controlSurface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (_) => _applyFilter(),
-              decoration: InputDecoration(
-                hintText: 'ابحث بالاسم، الكود الموحد (#)، أو اللون...',
-                hintStyle: GoogleFonts.cairo(fontSize: 13, color: colorScheme.onSurfaceVariant),
-                prefixIcon: const Icon(Icons.search, color: AppTheme.primaryGold),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          _applyFilter();
-                        },
-                      )
-                    : null,
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                filled: true,
-                fillColor: searchSurface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: colorScheme.outlineVariant),
+            child: Stack(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (_) => _applyFilter(),
+                  onTap: () {
+                    _onSearchChanged();
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'ابحث بالاسم، الكود الموحد (#)، أو اللون...',
+                    hintStyle: GoogleFonts.cairo(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                    prefixIcon: const Icon(Icons.search, color: AppTheme.primaryGold),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              _applyFilter();
+                              setState(() {
+                                _showSuggestions = false;
+                                _searchSuggestions = [];
+                              });
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                    filled: true,
+                    fillColor: searchSurface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: colorScheme.outlineVariant),
+                    ),
+                  ),
                 ),
-              ),
+                if (_showSuggestions)
+                  Positioned(
+                    top: 56,
+                    left: 0,
+                    right: 0,
+                    child: Material(
+                      color: searchSurface,
+                      elevation: 8,
+                      borderRadius: BorderRadius.circular(8),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 280),
+                        child: ListView.separated(
+                          padding: EdgeInsets.zero,
+                          itemCount: _searchSuggestions.length,
+                          itemBuilder: (context, index) {
+                            final product = _searchSuggestions[index];
+                            final hasPromo = product.hasPromo;
+                            final branchStock = product.totalBranchStock;
+                            final octoberStock = product.totalOctoberStock;
+                            final totalStock = branchStock + octoberStock;
+                            Color stockColor;
+                            String stockText;
+                            if (totalStock > 10) {
+                              stockColor = Colors.green;
+                              stockText = 'متوفر $totalStock';
+                            } else if (totalStock > 0) {
+                              stockColor = Colors.orange;
+                              stockText = 'متوفر $totalStock';
+                            } else {
+                              stockColor = Colors.red;
+                              stockText = 'نفاذ المخزون';
+                            }
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              leading: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: AppTheme.primaryGold.withOpacity(0.2),
+                                child: const Icon(Icons.shopping_bag_outlined, size: 16, color: AppTheme.primaryGold),
+                              ),
+                              title: Text(
+                                product.name,
+                                style: GoogleFonts.cairo(fontSize: 13, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Row(
+                                children: [
+                                  Text(
+                                    '${product.primaryCode}  •  #${product.unifiedCode ?? ''}',
+                                    style: GoogleFonts.cairo(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                                  ),
+                                  if (hasPromo)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'عرض',
+                                        style: GoogleFonts.cairo(fontSize: 9, color: Colors.red, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: stockColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  stockText,
+                                  style: GoogleFonts.cairo(fontSize: 10, color: stockColor, fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              onTap: () {
+                                _searchController.text = product.name;
+                                setState(() {
+                                  _showSuggestions = false;
+                                  _searchSuggestions = [];
+                                });
+                                _applyFilter();
+                                FocusScope.of(context).unfocus();
+                              },
+                            );
+                          },
+                          separatorBuilder: (context, index) => Divider(height: 1, color: colorScheme.outlineVariant),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
 
@@ -1263,6 +1416,7 @@ class _CatalogViewState extends State<CatalogScreen>
                       ),
                     ],
                   ),
+                ),
 
 
       // زر الذهاب للسلة وتأكيد الطلبية

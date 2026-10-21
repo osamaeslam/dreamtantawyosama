@@ -2389,6 +2389,8 @@ class CollectionForecastRecord {
   final String customerName;
   final double collectionForecast;
   final double salesForecast;
+  final double? repCollectionForecast;
+  final double? repSalesForecast;
   final ForecastStatusType status;
   final String? submittedAt;
   final String? approvedBy;
@@ -2398,6 +2400,21 @@ class CollectionForecastRecord {
   final String? changeRequestedAt;
   final String? updatedBy;
   final String? updatedAt;
+  final String? supervisorId;
+  final String approvalStage;
+  final String collectionMethod;
+  final bool returnExpected;
+  final double returnExpectedAmount;
+  final String returnStatus;
+  final String? returnNote;
+  final String legalReferralStatus;
+  final String? legalReferralNote;
+  final String? scheduledVisitDate;
+  final String? scheduledVisitId;
+  final String? supervisorApprovedBy;
+  final String? supervisorApprovedAt;
+  final String? branchManagerApprovedBy;
+  final String? branchManagerApprovedAt;
 
   CollectionForecastRecord({
     required this.id,
@@ -2411,6 +2428,8 @@ class CollectionForecastRecord {
     required this.customerName,
     this.collectionForecast = 0,
     this.salesForecast = 0,
+    this.repCollectionForecast,
+    this.repSalesForecast,
     this.status = ForecastStatusType.draft,
     this.submittedAt,
     this.approvedBy,
@@ -2420,6 +2439,21 @@ class CollectionForecastRecord {
     this.changeRequestedAt,
     this.updatedBy,
     this.updatedAt,
+    this.supervisorId,
+    this.approvalStage = 'rep_submitted',
+    this.collectionMethod = 'cash',
+    this.returnExpected = false,
+    this.returnExpectedAmount = 0,
+    this.returnStatus = 'none',
+    this.returnNote,
+    this.legalReferralStatus = 'none',
+    this.legalReferralNote,
+    this.scheduledVisitDate,
+    this.scheduledVisitId,
+    this.supervisorApprovedBy,
+    this.supervisorApprovedAt,
+    this.branchManagerApprovedBy,
+    this.branchManagerApprovedAt,
   });
 
   factory CollectionForecastRecord.fromJson(Map<String, dynamic> json) {
@@ -2435,6 +2469,8 @@ class CollectionForecastRecord {
       customerName: json['customer_name']?.toString() ?? '',
       collectionForecast: _toDouble(json['collection_forecast'] ?? json['collectionForecast']) ?? 0,
       salesForecast: _toDouble(json['sales_forecast'] ?? json['salesForecast']) ?? 0,
+      repCollectionForecast: _toDouble(json['rep_collection_forecast'] ?? json['repCollectionForecast']),
+      repSalesForecast: _toDouble(json['rep_sales_forecast'] ?? json['repSalesForecast']),
       status: _parseForecastStatus(json['status']?.toString() ?? 'draft'),
       submittedAt: json['submitted_at']?.toString() ?? json['submittedAt']?.toString(),
       approvedBy: json['approved_by']?.toString() ?? json['approvedBy']?.toString(),
@@ -2444,6 +2480,21 @@ class CollectionForecastRecord {
       changeRequestedAt: json['change_requested_at']?.toString() ?? json['changeRequestedAt']?.toString(),
       updatedBy: json['updated_by']?.toString() ?? json['updatedBy']?.toString(),
       updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
+      supervisorId: json['supervisor_id']?.toString() ?? json['supervisorId']?.toString(),
+      approvalStage: json['approval_stage']?.toString() ?? json['approvalStage']?.toString() ?? 'rep_submitted',
+      collectionMethod: json['collection_method']?.toString() ?? json['collectionMethod']?.toString() ?? 'cash',
+      returnExpected: json['return_expected'] as bool? ?? json['returnExpected'] as bool? ?? false,
+      returnExpectedAmount: _toDouble(json['return_expected_amount'] ?? json['returnExpectedAmount']) ?? 0,
+      returnStatus: json['return_status']?.toString() ?? json['returnStatus']?.toString() ?? 'none',
+      returnNote: json['return_note']?.toString() ?? json['returnNote']?.toString(),
+      legalReferralStatus: json['legal_referral_status']?.toString() ?? json['legalReferralStatus']?.toString() ?? 'none',
+      legalReferralNote: json['legal_referral_note']?.toString() ?? json['legalReferralNote']?.toString(),
+      scheduledVisitDate: json['scheduled_visit_date']?.toString() ?? json['scheduledVisitDate']?.toString(),
+      scheduledVisitId: json['scheduled_visit_id']?.toString() ?? json['scheduledVisitId']?.toString(),
+      supervisorApprovedBy: json['supervisor_approved_by']?.toString() ?? json['supervisorApprovedBy']?.toString(),
+      supervisorApprovedAt: json['supervisor_approved_at']?.toString() ?? json['supervisorApprovedAt']?.toString(),
+      branchManagerApprovedBy: json['branch_manager_approved_by']?.toString() ?? json['branchManagerApprovedBy']?.toString(),
+      branchManagerApprovedAt: json['branch_manager_approved_at']?.toString() ?? json['branchManagerApprovedAt']?.toString(),
     );
   }
 
@@ -2459,6 +2510,8 @@ class CollectionForecastRecord {
     'customer_name': customerName,
     'collection_forecast': collectionForecast,
     'sales_forecast': salesForecast,
+    'rep_collection_forecast': repCollectionForecast,
+    'rep_sales_forecast': repSalesForecast,
     'status': _forecastStatusToString(status),
     'submitted_at': submittedAt,
     'approved_by': approvedBy,
@@ -2468,6 +2521,21 @@ class CollectionForecastRecord {
     'change_requested_at': changeRequestedAt,
     'updated_by': updatedBy,
     'updated_at': updatedAt,
+    'supervisor_id': supervisorId,
+    'approval_stage': approvalStage,
+    'collection_method': collectionMethod,
+    'return_expected': returnExpected,
+    'return_expected_amount': returnExpectedAmount,
+    'return_status': returnStatus,
+    'return_note': returnNote,
+    'legal_referral_status': legalReferralStatus,
+    'legal_referral_note': legalReferralNote,
+    'scheduled_visit_date': scheduledVisitDate,
+    'scheduled_visit_id': scheduledVisitId,
+    'supervisor_approved_by': supervisorApprovedBy,
+    'supervisor_approved_at': supervisorApprovedAt,
+    'branch_manager_approved_by': branchManagerApprovedBy,
+    'branch_manager_approved_at': branchManagerApprovedAt,
   };
 }
 
@@ -2853,6 +2921,7 @@ class CustomerAnalytics {
   final bool hasDealtIn2026;
   final double? annualTarget;
   final double? targetAchievementPercentage;
+  final String? salesRepName;
 
   CustomerAnalytics({
     required this.customerId,
@@ -2873,6 +2942,7 @@ class CustomerAnalytics {
     this.hasDealtIn2026 = false,
     this.annualTarget,
     this.targetAchievementPercentage,
+    this.salesRepName,
   });
 
   factory CustomerAnalytics.fromJson(Map<String, dynamic> json) {
@@ -2895,6 +2965,7 @@ class CustomerAnalytics {
       hasDealtIn2026: json['has_dealt_in_2026'] as bool? ?? json['hasDealtIn2026'] as bool? ?? false,
       annualTarget: _toDouble(json['annual_target'] ?? json['annualTarget']),
       targetAchievementPercentage: _toDouble(json['target_achievement_percentage'] ?? json['targetAchievementPercentage']),
+      salesRepName: json['sales_rep_name']?.toString() ?? json['salesRepName']?.toString(),
     );
   }
 
@@ -2916,7 +2987,8 @@ class CustomerAnalytics {
     'status_2026': status2026,
     'has_dealt_in_2026': hasDealtIn2026,
     'annual_target': annualTarget,
-    'target_achievement_percentage': targetAchievementPercentage,
+     'target_achievement_percentage': targetAchievementPercentage,
+     'sales_rep_name': salesRepName,
   };
 }
 

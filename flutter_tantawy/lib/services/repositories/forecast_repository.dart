@@ -37,6 +37,35 @@ class ForecastRepository extends BaseRepository {
     }
   }
 
+  Future<bool> insertTarget(TargetRecord target) async {
+    try {
+      await client.from('targets').insert({
+        'branch_name': target.branch,
+        'rep_name': target.repName,
+        'sales_target': target.salesTarget,
+        'collection_target': target.collectionTarget,
+        'month': target.month,
+        'year': target.year,
+        'quarter': target.quarter,
+        'date': target.date,
+      });
+      return true;
+    } catch (e) {
+      logError('insertTarget', e);
+      return false;
+    }
+  }
+
+  Future<bool> upsertTargets(List<Map<String, dynamic>> targets) async {
+    try {
+      await client.from('targets').upsert(targets);
+      return true;
+    } catch (e) {
+      logError('upsertTargets', e);
+      return false;
+    }
+  }
+
   // ===================== التوقعات/التوقعات الأسبوعية (Forecasts) =====================
   Future<List<CollectionForecastRecord>> fetchForecasts({
     String? repName,
@@ -73,7 +102,7 @@ class ForecastRepository extends BaseRepository {
           .eq('id', monthKey)
           .maybeSingle();
       if (data == null) return null;
-      return ForecastMonthPlan.fromJson(data as Map<String, dynamic>);
+      return ForecastMonthPlan.fromJson(data);
     } catch (e) {
       logError('fetchForecastMonthPlan', e);
       return null;
@@ -86,6 +115,197 @@ class ForecastRepository extends BaseRepository {
       return true;
     } catch (e) {
       logError('saveForecast', e);
+      return false;
+    }
+  }
+
+  Future<bool> submitForecast(
+    CollectionForecastRecord record, {
+    required bool hasSupervisor,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    try {
+      await client.from('forecasts').upsert({
+        ...record.toJson(),
+        'rep_collection_forecast': record.repCollectionForecast ?? record.collectionForecast,
+        'rep_sales_forecast': record.repSalesForecast ?? record.salesForecast,
+        'status': 'submitted',
+        'approval_stage': hasSupervisor ? 'pending_supervisor' : 'pending_branch_manager',
+        'return_status': record.returnExpected || record.collectionForecast == 0
+            ? 'pending_review'
+            : 'none',
+        'submitted_at': now,
+        'updated_at': now,
+      });
+      return true;
+    } catch (e) {
+      logError('submitForecast', e);
+      return false;
+    }
+  }
+
+  Future<bool> approveForecastBySupervisor({
+    required String forecastId,
+    required String supervisorName,
+    double? collectionForecast,
+    double? salesForecast,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    final changes = <String, dynamic>{
+      'approval_stage': 'pending_branch_manager',
+      'supervisor_approved_by': supervisorName,
+      'supervisor_approved_at': now,
+      'updated_by': supervisorName,
+      'updated_at': now,
+    };
+    if (collectionForecast != null) changes['collection_forecast'] = collectionForecast;
+    if (salesForecast != null) changes['sales_forecast'] = salesForecast;
+    return _transitionForecast(
+      'approveForecastBySupervisor',
+      forecastId,
+      'pending_supervisor',
+      changes,
+    );
+  }
+
+  Future<bool> approveForecastByBranchManager({
+    required String forecastId,
+    required String managerName,
+    double? collectionForecast,
+    double? salesForecast,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    final changes = <String, dynamic>{
+      'status': 'approved',
+      'approval_stage': 'approved',
+      'approved_by': managerName,
+      'approved_at': now,
+      'branch_manager_approved_by': managerName,
+      'branch_manager_approved_at': now,
+      'updated_by': managerName,
+      'updated_at': now,
+    };
+    if (collectionForecast != null) changes['collection_forecast'] = collectionForecast;
+    if (salesForecast != null) changes['sales_forecast'] = salesForecast;
+    return _transitionForecast(
+      'approveForecastByBranchManager',
+      forecastId,
+      'pending_branch_manager',
+      changes,
+    );
+  }
+
+  Future<bool> requestForecastChanges({
+    required String forecastId,
+    required String reviewerName,
+    required String note,
+    required String currentStage,
+  }) {
+    return _transitionForecast(
+      'requestForecastChanges',
+      forecastId,
+      currentStage,
+      {
+        'status': 'change_requested',
+        'approval_stage': 'rep_changes_required',
+        'change_request_note': note,
+        'change_requested_by': reviewerName,
+        'change_requested_at': DateTime.now().toIso8601String(),
+        'updated_by': reviewerName,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+    );
+  }
+
+  Future<bool> updateReturnStatus({
+    required String forecastId,
+    required String status,
+    required String handledBy,
+    String? note,
+  }) async {
+    try {
+      final result = await client
+          .from('forecasts')
+          .update({
+            'return_status': status,
+            'return_note': note,
+            'updated_by': handledBy,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', forecastId)
+          .eq('return_status', 'pending_review')
+          .select('id');
+      return (result as List<dynamic>).isNotEmpty;
+    } catch (e) {
+      logError('updateReturnStatus', e);
+      return false;
+    }
+  }
+
+  Future<bool> updateLegalReferral({
+    required String forecastId,
+    required String status,
+    required String handledBy,
+    String? note,
+  }) async {
+    try {
+      final result = await client
+          .from('forecasts')
+          .update({
+            'legal_referral_status': status,
+            'legal_referral_note': note,
+            'updated_by': handledBy,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', forecastId)
+          .select('id');
+      return (result as List<dynamic>).isNotEmpty;
+    } catch (e) {
+      logError('updateLegalReferral', e);
+      return false;
+    }
+  }
+
+  Future<bool> linkScheduledVisit({
+    required String forecastId,
+    required String visitId,
+    required String visitDate,
+    required String scheduledBy,
+  }) async {
+    try {
+      final result = await client
+          .from('forecasts')
+          .update({
+            'scheduled_visit_id': visitId,
+            'scheduled_visit_date': visitDate,
+            'updated_by': scheduledBy,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', forecastId)
+          .select('id');
+      return (result as List<dynamic>).isNotEmpty;
+    } catch (e) {
+      logError('linkScheduledVisit', e);
+      return false;
+    }
+  }
+
+  Future<bool> _transitionForecast(
+    String operation,
+    String forecastId,
+    String expectedStage,
+    Map<String, dynamic> changes,
+  ) async {
+    try {
+      final result = await client
+          .from('forecasts')
+          .update(changes)
+          .eq('id', forecastId)
+          .eq('approval_stage', expectedStage)
+          .select('id');
+      return (result as List<dynamic>).isNotEmpty;
+    } catch (e) {
+      logError(operation, e);
       return false;
     }
   }

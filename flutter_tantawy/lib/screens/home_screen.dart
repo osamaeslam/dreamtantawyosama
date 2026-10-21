@@ -26,7 +26,7 @@ import 'returns_screen.dart';
 import 'sync_queue_screen.dart';
 import 'target_performance_screen.dart';
 import 'tasks_roles_screen.dart';
-import 'visits_screen.dart';
+import 'visits_dashboard_screen.dart';
 
 /// HomeScreen موحدة - الصفحة الرئيسية لكل الأدوار
 ///
@@ -397,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: Icons.location_on_outlined,
         color: AppTheme.infoBlue,
         allowedRoles: allRoles,
-        buildScreen: () => VisitsScreen(currentUser: widget.currentUser),
+         buildScreen: () => VisitsDashboardScreen(currentUser: widget.currentUser),
       ),
       HomeMenuItem(
         title: 'كتالوج المنتجات',
@@ -539,12 +539,7 @@ class ManagementDashboardScreenWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('لوحة الإدارة والتحليل'),
-      ),
-      body: ManagementDashboard(currentUser: currentUser),
-    );
+    return ManagementDashboard(currentUser: currentUser);
   }
 }
 

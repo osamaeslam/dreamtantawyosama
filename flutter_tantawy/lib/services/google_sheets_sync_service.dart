@@ -113,6 +113,57 @@ class GoogleSheetsSyncService {
     }
   }
 
+  /// Build a flexible column mapping that handles various header formats
+  Map<String, String> _buildColumnMap(List<String> headers) {
+    final headerMap = <String, String>{};
+    for (final header in headers) {
+      final cleanHeader = header.trim().toLowerCase();
+      // Map various header formats to standard names
+      if (cleanHeader.contains('code') || cleanHeader.contains('كود') || cleanHeader.contains('ص')) {
+        headerMap['code'] = header;
+      } else if (cleanHeader.contains('name') || cleanHeader.contains('اسم') || cleanHeader.contains('نام')) {
+        headerMap['name'] = header;
+      } else if (cleanHeader.contains('department') || cleanHeader.contains('قسم')) {
+        headerMap['department'] = header;
+      } else if (cleanHeader.contains('category') || cleanHeader.contains('فئ')) {
+        headerMap['category'] = header;
+      } else if (cleanHeader.contains('pieceprice') || cleanHeader.contains('سعر') || cleanHeader.contains('سعر القطعة')) {
+        headerMap['piecePrice'] = header;
+      } else if (cleanHeader.contains('cartonprice') || cleanHeader.contains('سعر الكرتون')) {
+        headerMap['cartonPrice'] = header;
+      } else if (cleanHeader.contains('promoprice') || cleanHeader.contains('عرض') || cleanHeader.contains('سعر العرض')) {
+        headerMap['promoPrice'] = header;
+      } else if (cleanHeader.contains('cartonquantity') || cleanHeader.contains('كمية') || cleanHeader.contains('عدد')) {
+        headerMap['cartonQuantity'] = header;
+      } else if (cleanHeader.contains('branchstock') || cleanHeader.contains('مخزون الفرع') || cleanHeader.contains('stock_actual') || cleanHeader.contains('stockactual')) {
+        headerMap['branchStockActual'] = header;
+      } else if (cleanHeader.contains('branchstockreserved') || cleanHeader.contains('مخزون محجوز') || cleanHeader.contains('stock_reserved')) {
+        headerMap['branchStockReserved'] = header;
+      } else if (cleanHeader.contains('warehouse') || cleanHeader.contains('مخزون المستودع') || cleanHeader.contains('mainstock') || cleanHeader.contains('main_warehouse_stock')) {
+        headerMap['mainWarehouseStock'] = header;
+      } else if (cleanHeader.contains('image') || cleanHeader.contains('صورة') || cleanHeader.contains('imageurl')) {
+        headerMap['imageUrl'] = header;
+      } else if (cleanHeader.contains('status') || cleanHeader.contains('حالة')) {
+        headerMap['status'] = header;
+      } else if (cleanHeader.contains('barcode') || cleanHeader.contains('باركود')) {
+        headerMap['barcode'] = header;
+      } else if (cleanHeader.contains('variant') || cleanHeader.contains('موديل')) {
+        headerMap['variantName'] = header;
+      } else if (cleanHeader.contains('color') || cleanHeader.contains('لون')) {
+        headerMap['color'] = header;
+      } else if (cleanHeader.contains('salespriority') || cleanHeader.contains('أولوية')) {
+        headerMap['salesPriority'] = header;
+      }
+    }
+    return headerMap;
+  }
+
+  /// Safely get value from row using column map, handling null keys
+  String? _safeGet(Map<String, dynamic> row, String? key) {
+    if (key == null) return null;
+    return row[key] as String?;
+  }
+
   /// Sync products from Google Sheets to Supabase
   /// Expected CSV columns: code, name, department, category, piecePrice, cartonPrice,
   ///   promoPrice, cartonQuantity, branchStockActual, branchStockReserved,
@@ -133,9 +184,21 @@ class GoogleSheetsSyncService {
 
     int total = rows.length;
     int processed = 0;
+    
+    // Debug: Log the actual headers and first few rows
+    if (rows.isNotEmpty) {
+      debugPrint('[$context] CSV Headers: ${rows.first.keys.toList()}');
+      if (rows.length > 1) {
+        debugPrint('[$context] First row sample: ${rows[1]}');
+      }
+    }
+    
+    // Build a column mapping for flexible header matching
+    final columnMap = _buildColumnMap(rows.first.keys.toList());
+    
     for (final row in rows) {
       try {
-        final code = row['code']?.trim() ?? '';
+        final code = row[columnMap['code']]?.trim() ?? '';
         if (code.isEmpty) {
           skipped++;
           processed++;
@@ -145,33 +208,33 @@ class GoogleSheetsSyncService {
 
         final productData = {
           'code': code,
-          'name': row['name']?.trim() ?? '',
-          'department': row['department']?.trim() ?? 'عام',
-          'category': row['category']?.trim() ?? '',
-          'piecePrice': _parseDouble(row['piecePrice']),
-          'cartonPrice': _parseDouble(row['cartonPrice']),
-          'promoPrice': _parseNullableDouble(row['promoPrice']),
-          'cartonQuantity': _parseInt(row['cartonQuantity']),
-          'branch_stock_actual': _parseInt(row['branchStockActual'] ?? row['branch_stock_actual']),
-          'branch_stock_reserved': _parseInt(row['branchStockReserved'] ?? row['branch_stock_reserved']),
-          'main_warehouse_stock': _parseInt(row['mainWarehouseStock'] ?? row['main_warehouse_stock']),
-          'image_url': row['imageUrl']?.trim().isNotEmpty == true
-              ? row['imageUrl']?.trim()
-              : (row['image_url']?.trim().isNotEmpty == true ? row['image_url']?.trim() : null),
-          'status': row['status']?.trim().isNotEmpty == true
-              ? row['status']?.trim()
+          'name': row[columnMap['name']]?.trim() ?? '',
+          'department': row[columnMap['department']]?.trim() ?? 'عام',
+          'category': row[columnMap['category']]?.trim() ?? '',
+          'piecePrice': _parseDouble(row[columnMap['piecePrice']]),
+          'cartonPrice': _parseDouble(row[columnMap['cartonPrice']]),
+          'promoPrice': _parseNullableDouble(row[columnMap['promoPrice']]),
+          'cartonQuantity': _parseInt(row[columnMap['cartonQuantity']]),
+          'branch_stock_actual': _parseInt(row[columnMap['branchStockActual']]),
+          'branch_stock_reserved': _parseInt(row[columnMap['branchStockReserved']]),
+          'main_warehouse_stock': _parseInt(row[columnMap['mainWarehouseStock']]),
+          'image_url': _safeGet(row, columnMap['imageUrl'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['imageUrl'])?.trim()
+              : null,
+          'status': _safeGet(row, columnMap['status'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['status'])?.trim()
               : 'متاح',
-          'sales_priority': row['salesPriority']?.trim().isNotEmpty == true
-              ? row['salesPriority']?.trim()
+          'sales_priority': _safeGet(row, columnMap['salesPriority'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['salesPriority'])?.trim()
               : 'عادي',
-          'barcode': row['barcode']?.trim().isNotEmpty == true
-              ? row['barcode']?.trim()
+          'barcode': _safeGet(row, columnMap['barcode'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['barcode'])?.trim()
               : null,
-          'variant_name': row['variantName']?.trim().isNotEmpty == true
-              ? row['variantName']?.trim()
+          'variant_name': _safeGet(row, columnMap['variantName'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['variantName'])?.trim()
               : null,
-          'color': row['color']?.trim().isNotEmpty == true
-              ? row['color']?.trim()
+          'color': _safeGet(row, columnMap['color'])?.trim().isNotEmpty == true
+              ? _safeGet(row, columnMap['color'])?.trim()
               : null,
         };
 

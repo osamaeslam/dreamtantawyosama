@@ -19,7 +19,7 @@ import 'order_builder_screen.dart';
 import 'rep_performance_screen.dart';
 import 'returns_screen.dart';
 import 'target_performance_screen.dart';
-import 'visits_screen.dart';
+import 'visits_dashboard_screen.dart';
 
 class _DashboardMenuItem {
   final String title;
@@ -101,7 +101,7 @@ class RepDashboardScreen extends StatelessWidget {
         icon: Icons.location_on_outlined,
         color: AppTheme.infoBlue,
         allowedRoles: allRoles,
-        buildScreen: () => VisitsScreen(currentUser: currentUser),
+        buildScreen: () => VisitsDashboardScreen(currentUser: currentUser),
       ),
       _DashboardMenuItem(
         title: 'كتالوج المنتجات',

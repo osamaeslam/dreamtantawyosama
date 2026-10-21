@@ -90,7 +90,9 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
         : 0.0;
     final totalDues =
         _customers.fold<double>(0, (s, c) => c.balance > 0 ? s + c.balance : s);
-    final customersWithDues = _customers.where((c) => c.balance > 0).length;
+    final duesCustomers = _customers.where((c) => c.balance > 0).toList();
+    final customersWithDues = duesCustomers.length;
+    final hasDashboardData = _targets.isNotEmpty || duesCustomers.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -119,58 +121,90 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: () async => _loadData(),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(14),
-                child: Column(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1440),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (_targets.isEmpty && _customers.isEmpty) ...[
-                      Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.infoBlue.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          'لا توجد بيانات فعلية للأهداف أو العملاء في النطاق المحدد.',
-                          style: GoogleFonts.cairo(fontSize: 12),
-                        ),
-                      ),
-                    ],
                     Text('ملخص التنفيذي',
                         style: GoogleFonts.cairo(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.darkSlate)),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: [
-                        _buildKPICard(
-                            'مبيعات',
-                            _currencyFmt.format(salesAchieved),
-                            '${salesRate.toStringAsFixed(1)}%',
-                            salesRate,
-                            salesTarget,
-                            salesAchieved),
-                        _buildKPICard(
-                            'تحصيل',
-                            _currencyFmt.format(collectionAchieved),
-                            '${collectionRate.toStringAsFixed(1)}%',
-                            collectionRate,
-                            collectionTarget,
-                            collectionAchieved),
-                        _buildKPICard('مستحقات', _currencyFmt.format(totalDues),
-                            '$customersWithDues عميل', 0, 0, 0,
-                            isCurrency: false),
-                        _buildKPICard('مناديب', '${_targets.length} مندوب',
-                            'فعّال', 0, 0, 0,
-                            isCurrency: false),
-                      ],
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final columns = constraints.maxWidth >= 900
+                            ? 4
+                            : constraints.maxWidth >= 560
+                                ? 2
+                                : 1;
+                        const spacing = 10.0;
+                        final cardWidth = (constraints.maxWidth -
+                                spacing * (columns - 1)) /
+                            columns;
+                        return Wrap(
+                          spacing: spacing,
+                          runSpacing: spacing,
+                          children: [
+                            SizedBox(
+                              width: cardWidth,
+                              child: _buildKPICard(
+                                'مبيعات',
+                                _currencyFmt.format(salesAchieved),
+                                '${salesRate.toStringAsFixed(1)}%',
+                                salesRate,
+                                salesTarget,
+                                salesAchieved,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _buildKPICard(
+                                'تحصيل',
+                                _currencyFmt.format(collectionAchieved),
+                                '${collectionRate.toStringAsFixed(1)}%',
+                                collectionRate,
+                                collectionTarget,
+                                collectionAchieved,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _buildKPICard(
+                                'مستحقات',
+                                _currencyFmt.format(totalDues),
+                                '$customersWithDues عميل',
+                                0,
+                                0,
+                                0,
+                                isCurrency: false,
+                              ),
+                            ),
+                            SizedBox(
+                              width: cardWidth,
+                              child: _buildKPICard(
+                                'مناديب',
+                                '${_targets.length} مندوب',
+                                'فعّال',
+                                0,
+                                0,
+                                0,
+                                isCurrency: false,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
+                    if (!hasDashboardData) ...[
+                      const SizedBox(height: 20),
+                      _buildDashboardEmptyState(),
+                    ] else ...[
                     const SizedBox(height: 20),
                     Text('رسم بياني للمبيعات والتحصيل',
                         style: GoogleFonts.cairo(
@@ -210,44 +244,73 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    Text('إنجاز المناديب',
-                        style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.darkSlate)),
-                    const SizedBox(height: 10),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _targets.length,
-                      itemBuilder: (context, index) {
-                        final target = _targets[index];
-                        return _buildRepRow(target);
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Text('العملاء ذوو المستحقات',
-                        style: GoogleFonts.cairo(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.darkSlate)),
-                    const SizedBox(height: 10),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _customers.where((c) => c.balance > 0).length,
-                      itemBuilder: (context, index) {
-                        final customer = _customers
-                            .where((c) => c.balance > 0)
-                            .toList()[index];
-                        return _buildCustomerRow(customer);
-                      },
-                    ),
+                    if (_targets.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Text('إنجاز المناديب',
+                          style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkSlate)),
+                      const SizedBox(height: 10),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _targets.length,
+                        itemBuilder: (context, index) =>
+                            _buildRepRow(_targets[index]),
+                      ),
+                    ],
+                    if (duesCustomers.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Text('العملاء ذوو المستحقات',
+                          style: GoogleFonts.cairo(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.darkSlate)),
+                      const SizedBox(height: 10),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: duesCustomers.length,
+                        itemBuilder: (context, index) =>
+                            _buildCustomerRow(duesCustomers[index]),
+                      ),
+                    ],
+                    ],
                   ],
+                    ),
+                  ),
                 ),
               ),
             ),
+    );
+  }
+
+  Widget _buildDashboardEmptyState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.infoBlue.withOpacity(0.18)),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.query_stats, size: 34, color: AppTheme.infoBlue),
+          const SizedBox(height: 10),
+          Text(
+            'لا توجد بيانات للفترة المحددة',
+            style: GoogleFonts.cairo(fontSize: 14, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'أضف أهداف المندوبين أو بيانات العملاء لعرض مؤشرات الإدارة.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(fontSize: 12, color: AppTheme.textMuted),
+          ),
+        ],
+      ),
     );
   }
 

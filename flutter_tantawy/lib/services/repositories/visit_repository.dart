@@ -52,6 +52,50 @@ class VisitRepository extends BaseRepository {
     }
   }
 
+  Future<String?> scheduleVisit({
+    required Customer customer,
+    required AppUser representative,
+    required DateTime scheduledAt,
+    required String scheduledBy,
+    String? forecastId,
+  }) async {
+    final visitId = 'scheduled_${DateTime.now().microsecondsSinceEpoch}';
+    try {
+      final date = DateTime(scheduledAt.year, scheduledAt.month, scheduledAt.day);
+      await client.from('visits').insert({
+        'id': visitId,
+        'customer_id': customer.id,
+        'customer_name': customer.name,
+        'customer_code': customer.code,
+        'client_code': customer.code,
+        'client_name': customer.name,
+        'rep_id': representative.id,
+        'mandoub_id': representative.id,
+        'rep_name': representative.name,
+        'mandoub_name': representative.name,
+        'branch_name': customer.branchName,
+        'branch': customer.branchName,
+        'supervisor_id': representative.supervisorId,
+        'supervisor_name': representative.supervisorName,
+        'date': date.toIso8601String(),
+        'timestamp': date.toIso8601String(),
+        'next_visit_date': date.toIso8601String().split('T').first,
+        'type': 'متابعة تحصيل',
+        'outcome': 'زيارة مجدولة',
+        'status': 'scheduled',
+        'amount': 0,
+        'collected_amount': 0,
+        'notes': 'تمت الجدولة بواسطة $scheduledBy${forecastId == null ? '' : ' • توقع $forecastId'}',
+        'created_by': scheduledBy,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      return visitId;
+    } catch (e) {
+      logError('scheduleVisit', e);
+      return null;
+    }
+  }
+
   Future<bool> archiveVisit({
     required String visitId,
     required String archivedBy,

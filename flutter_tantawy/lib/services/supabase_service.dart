@@ -259,6 +259,21 @@ class SupabaseService {
 
   Future<bool> logVisit(CustomerVisit visit) => _visits.logVisit(visit);
 
+  Future<String?> scheduleVisit({
+    required Customer customer,
+    required AppUser representative,
+    required DateTime scheduledAt,
+    required String scheduledBy,
+    String? forecastId,
+  }) =>
+      _visits.scheduleVisit(
+        customer: customer,
+        representative: representative,
+        scheduledAt: scheduledAt,
+        scheduledBy: scheduledBy,
+        forecastId: forecastId,
+      );
+
   Future<bool> archiveVisit({
     required String visitId,
     required String archivedBy,
@@ -282,6 +297,14 @@ class SupabaseService {
     String? repName, String? branchName, int? month, int? year,
   }) {
     return _forecasts.fetchTargets(repName: repName, branchName: branchName, month: month, year: year);
+  }
+
+  Future<bool> insertTarget(TargetRecord target) {
+    return _forecasts.insertTarget(target);
+  }
+
+  Future<bool> upsertTargets(List<Map<String, dynamic>> targets) {
+    return _forecasts.upsertTargets(targets);
   }
 
   // ===================== ملاحظات العملاء (Customer Comments) =====================
@@ -323,6 +346,90 @@ class SupabaseService {
   }
 
   Future<bool> saveForecast(CollectionForecastRecord record) => _forecasts.saveForecast(record);
+
+  Future<bool> submitForecast(
+    CollectionForecastRecord record, {
+    required bool hasSupervisor,
+  }) =>
+      _forecasts.submitForecast(record, hasSupervisor: hasSupervisor);
+
+  Future<bool> approveForecastBySupervisor({
+    required String forecastId,
+    required String supervisorName,
+    double? collectionForecast,
+    double? salesForecast,
+  }) =>
+      _forecasts.approveForecastBySupervisor(
+        forecastId: forecastId,
+        supervisorName: supervisorName,
+        collectionForecast: collectionForecast,
+        salesForecast: salesForecast,
+      );
+
+  Future<bool> approveForecastByBranchManager({
+    required String forecastId,
+    required String managerName,
+    double? collectionForecast,
+    double? salesForecast,
+  }) =>
+      _forecasts.approveForecastByBranchManager(
+        forecastId: forecastId,
+        managerName: managerName,
+        collectionForecast: collectionForecast,
+        salesForecast: salesForecast,
+      );
+
+  Future<bool> requestForecastChanges({
+    required String forecastId,
+    required String reviewerName,
+    required String note,
+    required String currentStage,
+  }) =>
+      _forecasts.requestForecastChanges(
+        forecastId: forecastId,
+        reviewerName: reviewerName,
+        note: note,
+        currentStage: currentStage,
+      );
+
+  Future<bool> updateForecastReturnStatus({
+    required String forecastId,
+    required String status,
+    required String handledBy,
+    String? note,
+  }) =>
+      _forecasts.updateReturnStatus(
+        forecastId: forecastId,
+        status: status,
+        handledBy: handledBy,
+        note: note,
+      );
+
+  Future<bool> updateForecastLegalReferral({
+    required String forecastId,
+    required String status,
+    required String handledBy,
+    String? note,
+  }) =>
+      _forecasts.updateLegalReferral(
+        forecastId: forecastId,
+        status: status,
+        handledBy: handledBy,
+        note: note,
+      );
+
+  Future<bool> linkForecastScheduledVisit({
+    required String forecastId,
+    required String visitId,
+    required String visitDate,
+    required String scheduledBy,
+  }) =>
+      _forecasts.linkScheduledVisit(
+        forecastId: forecastId,
+        visitId: visitId,
+        visitDate: visitDate,
+        scheduledBy: scheduledBy,
+      );
 
   // ===================== إدارة أسابيع الشهر (Month Plan Week Config) =====================
   Future<bool> saveForecastMonthPlan(ForecastMonthPlan monthPlan) =>
@@ -438,7 +545,7 @@ class SupabaseService {
     }
   }
 
-  Future<bool> updateUserRole(String userId, String newRole) async {
+   Future<bool> updateUserRole(String userId, String newRole) async {
     try {
       await client
           .from('app_users')
@@ -447,6 +554,63 @@ class SupabaseService {
       return true;
     } catch (e) {
       debugPrint('SupabaseService Error in updateUserRole: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateUserBranch(String userId, String branchName) async {
+    try {
+      await client
+          .from('app_users')
+          .update({'branch_name': branchName})
+          .eq('id', userId);
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in updateUserBranch: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateUserSupervisor(String userId, String? supervisorId) async {
+    try {
+      await client
+          .from('app_users')
+          .update({'supervisor_id': supervisorId})
+          .eq('id', userId);
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in updateUserSupervisor: $e');
+      return false;
+    }
+  }
+
+  Future<bool> createUser(
+    String name,
+    String username,
+    String password,
+    String role,
+    String branchName,
+    String phone,
+    String? email,
+    String? supervisorName,
+  ) async {
+    try {
+      final hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+      await client.from('app_users').insert({
+        'name': name,
+        'username': username,
+        'password_hash': hashedPassword,
+        'role': role,
+        'branch_name': branchName,
+        'phone': phone,
+        'email': email,
+        'supervisor_name': supervisorName,
+        'is_active': true,
+        'approval_status': 'approved',
+      });
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in createUser: $e');
       return false;
     }
   }
