@@ -26,6 +26,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
   int _added = 0;
   int _updated = 0;
   int _skipped = 0;
+  int _errors = 0;
 
   @override
   void dispose() {
@@ -81,6 +82,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
         _added = result.added;
         _updated = result.updated;
         _skipped = result.skipped;
+        _errors = result.errors;
       });
     } catch (e) {
       setState(() {
@@ -252,7 +254,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                         style: GoogleFonts.cairo(fontSize: 12, color: mutedColor),
                       ),
                     ],
-                    if (!_isSyncing && (_added > 0 || _updated > 0 || _skipped > 0)) ...[
+                    if (!_isSyncing && (_added > 0 || _updated > 0 || _skipped > 0 || _errors > 0)) ...[
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -260,6 +262,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                           _buildStat('تمت الإضافة', _added, AppTheme.emeraldGreen),
                           _buildStat('تم التحديث', _updated, AppTheme.infoBlue),
                           _buildStat('تم تخطيها', _skipped, mutedColor),
+                          _buildStat('أخطاء', _errors, _errors > 0 ? AppTheme.roseRed : mutedColor),
                         ],
                       ),
                     ],

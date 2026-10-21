@@ -144,13 +144,14 @@ class AppNavigation {
   /// Builds a [NavigationRailDestination] for the desktop rail.
   static NavigationRailDestination buildRailDestination(
     int logicalIndex,
-    int cartItemCount,
-  ) {
+    int cartItemCount, {
+    bool compact = false,
+  }) {
     final dest = destinations[logicalIndex];
     return NavigationRailDestination(
-      icon: _buildRailIcon(dest, cartItemCount, selected: false),
-      selectedIcon: _buildRailIcon(dest, cartItemCount, selected: true),
-      label: Text(dest.label),
+      icon: _buildRailIcon(dest, cartItemCount, selected: false, compact: compact),
+      selectedIcon: _buildRailIcon(dest, cartItemCount, selected: true, compact: compact),
+      label: Text(dest.label, style: TextStyle(fontSize: compact ? 0 : 11)),
     );
   }
 
@@ -174,6 +175,7 @@ class AppNavigation {
     AppDestination dest,
     int cartItemCount, {
     required bool selected,
+    bool compact = false,
   }) {
     if (dest.showBadge) {
       return Badge(
@@ -199,6 +201,7 @@ class AppNavigationRail extends StatelessWidget {
   final int cartItemCount;
   final List<int> visibleDestinationIndices;
   final void Function(int logicalIndex) onSelected;
+  final bool compact;
 
   const AppNavigationRail({
     super.key,
@@ -206,9 +209,10 @@ class AppNavigationRail extends StatelessWidget {
     required this.cartItemCount,
     required this.visibleDestinationIndices,
     required this.onSelected,
+    this.compact = false,
   });
 
-@override
+  @override
   Widget build(BuildContext context) {
     final selectedVisibleIndex = visibleDestinationIndices.indexOf(selectedIndex);
     return NavigationRail(
@@ -216,7 +220,7 @@ class AppNavigationRail extends StatelessWidget {
       backgroundColor: AppTheme.darkSlate,
       indicatorColor: AppTheme.primaryGold,
       useIndicator: true,
-      labelType: NavigationRailLabelType.all,
+      labelType: compact ? NavigationRailLabelType.none : NavigationRailLabelType.all,
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Container(
@@ -238,13 +242,13 @@ class AppNavigationRail extends StatelessWidget {
       selectedLabelTextStyle: GoogleFonts.cairo(
         fontWeight: FontWeight.bold,
         color: AppTheme.secondaryGold,
-        fontSize: 11,
+        fontSize: compact ? 0 : 11,
       ),
       unselectedLabelTextStyle:
-          GoogleFonts.cairo(color: Colors.grey.shade400, fontSize: 10),
+          GoogleFonts.cairo(color: Colors.grey.shade400, fontSize: compact ? 0 : 10),
       destinations: visibleDestinationIndices
           .map((index) =>
-              AppNavigation.buildRailDestination(index, cartItemCount))
+              AppNavigation.buildRailDestination(index, cartItemCount, compact: compact))
           .toList(),
     );
   }

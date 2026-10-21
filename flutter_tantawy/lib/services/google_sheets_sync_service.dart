@@ -190,7 +190,7 @@ class GoogleSheetsSyncService {
       updated: updated,
       skipped: skipped,
       errors: errors,
-      message: 'تم مزامنة المنتجات: $added أضيف، $updated حدث، $skipped تم تخطيه، $errors خطأ',
+      message: 'تم مزامنة المنتجات: $added أضيف، $updated حدث، $skipped تم تخطيه${errors > 0 ? '، $errors خطأ' : ''}',
     );
   }
 
@@ -462,6 +462,66 @@ class GoogleSheetsSyncService {
       skipped: totalSkipped,
       errors: totalErrors,
       message: messages.join('\n'),
+    );
+  }
+
+  /// Sync expenses from Google Sheets to Supabase
+  /// Expected CSV columns: category, amount, date, description, branchName, repName
+  Future<SyncResult> syncExpenses(
+    String publishedUrl, {
+    void Function(String sheetName, int current, int total)? onProgress,
+  }) async {
+    final rows = await _fetchAndParseSheet(publishedUrl, 'Expenses');
+    if (rows.isEmpty) {
+      return SyncResult(message: 'لا توجد بيانات مصاريف للمزامنة');
+    }
+
+    int added = 0;
+    int updated = 0;
+    int skipped = 0;
+    int errors = 0;
+
+    int total = rows.length;
+    int processed = 0;
+    for (final row in rows) {
+      try {
+        final category = row['category']?.trim() ?? 'متنوع';
+        if (category.isEmpty) {
+          skipped++;
+          processed++;
+          onProgress?.call('المصاريف', processed, total);
+          continue;
+        }
+
+        final expenseData = {
+          'category': category,
+          'amount': _parseDouble(row['amount']),
+          'date': row['date']?.trim().isNotEmpty == true
+              ? row['date']?.trim()
+              : DateTime.now().toIso8601String(),
+          'description': row['description']?.trim(),
+          'branch_name': row['branchName']?.trim() ?? '',
+          'rep_name': row['repName']?.trim(),
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+
+        await _client.from('expenses').insert(expenseData);
+        added++;
+      } catch (e) {
+        errors++;
+        debugPrint('Error syncing expense: $e');
+      }
+      processed++;
+      onProgress?.call('المصاريف', processed, total);
+    }
+
+    return SyncResult(
+      added: added,
+      updated: updated,
+      skipped: skipped,
+      errors: errors,
+      message: 'تم مزامنة المصاريف: $added أضيف، $updated حدث، $skipped تم تخطيه${errors > 0 ? '، $errors خطأ' : ''}',
     );
   }
 

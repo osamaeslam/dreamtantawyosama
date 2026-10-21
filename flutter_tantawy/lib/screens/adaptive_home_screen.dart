@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
@@ -45,15 +46,15 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       InvoicesScreen(currentUser: widget.currentUser),
       VisitsScreen(currentUser: widget.currentUser),
       InventoryScreen(currentUser: widget.currentUser),
-        CollectionForecastView(currentUser: widget.currentUser),
-        const SyncQueueScreen(),
-        OffersNotificationsScreen(currentUser: widget.currentUser),
-        OffersNotificationsScreen(currentUser: widget.currentUser),
-        TasksRolesScreen(currentUser: widget.currentUser),
-        UsersManagementScreen(currentUser: widget.currentUser),
-        AboutScreen(currentUser: widget.currentUser),
-      ];
-    }
+      CollectionForecastView(currentUser: widget.currentUser),
+      const SyncQueueScreen(),
+      OffersNotificationsScreen(currentUser: widget.currentUser),
+      OffersNotificationsScreen(currentUser: widget.currentUser),
+      TasksRolesScreen(currentUser: widget.currentUser),
+      UsersManagementScreen(currentUser: widget.currentUser),
+      AboutScreen(currentUser: widget.currentUser),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,16 +62,38 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final cartCount = cart.items.length;
     final visibleDestinationIndices =
-      AppNavigation.visibleDestinationIndices(widget.currentUser.role);
+        AppNavigation.visibleDestinationIndices(widget.currentUser.role);
     final visibleMobileDestinationIndices = visibleDestinationIndices
-      .where(AppNavigation.mobileTabIndices.contains)
-      .toList();
+        .where(AppNavigation.mobileTabIndices.contains)
+        .toList();
     final selectedVisibleIndex =
-      visibleMobileDestinationIndices.indexOf(_selectedIndex);
+        visibleMobileDestinationIndices.indexOf(_selectedIndex);
 
     return ResponsiveLayout(
-      // 1. مظهر الموبايل (Phone < 650px): شريط سفلي متجاوب
+      // 1. مظهر الموبايل (Phone < 650px): شريط سفلي + Drawer
       mobile: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            AppNavigation.destinations[_selectedIndex == AppNavigation.moreIndex
+                    ? 0
+                    : _selectedIndex >= 0 &&
+                        _selectedIndex < AppNavigation.destinations.length
+                ? _selectedIndex
+                : 0]
+                .label,
+            style: const TextStyle(color: Colors.white),
+          ),
+          actions: [
+            if (_selectedIndex == AppNavigation.moreIndex)
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: () => setState(() {
+                  _selectedIndex = 0;
+                }),
+              ),
+          ],
+        ),
+        drawer: _buildMobileDrawer(visibleDestinationIndices, cartCount),
         body: _selectedIndex == AppNavigation.moreIndex
             ? _buildMoreScreen(context)
             : _buildSelectedScreen(_selectedIndex),
@@ -78,8 +101,8 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
           selectedIndex: _selectedIndex == AppNavigation.moreIndex
               ? visibleMobileDestinationIndices.length
               : selectedVisibleIndex < 0
-                ? 0
-                : selectedVisibleIndex,
+                  ? 0
+                  : selectedVisibleIndex,
           backgroundColor: colorScheme.surface,
           indicatorColor: AppTheme.primaryGold.withOpacity(0.22),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -97,7 +120,34 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
         ),
       ),
 
-      // 2. مظهر التابلت والويب (Tablet & Web Desktop >= 650px): NavigationRail جانبي
+      // 2. مظهر التابلت (650px - 1100px): Sidebar مدمج بأيقونات مدمجة
+      tablet: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            AppNavigation.destinations[_selectedIndex]
+                .label,
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
+        body: Row(
+          children: [
+            AppNavigationRail(
+              selectedIndex: _selectedIndex,
+              cartItemCount: cartCount,
+              visibleDestinationIndices: visibleDestinationIndices,
+              onSelected: (index) => setState(() => _selectedIndex = index),
+              compact: true,
+            ),
+            const VerticalDivider(
+                thickness: 1, width: 1, color: Color(0xFF334155)),
+            Expanded(
+              child: _buildSelectedScreen(_selectedIndex),
+            ),
+          ],
+        ),
+      ),
+
+      // 3. مظهر الويب/ديسكتوب (>= 1100px): NavigationRail كامل
       desktop: Scaffold(
         body: Row(
           children: [
@@ -126,6 +176,85 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
     return screens[index];
   }
 
+  Widget _buildMobileDrawer(
+    List<int> visibleDestinationIndices,
+    int cartCount,
+  ) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: AppTheme.darkSlate,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.primaryGold, width: 2),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.storefront_rounded,
+                      color: AppTheme.darkSlate,
+                      size: 28,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'مجموعة الطنطاوي',
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  widget.currentUser.name,
+                  style: GoogleFonts.cairo(
+                    color: Colors.grey.shade300,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...visibleDestinationIndices.map((index) => ListTile(
+                leading: Icon(
+                  AppNavigation.destinations[index].icon,
+                  color: _selectedIndex == index
+                      ? AppTheme.primaryGold
+                      : null,
+                ),
+                title: Text(
+                  AppNavigation.destinations[index].label,
+                  style: TextStyle(
+                    color: _selectedIndex == index
+                        ? AppTheme.primaryGold
+                        : null,
+                    fontWeight: _selectedIndex == index
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+                selected: _selectedIndex == index,
+                onTap: () {
+                  setState(() => _selectedIndex = index);
+                  Navigator.pop(context);
+                },
+              )),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMoreScreen(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final visibleDestinationIndices =
@@ -138,13 +267,17 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 7, title: 'طابور المزامنة', subtitle: 'العناصر المعلقة والمعالجة غير المتصلة', icon: Icons.cloud_sync_outlined),
       (index: 8, title: 'العروض', subtitle: 'العروض الترويجية والخصومات', icon: Icons.local_offer_outlined),
       (index: 9, title: 'الإشعارات', subtitle: 'الإشعارات والتنبيهات', icon: Icons.notifications_outlined),
-       (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
-       (index: 11, title: 'إدارة الموظفين', subtitle: 'إدارة حسابات وأدوار الموظفين', icon: Icons.people_outline),
-       (index: 12, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
+      (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
+      (index: 11, title: 'إدارة الموظفين', subtitle: 'إدارة حسابات وأدوار الموظفين', icon: Icons.people_outline),
+      (index: 12, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('المزيد من الأقسام')),
+      appBar: AppBar(
+        title: const Text('المزيد من الأقسام'),
+        backgroundColor: AppTheme.darkSlate,
+        foregroundColor: Colors.white,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

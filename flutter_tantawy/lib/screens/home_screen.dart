@@ -8,6 +8,7 @@ import '../services/cart_service.dart';
 import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
+import '../widgets/responsive_layout.dart';
 import '../widgets/role_dashboard_summary.dart';
 import 'about_screen.dart';
 import 'adaptive_home_screen.dart';
@@ -61,19 +62,44 @@ class _HomeScreenState extends State<HomeScreen> {
             toolbarHeight: 140,
             title: _buildHeaderProfile(context, cart.items.length, showProfilePhoto),
             actions: [
-               Padding(
+              Padding(
                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                 child: IconButton(
-                   icon: Icon(
-                     context.watch<ThemeModeProvider>().isDark
-                         ? Icons.light_mode_outlined
-                         : Icons.dark_mode_outlined,
-                     color: AppTheme.primaryGold,
+                 child: GestureDetector(
+                   onTap: () => context.read<ThemeModeProvider>().toggleTheme(),
+                   child: Container(
+                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                     decoration: BoxDecoration(
+                       color: Theme.of(context).brightness == Brightness.dark
+                           ? Colors.white.withOpacity(0.1)
+                           : AppTheme.darkSlate.withOpacity(0.1),
+                       borderRadius: BorderRadius.circular(12),
+                     ),
+                     child: Row(
+                       mainAxisSize: MainAxisSize.min,
+                       children: [
+                         Icon(
+                           context.watch<ThemeModeProvider>().isDark
+                               ? Icons.light_mode_outlined
+                               : Icons.dark_mode_outlined,
+                           color: AppTheme.primaryGold,
+                           size: 20,
+                         ),
+                         const SizedBox(width: 6),
+                         Text(
+                           'طلبية',
+                           style: TextStyle(
+                             color: Theme.of(context).brightness == Brightness.dark
+                                 ? Colors.white
+                                 : AppTheme.darkSlate,
+                             fontSize: 12,
+                             fontWeight: FontWeight.w600,
+                           ),
+                         ),
+                       ],
+                     ),
                    ),
-                   onPressed: () => context.read<ThemeModeProvider>().toggleTheme(),
-                   tooltip: 'تبديل الوضع الليلي',
                  ),
-              ),
+               ),
               // زر الطلبات مع البِج
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -316,13 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 1100
-            ? 5
-            : constraints.maxWidth >= 700
-                ? 4
-                : constraints.maxWidth >= 500
-                    ? 3
-                    : 2;
+        final columns = ResponsiveBreakpoints.gridColumns(context);
 
         return GridView.builder(
           padding: EdgeInsets.zero,

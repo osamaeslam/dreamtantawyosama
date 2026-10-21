@@ -38,3 +38,37 @@ class ResponsiveLayout extends StatelessWidget {
     );
   }
 }
+
+/// Helper class for responsive breakpoints and adaptive layout decisions.
+class ResponsiveBreakpoints {
+  static const double mobileMax = 650;
+  static const double tabletMax = 1100;
+
+  static bool isMobile(BuildContext context) =>
+      MediaQuery.of(context).size.width < mobileMax;
+
+  static bool isTablet(BuildContext context) =>
+      MediaQuery.of(context).size.width >= mobileMax &&
+      MediaQuery.of(context).size.width < tabletMax;
+
+  static bool isDesktop(BuildContext context) =>
+      MediaQuery.of(context).size.width >= tabletMax;
+
+  /// Returns the appropriate cross-axis column count for grid layouts.
+  static int gridColumns(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width >= 1200) return 5;
+    if (width >= 900) return 4;
+    if (width >= 600) return 3;
+    if (width >= 450) return 2;
+    return 1;
+  }
+
+  /// Returns appropriate padding based on screen size.
+  static EdgeInsets screenPadding(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width >= tabletMax) return const EdgeInsets.symmetric(horizontal: 24, vertical: 20);
+    if (width >= mobileMax) return const EdgeInsets.symmetric(horizontal: 20, vertical: 16);
+    return const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+  }
+}
