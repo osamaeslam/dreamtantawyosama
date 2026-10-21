@@ -21,23 +21,22 @@ class SupabaseService {
 
     final reachable = await _connectivity.pingServer();
     if (!reachable) {
-      throw const SocketException('غير متصل بالخادم — العمليات المالية تتطلب اتصالاً نشطاً');
+      throw const SocketException(
+          'غير متصل بالخادم — العمليات المالية تتطلب اتصالاً نشطاً');
     }
   }
 
-  static final ProductRepository _products = const ProductRepository();
-  static final CustomerRepository _customers = const CustomerRepository();
-  static final InvoiceRepository _invoices = const InvoiceRepository();
-  static final VisitRepository _visits = const VisitRepository();
-  static final ForecastRepository _forecasts = const ForecastRepository();
-  static final AnalyticsRepository _analytics = const AnalyticsRepository();
-  static final ReturnsRepository _returns = const ReturnsRepository();
-  static final ExpenseRepository _expenses = const ExpenseRepository();
-
-  SupabaseService._();
+  static const ProductRepository _products = ProductRepository();
+  static const CustomerRepository _customers = CustomerRepository();
+  static const InvoiceRepository _invoices = InvoiceRepository();
+  static const VisitRepository _visits = VisitRepository();
+  static const ForecastRepository _forecasts = ForecastRepository();
+  static const AnalyticsRepository _analyticsRepo = AnalyticsRepository();
+  static const ReturnsRepository _returns = ReturnsRepository();
+  static const ExpenseRepository _expenses = ExpenseRepository();
 
   ReturnsRepository get returnsRepo => _returns;
-  AnalyticsRepository get analyticsRepo => _analytics;
+  AnalyticsRepository get analyticsRepo => _analyticsRepo;
   ForecastRepository get forecastRepo => _forecasts;
 
   SupabaseClient? _client;
@@ -49,11 +48,11 @@ class SupabaseService {
   // تهيئة الاتصال بقاعدة بيانات Supabase
   static Future<void> initialize({
     required String supabaseUrl,
-    required String anonKey,
+    required String publishableKey,
   }) async {
     await Supabase.initialize(
       url: supabaseUrl,
-      anonKey: anonKey,
+      publishableKey: publishableKey,
       debug: kDebugMode,
     );
   }
@@ -103,7 +102,8 @@ class SupabaseService {
     }
 
     // bcrypt format: $2a$, $2b$, $2y$
-    if (storedHash.startsWith('\$2') || storedHash.toLowerCase().startsWith('bcrypt\$')) {
+    if (storedHash.startsWith('\$2') ||
+        storedHash.toLowerCase().startsWith('bcrypt\$')) {
       return _verifyBcrypt(password, storedHash);
     }
 
@@ -159,8 +159,10 @@ class SupabaseService {
   }
 
   // ===================== المنتجات (Products) =====================
-  Future<List<Product>> fetchProducts({String? branchName, String? department}) {
-    return _products.fetchProducts(branchName: branchName, department: department);
+  Future<List<Product>> fetchProducts(
+      {String? branchName, String? department}) {
+    return _products.fetchProducts(
+        branchName: branchName, department: department);
   }
 
   Future<List<ParentProduct>> fetchParentProducts({
@@ -169,10 +171,13 @@ class SupabaseService {
     String? searchQuery,
   }) {
     return _products.fetchParentProducts(
-      department: department, branchName: branchName, searchQuery: searchQuery);
+        department: department,
+        branchName: branchName,
+        searchQuery: searchQuery);
   }
 
-  Future<List<ProductVariant>> fetchProductVariants({required String productId}) {
+  Future<List<ProductVariant>> fetchProductVariants(
+      {required String productId}) {
     return _products.fetchProductVariants(productId: productId);
   }
 
@@ -183,7 +188,9 @@ class SupabaseService {
     String? productCode,
   }) {
     return _products.fetchPromotions(
-      activeOnly: activeOnly, branchName: branchName, productCode: productCode);
+        activeOnly: activeOnly,
+        branchName: branchName,
+        productCode: productCode);
   }
 
   // ===================== الفروع (Branches) =====================
@@ -191,7 +198,8 @@ class SupabaseService {
     return _products.fetchBranches();
   }
 
-  Future<Map<String, int>> fetchProductBranchStock(String productId, String branchName) {
+  Future<Map<String, int>> fetchProductBranchStock(
+      String productId, String branchName) {
     return _products.fetchProductBranchStock(productId, branchName);
   }
 
@@ -235,9 +243,11 @@ class SupabaseService {
     return _invoices.updateInvoiceStatus(invoiceId, newStatus);
   }
 
-  Future<bool> reserveStock({required String productId, required int cartonsToReserve}) async {
+  Future<bool> reserveStock(
+      {required String productId, required int cartonsToReserve}) async {
     await requireOnline();
-    return _products.reserveStock(productId: productId, cartonsToReserve: cartonsToReserve);
+    return _products.reserveStock(
+        productId: productId, cartonsToReserve: cartonsToReserve);
   }
 
   // ===================== الزيارات الميدانية (Visits) =====================
@@ -285,18 +295,23 @@ class SupabaseService {
   }
 
   // ===================== الاشتراك اللحظي (Realtime Stream) =====================
-  RealtimeChannel subscribeToOrders(void Function(Map<String, dynamic> payload) onEvent) {
+  RealtimeChannel subscribeToOrders(
+      void Function(Map<String, dynamic> payload) onEvent) {
     return _products.subscribeToOrders(onEvent);
   }
 
   // ===================== معلومات الشركة (Company Info) =====================
-  Future<CompanyInfo?> fetchCompanyInfo() => _analytics.fetchCompanyInfo();
+  Future<CompanyInfo?> fetchCompanyInfo() => _analyticsRepo.fetchCompanyInfo();
 
   // ===================== الأهداف والتارجت (Targets) =====================
   Future<List<TargetRecord>> fetchTargets({
-    String? repName, String? branchName, int? month, int? year,
+    String? repName,
+    String? branchName,
+    int? month,
+    int? year,
   }) {
-    return _forecasts.fetchTargets(repName: repName, branchName: branchName, month: month, year: year);
+    return _forecasts.fetchTargets(
+        repName: repName, branchName: branchName, month: month, year: year);
   }
 
   Future<bool> insertTarget(TargetRecord target) {
@@ -309,10 +324,14 @@ class SupabaseService {
 
   // ===================== ملاحظات العملاء (Customer Comments) =====================
   Future<List<CustomerCommentRecord>> fetchCustomerComments({
-    String? customerId, String? customerCode, String? branchName,
+    String? customerId,
+    String? customerCode,
+    String? branchName,
   }) {
     return _customers.fetchCustomerComments(
-        customerId: customerId, customerCode: customerCode, branchName: branchName);
+        customerId: customerId,
+        customerCode: customerCode,
+        branchName: branchName);
   }
 
   Future<bool> addCustomerComment(CustomerCommentRecord comment) {
@@ -321,31 +340,40 @@ class SupabaseService {
 
   // ===================== المعاملات المخزنية (Inventory Transactions) =====================
   Future<List<InventoryTransaction>> fetchInventoryTransactions({
-    String? productId, String? branchName, String? date,
+    String? productId,
+    String? branchName,
+    String? date,
   }) {
-    return _analytics.fetchInventoryTransactions(
+    return _analyticsRepo.fetchInventoryTransactions(
         productId: productId, branchName: branchName, date: date);
   }
 
   // ===================== المرتجعات (Returns) =====================
-  Future<List<ReturnRecord>> fetchReturns({String? repName, String? branchName, String? invoiceNumber}) {
-    return _returns.fetchReturns(repName: repName, branchName: branchName, invoiceNumber: invoiceNumber);
+  Future<List<ReturnRecord>> fetchReturns(
+      {String? repName, String? branchName, String? invoiceNumber}) {
+    return _returns.fetchReturns(
+        repName: repName, branchName: branchName, invoiceNumber: invoiceNumber);
   }
 
-  Future<bool> createReturnRecord(ReturnRecord record) => _returns.createReturnRecord(record);
+  Future<bool> createReturnRecord(ReturnRecord record) =>
+      _returns.createReturnRecord(record);
 
   // ===================== التوقعات/التوقعات الأسبوعية (Forecasts) =====================
   Future<List<CollectionForecastRecord>> fetchForecasts({
-    String? repName, String? monthKey, ForecastStatusType? status,
+    String? repName,
+    String? monthKey,
+    ForecastStatusType? status,
   }) {
-    return _forecasts.fetchForecasts(repName: repName, monthKey: monthKey, status: status);
+    return _forecasts.fetchForecasts(
+        repName: repName, monthKey: monthKey, status: status);
   }
 
   Future<ForecastMonthPlan?> fetchForecastMonthPlan(String monthKey) {
     return _forecasts.fetchForecastMonthPlan(monthKey);
   }
 
-  Future<bool> saveForecast(CollectionForecastRecord record) => _forecasts.saveForecast(record);
+  Future<bool> saveForecast(CollectionForecastRecord record) =>
+      _forecasts.saveForecast(record);
 
   Future<bool> submitForecast(
     CollectionForecastRecord record, {
@@ -435,7 +463,8 @@ class SupabaseService {
   Future<bool> saveForecastMonthPlan(ForecastMonthPlan monthPlan) =>
       _forecasts.saveForecastMonthPlan(monthPlan);
 
-  Future<bool> updateMonthPlanWeeks(String monthKey, List<ForecastWeek> weeks) =>
+  Future<bool> updateMonthPlanWeeks(
+          String monthKey, List<ForecastWeek> weeks) =>
       _forecasts.updateMonthPlanWeeks(monthKey, weeks);
 
   Future<bool> closeMonthPlan(String monthKey, String closedBy) =>
@@ -472,22 +501,29 @@ class SupabaseService {
       );
 
   // ===================== سجلات التدقيق (Audit Logs) =====================
-  Future<List<AuditLog>> fetchAuditLogs({String? userName, AuditActionType? action, String? invoiceId}) {
-    return _analytics.fetchAuditLogs(userName: userName, action: action, invoiceId: invoiceId);
+  Future<List<AuditLog>> fetchAuditLogs(
+      {String? userName, AuditActionType? action, String? invoiceId}) {
+    return _analyticsRepo.fetchAuditLogs(
+        userName: userName, action: action, invoiceId: invoiceId);
   }
 
   // ===================== أداء المندوبين (Rep Performance) =====================
-  Future<List<RepPerformance>> fetchRepPerformance({String? branchName, int? month, int? year}) {
-    return _analytics.fetchRepPerformance(branchName: branchName, month: month, year: year);
+  Future<List<RepPerformance>> fetchRepPerformance(
+      {String? branchName, int? month, int? year}) {
+    return _analyticsRepo.fetchRepPerformance(
+        branchName: branchName, month: month, year: year);
   }
 
   // ===================== تحليلات العملاء (Customer Analytics) =====================
-  Future<List<CustomerAnalytics>> fetchCustomerAnalytics({String? branchName, String? repName, String? tier}) {
-    return _analytics.fetchCustomerAnalytics(branchName: branchName, repName: repName, tier: tier);
+  Future<List<CustomerAnalytics>> fetchCustomerAnalytics(
+      {String? branchName, String? repName, String? tier}) {
+    return _analyticsRepo.fetchCustomerAnalytics(
+        branchName: branchName, repName: repName, tier: tier);
   }
 
   // ===================== إعدادات Cloudinary =====================
-  Future<CloudinaryConfig?> fetchCloudinaryConfig() => _analytics.fetchCloudinaryConfig();
+  Future<CloudinaryConfig?> fetchCloudinaryConfig() =>
+      _analyticsRepo.fetchCloudinaryConfig();
 
   // ===================== المصروفات (Expenses) =====================
   Future<List<Expense>> fetchExpenses({
@@ -536,8 +572,7 @@ class SupabaseService {
     try {
       await client
           .from('app_users')
-          .update({'is_active': isActive})
-          .eq('id', userId);
+          .update({'is_active': isActive}).eq('id', userId);
       return true;
     } catch (e) {
       debugPrint('SupabaseService Error in updateUserStatus: $e');
@@ -545,12 +580,9 @@ class SupabaseService {
     }
   }
 
-   Future<bool> updateUserRole(String userId, String newRole) async {
+  Future<bool> updateUserRole(String userId, String newRole) async {
     try {
-      await client
-          .from('app_users')
-          .update({'role': newRole})
-          .eq('id', userId);
+      await client.from('app_users').update({'role': newRole}).eq('id', userId);
       return true;
     } catch (e) {
       debugPrint('SupabaseService Error in updateUserRole: $e');
@@ -562,8 +594,7 @@ class SupabaseService {
     try {
       await client
           .from('app_users')
-          .update({'branch_name': branchName})
-          .eq('id', userId);
+          .update({'branch_name': branchName}).eq('id', userId);
       return true;
     } catch (e) {
       debugPrint('SupabaseService Error in updateUserBranch: $e');
@@ -575,8 +606,7 @@ class SupabaseService {
     try {
       await client
           .from('app_users')
-          .update({'supervisor_id': supervisorId})
-          .eq('id', userId);
+          .update({'supervisor_id': supervisorId}).eq('id', userId);
       return true;
     } catch (e) {
       debugPrint('SupabaseService Error in updateUserSupervisor: $e');

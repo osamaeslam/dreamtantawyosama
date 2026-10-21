@@ -85,26 +85,25 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderColor),
+          borderSide: const BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: borderColor),
+          borderSide: const BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryGold, width: 2),
+          borderSide: const BorderSide(color: primaryGold, width: 2),
         ),
         labelStyle: GoogleFonts.cairo(color: textMuted),
-        hintStyle: GoogleFonts.cairo(color: textMuted.withOpacity(0.7)),
+        hintStyle: GoogleFonts.cairo(color: textMuted.withValues(alpha: 0.7)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGold,
           foregroundColor: darkSlate,
           elevation: 3,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -117,7 +116,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: darkSlate,
-          side: BorderSide(color: borderColor),
+          side: const BorderSide(color: borderColor),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -182,26 +181,26 @@ class AppTheme {
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: darkBorder),
+          borderSide: const BorderSide(color: darkBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: darkBorder),
+          borderSide: const BorderSide(color: darkBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: primaryGold, width: 2),
+          borderSide: const BorderSide(color: primaryGold, width: 2),
         ),
         labelStyle: GoogleFonts.cairo(color: darkTextMuted),
-        hintStyle: GoogleFonts.cairo(color: darkTextMuted.withOpacity(0.7)),
+        hintStyle:
+            GoogleFonts.cairo(color: darkTextMuted.withValues(alpha: 0.7)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGold,
           foregroundColor: darkSlate,
           elevation: 3,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -214,7 +213,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: darkText,
-          side: BorderSide(color: darkBorder),
+          side: const BorderSide(color: darkBorder),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -222,13 +221,13 @@ class AppTheme {
         ),
       ),
       dividerColor: darkBorder,
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryGold,
         foregroundColor: darkSlate,
       ),
-      focusColor: primaryGold.withOpacity(0.3),
-      hoverColor: primaryGold.withOpacity(0.2),
-      tabBarTheme: TabBarThemeData(
+      focusColor: primaryGold.withValues(alpha: 0.3),
+      hoverColor: primaryGold.withValues(alpha: 0.2),
+      tabBarTheme: const TabBarThemeData(
         indicatorColor: primaryGold,
         labelColor: primaryGold,
         unselectedLabelColor: darkTextMuted,

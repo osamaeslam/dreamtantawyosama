@@ -167,7 +167,7 @@ class _InvoiceCalendarScreenState extends State<InvoiceCalendarScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGold.withOpacity(0.14),
+                color: AppTheme.primaryGold.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -192,7 +192,6 @@ class _InvoiceCalendarScreenState extends State<InvoiceCalendarScreen> {
     Color cardColor,
     Color borderColor,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final daysOverdue = DateTime.now().difference(inv.date).inDays;
     final statusColor = inv.status.toLowerCase().contains('متأخر')
         ? AppTheme.roseRed
@@ -210,7 +209,7 @@ class _InvoiceCalendarScreenState extends State<InvoiceCalendarScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: CircleAvatar(
-          backgroundColor: statusColor.withOpacity(0.15),
+          backgroundColor: statusColor.withValues(alpha: 0.15),
           child: Icon(Icons.receipt, color: statusColor, size: 20),
         ),
         title: Text(
@@ -235,3 +234,5 @@ class _InvoiceCalendarScreenState extends State<InvoiceCalendarScreen> {
   String _formatDate(DateTime date) => DateFormat('yyyy/MM/dd').format(date);
   String _formatCurrency() => 'د.ك';
 }
+
+

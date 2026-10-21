@@ -34,7 +34,7 @@ class CustomerDetailDialog extends StatelessWidget {
         ? (customer.totalCollections / customer.totalSales) * 100
         : 0.0;
     final targetPct = customer.annualTarget != null && customer.annualTarget! > 0
-        ? ((customer.totalSales / customer.annualTarget!) * 100).clamp(0, 999)
+        ? (customer.totalSales / customer.annualTarget!) * 100
         : 0.0;
 
     return Dialog(
@@ -65,7 +65,7 @@ class CustomerDetailDialog extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: _tierColor(customer.tier).withOpacity(0.15),
+                    backgroundColor: _tierColor(customer.tier).withValues(alpha: 0.15),
                     child: Icon(Icons.storefront, color: _tierColor(customer.tier), size: 20),
                   ),
                   const SizedBox(width: 12),
@@ -110,9 +110,9 @@ class CustomerDetailDialog extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: _tierColor(customer.tier).withOpacity(0.15),
+                        color: _tierColor(customer.tier).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: _tierColor(customer.tier).withOpacity(0.3)),
+                        border: Border.all(color: _tierColor(customer.tier).withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         customer.tier ?? '—',
@@ -258,7 +258,7 @@ class CustomerDetailDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: (pct / 100).clamp(0, 1),
-            backgroundColor: mutedColor.withOpacity(0.2),
+            backgroundColor: mutedColor.withValues(alpha: 0.2),
             color: color,
             minHeight: 6,
           ),
@@ -283,3 +283,4 @@ class CustomerDetailDialog extends StatelessWidget {
     return dateStr;
   }
 }
+

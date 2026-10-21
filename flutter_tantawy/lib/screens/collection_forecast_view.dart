@@ -299,7 +299,7 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _monthPlan!.isClosed ? AppTheme.infoBlue.withOpacity(0.15) : AppTheme.warningAmber.withOpacity(0.15),
+                                color: _monthPlan!.isClosed ? AppTheme.infoBlue.withValues(alpha: 0.15) : AppTheme.warningAmber.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -321,7 +321,7 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                               children: _monthPlan!.weeks.map((week) => Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryGold.withOpacity(0.1),
+                                  color: AppTheme.primaryGold.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -439,7 +439,7 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CircleAvatar(
-                  backgroundColor: AppTheme.infoBlue.withOpacity(0.15),
+                  backgroundColor: AppTheme.infoBlue.withValues(alpha: 0.15),
                   child: Icon(Icons.person, color: AppTheme.infoBlue, size: 18),
                 ),
                 const SizedBox(width: 8),
@@ -468,7 +468,7 @@ class _CollectionForecastViewState extends State<CollectionForecastView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
+                        color: statusColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -1316,3 +1316,5 @@ class _WeekConfigDialogState extends State<_WeekConfigDialog> {
     return monthKey;
   }
 }
+
+

@@ -37,7 +37,7 @@ class ConnectionStatusBar extends StatelessWidget {
           onTap: onTap,
           child: Container(
             width: double.infinity,
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             child: Row(
               children: [
@@ -95,3 +95,4 @@ class ConnectionStatusBar extends StatelessWidget {
     }
   }
 }
+

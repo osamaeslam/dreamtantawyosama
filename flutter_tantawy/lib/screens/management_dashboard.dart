@@ -21,27 +21,9 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
   List<CustomerAnalytics> _customers = [];
   bool _isLoading = true;
   int _selectedYear = DateTime.now().year;
-  String _selectedQuarter = 'ALL';
-  String _selectedMonth = 'ALL';
 
   final NumberFormat _currencyFmt =
       NumberFormat.currency(locale: 'ar_EG', decimalDigits: 0);
-  final List<String> _quarterOptions = ['ALL', 'Q1', 'Q2', 'Q3', 'Q4'];
-  final List<String> _monthOptions = [
-    'ALL',
-    'يناير',
-    'فبراير',
-    'مارس',
-    'أبريل',
-    'مايو',
-    'يونيو',
-    'يوليو',
-    'أغسطس',
-    'سبتمبر',
-    'أكتوبر',
-    'نوفمبر',
-    'ديسمبر'
-  ];
 
   RoleAccessController get rbac => RoleAccessController(widget.currentUser);
 
@@ -293,7 +275,7 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.infoBlue.withOpacity(0.18)),
+        border: Border.all(color: AppTheme.infoBlue.withValues(alpha: 0.18)),
       ),
       child: Column(
         children: [
@@ -360,7 +342,7 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
       child: ListTile(
         leading: CircleAvatar(
           radius: 20,
-          backgroundColor: color.withOpacity(0.15),
+          backgroundColor: color.withValues(alpha: 0.15),
           backgroundImage: target.repAvatar != null
               ? NetworkImage(target.repAvatar!)
               : null,
@@ -379,10 +361,10 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
                   color: target.salesPriority == 'مرتفع'
-                      ? AppTheme.errorRed.withOpacity(0.15)
+                      ? AppTheme.errorRed.withValues(alpha: 0.15)
                       : target.salesPriority == 'متوسط'
-                          ? AppTheme.warningAmber.withOpacity(0.15)
-                          : AppTheme.emeraldGreen.withOpacity(0.15),
+                          ? AppTheme.warningAmber.withValues(alpha: 0.15)
+                          : AppTheme.emeraldGreen.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -475,11 +457,11 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
             toY: t.salesTarget > 0
                 ? (t.salesAchieved / t.salesTarget).clamp(0.0, 1.0) * 100
                 : 0,
-            color: barColor.withOpacity(0.8),
+            color: barColor.withValues(alpha: 0.8),
             width: 16,
             borderRadius: BorderRadius.circular(6),
             gradient: LinearGradient(
-              colors: [barColor.withOpacity(0.7), barColor.withOpacity(0.4)],
+              colors: [barColor.withValues(alpha: 0.7), barColor.withValues(alpha: 0.4)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -489,11 +471,11 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
                 ? (t.collectionAchieved / t.collectionTarget).clamp(0.0, 1.0) *
                     100
                 : 0,
-            color: AppTheme.infoBlue.withOpacity(0.8),
+            color: AppTheme.infoBlue.withValues(alpha: 0.8),
             width: 16,
             borderRadius: BorderRadius.circular(6),
             gradient: LinearGradient(
-              colors: [AppTheme.infoBlue.withOpacity(0.7), AppTheme.infoBlue.withOpacity(0.4)],
+              colors: [AppTheme.infoBlue.withValues(alpha: 0.7), AppTheme.infoBlue.withValues(alpha: 0.4)],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -510,7 +492,7 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -631,7 +613,7 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -665,3 +647,5 @@ class _ManagementDashboardState extends State<ManagementDashboard> {
     );
   }
 }
+
+

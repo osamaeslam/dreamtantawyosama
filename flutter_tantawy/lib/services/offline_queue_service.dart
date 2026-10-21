@@ -32,7 +32,6 @@ class OfflineQueueService extends ChangeNotifier {
   final List<OfflineAction> _queue = [];
 
   bool _isProcessing = false;
-  bool _disposed = false;
 
   OfflineQueueService(this._connectivity);
 
@@ -274,7 +273,6 @@ class OfflineQueueService extends ChangeNotifier {
 
   @override
   void dispose() {
-    _disposed = true;
     _sub?.cancel();
     super.dispose();
   }

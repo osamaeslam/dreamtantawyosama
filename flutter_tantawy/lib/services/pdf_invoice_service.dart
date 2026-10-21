@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -75,7 +73,7 @@ class PdfInvoiceService {
               pw.Text('العميل: ${invoice.customerName} (${invoice.customerCode})', style: const pw.TextStyle(fontSize: 10)),
               if (invoice.customerPhone?.isNotEmpty == true)
                 pw.Text('الهاتف: ${invoice.customerPhone}', style: const pw.TextStyle(fontSize: 9)),
-              pw.Text('المندوب: ${invoice.repName ?? ''} | الفرع: ${invoice.branchName ?? ''}', style: const pw.TextStyle(fontSize: 10)),
+               pw.Text('المندوب: ${invoice.repName} | الفرع: ${invoice.branchName}', style: const pw.TextStyle(fontSize: 10)),
               pw.Text('التاريخ: ${DateFormat('yyyy-MM-dd HH:mm').format(invoice.date)}', style: const pw.TextStyle(fontSize: 9)),
               pw.Text('طريقة الدفع: ${invoice.paymentType}', style: const pw.TextStyle(fontSize: 9)),
               pw.Text('حالة الفاتورة: ${invoice.status}', style: const pw.TextStyle(fontSize: 9)),

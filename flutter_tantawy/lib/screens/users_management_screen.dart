@@ -208,7 +208,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     decoration: InputDecoration(
                       labelText: 'الدور',
                       border: OutlineInputBorder(
@@ -236,7 +236,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: selectedBranch,
+                    initialValue: selectedBranch,
                     decoration: InputDecoration(
                       labelText: 'الفرع',
                       border: OutlineInputBorder(
@@ -341,7 +341,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedRole,
+                  initialValue: selectedRole,
                   decoration: InputDecoration(
                     labelText: 'الدور',
                     border: OutlineInputBorder(
@@ -572,7 +572,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                                             CircleAvatar(
                                               radius: 16,
                                               backgroundColor:
-                                                  roleColor.withOpacity(0.2),
+                                                  roleColor.withValues(alpha: 0.2),
                                               child: Icon(
                                                 _roleIcon(user.role),
                                                 color: roleColor,
@@ -596,7 +596,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                                           padding: const EdgeInsets.symmetric(
                                               horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: roleColor.withOpacity(0.2),
+                                            color: roleColor.withValues(alpha: 0.2),
                                             borderRadius: BorderRadius.circular(12),
                                           ),
                                           child: Text(
@@ -680,3 +680,5 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
     );
   }
 }
+
+

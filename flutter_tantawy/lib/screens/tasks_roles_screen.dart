@@ -17,23 +17,37 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
   String _selectedRole = '';
 
   final List<_RoleTaskPage> _allPages = [
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الرئيسية',
       subtitle: 'لوحة المراجعة السريعة',
       description: 'مراجعة سريعة للمؤشرات الرئيسية والإشعارات العاجلة',
       icon: Icons.dashboard_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الكتالوج',
       subtitle: 'تصفح المنتجات والأسعار',
       description: 'استعراض الأسعار والأرصدة الفورية، بحث وتصفية حسب القسم',
       icon: Icons.inventory_2_outlined,
       color: AppTheme.primaryGold,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الطلبية',
       subtitle: 'إنشاء طلبية جديدة',
       description: 'إنشاء وتعديل طلبات العملاء مع دعم المتغيرات (اللون/الحجم)',
@@ -41,39 +55,68 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       color: AppTheme.primaryGold,
       roles: ['sales_rep'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الفواتير',
       subtitle: 'عرض وطباعة الفواتير',
       description: 'جميع الفواتير، حالتها، والقدرة على الطباعة والتصدير',
       icon: Icons.receipt_long_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الزيارات',
       subtitle: 'تسجيل الزيارات وخط السير',
       description: 'تسجيل زيارات عملاء مع توثيق الموقع الجغرافي والنتيجة',
       icon: Icons.location_on_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'المخزون',
       subtitle: 'حركة المخزون اليومية',
       description: 'متابعة مصادر المخزون من المخزن الرئيسي والأكتوبر',
       icon: Icons.warehouse_outlined,
       color: AppTheme.emeraldGreen,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'التوقعات',
       subtitle: 'توقعات التحصيل الأسبوعية',
-      description: 'تقدير التحصيل والمبيعات حسب الأسبوع، يمكن للإدارة تعديل أسابيع الشهر',
+      description:
+          'تقدير التحصيل والمبيعات حسب الأسبوع، يمكن للإدارة تعديل أسابيع الشهر',
       icon: Icons.energy_savings_leaf_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'طابور المزامنة',
       subtitle: 'العناصر المعلقة',
       description: 'متابعة العناصر المعلقة ومعالجتها غير المتصلة',
@@ -81,31 +124,46 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       color: AppTheme.infoBlue,
       roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'العروض',
       subtitle: 'العروض الترويجية والخصومات',
       description: 'عرض العروض النشطة والمنتهية مع تفاصيل الخصم والفترة',
       icon: Icons.local_offer_outlined,
       color: AppTheme.roseRed,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'الإشعارات',
       subtitle: 'التنبيهات والإشعارات',
       description: 'مراجعة الإشعارات المرتبطة بأنشطة العملاء والزيارات',
       icon: Icons.notifications_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'لوحة الإدارة',
       subtitle: 'ملخص الأداء والمؤشرات',
-      description: 'لوحة تحكم تحليلية مع رسوم بيانية للمبيعات والتحصيل، للإدارة والمديرين',
+      description:
+          'لوحة تحكم تحليلية مع رسوم بيانية للمبيعات والتحصيل، للإدارة والمديرين',
       icon: Icons.dashboard_outlined,
       color: AppTheme.infoBlue,
       roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'تحليلات العملاء',
       subtitle: 'أداء العملاء والأرصدة',
       description: 'تحليل شامل لعملاء حسب الفئة ومستوى المستحقات',
@@ -113,7 +171,7 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       color: AppTheme.infoBlue,
       roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'أداء المندوب',
       subtitle: 'الهدف والمحقق الشخصي',
       description: 'تفاصيل الأداء الشخصي للمندوب مع المؤشرات والإنجاز',
@@ -121,23 +179,37 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       color: AppTheme.emeraldGreen,
       roles: ['sales_rep'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'أهداف وإنجاز',
       subtitle: 'الهدف والمحقق',
       description: 'متابعة أهداف المبيعات والتحصيل حسب الربع والربع السنوي',
       icon: Icons.track_changes_outlined,
       color: AppTheme.emeraldGreen,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'المرتجعات',
       subtitle: 'إذن مرتجع المبيعات',
       description: 'إدارة مرتجعات المنتجات مع توثيق السبب والحالة',
       icon: Icons.assignment_return_outlined,
       color: AppTheme.roseRed,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'مزامنة Google Sheets',
       subtitle: 'رفع ومزامنة البيانات',
       description: 'استيراد المنتجات والعروض من Google Sheets',
@@ -145,21 +217,29 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       color: AppTheme.emeraldGreen,
       roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'إدارة الموظفين',
       subtitle: 'إدارة حسابات وأدوار الموظفين',
-      description: 'إدارة حسابات الموظفين، تفعيلهم، وتغيير الأدوار (للإدارة العامة فقط)',
+      description:
+          'إدارة حسابات الموظفين، تفعيلهم، وتغيير الأدوار (للإدارة العامة فقط)',
       icon: Icons.manage_accounts_outlined,
       color: AppTheme.infoBlue,
       roles: ['admin', 'developer'],
     ),
-    _RoleTaskPage(
+    const _RoleTaskPage(
       title: 'نبذة عن البرنامج',
       subtitle: 'معلومات عن التطبيق والشركة',
       description: 'عرض معلومات الشركة، حقوق الطبع، وإعدادات التطبيق',
       icon: Icons.info_outlined,
       color: AppTheme.infoBlue,
-      roles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+      roles: [
+        'admin',
+        'manager',
+        'branch_manager',
+        'supervisor',
+        'sales_rep',
+        'developer'
+      ],
     ),
   ];
 
@@ -170,7 +250,9 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
   }
 
   List<_RoleTaskPage> get _filteredPages {
-    return _allPages.where((page) => page.roles.contains(_selectedRole)).toList();
+    return _allPages
+        .where((page) => page.roles.contains(_selectedRole))
+        .toList();
   }
 
   @override
@@ -189,20 +271,23 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
       appBar: AppBar(
         backgroundColor: isDark ? AppTheme.darkCard : AppTheme.darkSlate,
         title: Text('المهام والأدوار',
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 18)),
+            style:
+                GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGold.withOpacity(0.15),
+                  color: AppTheme.primaryGold.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.person, color: AppTheme.primaryGold, size: 16),
+                    const Icon(Icons.person,
+                        color: AppTheme.primaryGold, size: 16),
                     const SizedBox(width: 4),
                     Text(roleLabel,
                         style: GoogleFonts.cairo(
@@ -234,10 +319,13 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
                         style: GoogleFonts.cairo(fontSize: 13),
                       )))
                   .toList(),
-              onChanged: (v) => setState(() => _selectedRole = v ?? _selectedRole),
+              onChanged: (v) =>
+                  setState(() => _selectedRole = v ?? _selectedRole),
               style: GoogleFonts.cairo(color: textColor, fontSize: 13),
               dropdownColor: cardColor,
-              underline: Container(height: 1, color: isDark ? AppTheme.darkBorder : AppTheme.borderColor),
+              underline: Container(
+                  height: 1,
+                  color: isDark ? AppTheme.darkBorder : AppTheme.borderColor),
               icon: const Icon(Icons.filter_alt_outlined, size: 18),
             ),
           ),
@@ -254,15 +342,18 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
             child: _filteredPages.isEmpty
                 ? Center(
                     child: Text('لا توجد صفحات متاحة لهذا الدور',
-                        style: GoogleFonts.cairo(fontSize: 13, color: mutedColor)),
+                        style:
+                            GoogleFonts.cairo(fontSize: 13, color: mutedColor)),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: _filteredPages.length,
-                    separatorBuilder: (context, i) => const SizedBox(height: 12),
+                    separatorBuilder: (context, i) =>
+                        const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final page = _filteredPages[index];
-                      return _buildPageCard(page, cardColor, textColor, mutedColor, isDark, rbac);
+                      return _buildPageCard(
+                          page, cardColor, textColor, mutedColor, isDark, rbac);
                     },
                   ),
           ),
@@ -287,13 +378,14 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: page.color.withOpacity(0.14),
+            color: page.color.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(page.icon, color: page.color, size: 22),
         ),
         title: Text(page.title,
-            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13, color: textColor)),
+            style: GoogleFonts.cairo(
+                fontWeight: FontWeight.bold, fontSize: 13, color: textColor)),
         subtitle: Text(page.description,
             style: GoogleFonts.cairo(fontSize: 11, color: mutedColor),
             maxLines: 2,
@@ -304,27 +396,38 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('الوصف:', style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.w600, color: mutedColor)),
+                Text('الوصف:',
+                    style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: mutedColor)),
                 const SizedBox(height: 4),
                 Text(page.description,
                     style: GoogleFonts.cairo(fontSize: 12, color: mutedColor)),
                 const SizedBox(height: 8),
                 Text('الأدوار المسموحة:',
-                    style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.w600, color: mutedColor)),
+                    style: GoogleFonts.cairo(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: mutedColor)),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 6,
-                  children: page.roles.map((role) => Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: page.color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          _roleLabel(role),
-                          style: GoogleFonts.cairo(fontSize: 10, color: page.color),
-                        ),
-                      )).toList(),
+                  children: page.roles
+                      .map((role) => Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: page.color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              _roleLabel(role),
+                              style: GoogleFonts.cairo(
+                                  fontSize: 10, color: page.color),
+                            ),
+                          ))
+                      .toList(),
                 ),
               ],
             ),
@@ -334,11 +437,20 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
     );
   }
 
-  Widget _buildTeamReference(Color cardColor, Color textColor, Color mutedColor, bool isDark) {
+  Widget _buildTeamReference(
+      Color cardColor, Color textColor, Color mutedColor, bool isDark) {
     final teamMembers = [
-      {'name': 'أ محمد محمود', 'role': 'manager', 'position': 'مدير إدارة مبيعات'},
+      {
+        'name': 'أ محمد محمود',
+        'role': 'manager',
+        'position': 'مدير إدارة مبيعات'
+      },
       {'name': 'أ احمد محمود', 'role': 'sales_rep', 'position': 'مندوب مبيعات'},
-      {'name': 'أ اسامه اسلام', 'role': 'sales_rep', 'position': 'مندوب مبيعات'},
+      {
+        'name': 'أ اسامه اسلام',
+        'role': 'sales_rep',
+        'position': 'مندوب مبيعات'
+      },
     ];
 
     return ExpansionTile(
@@ -346,13 +458,14 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppTheme.primaryGold.withOpacity(0.15),
+          color: AppTheme.primaryGold.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(Icons.group, color: AppTheme.primaryGold, size: 22),
+        child: const Icon(Icons.group, color: AppTheme.primaryGold, size: 22),
       ),
       title: Text('فريق إدارة المبيعات',
-          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+          style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
@@ -366,28 +479,37 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
                   children: [
                     CircleAvatar(
                       radius: 16,
-                      backgroundColor: roleColor.withOpacity(0.15),
-                      child: Icon(_roleIcon(member['role']!), size: 14, color: roleColor),
+                      backgroundColor: roleColor.withValues(alpha: 0.15),
+                      child: Icon(_roleIcon(member['role']!),
+                          size: 14, color: roleColor),
                     ),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(member['name']!,
-                            style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 12, color: textColor)),
+                            style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: textColor)),
                         Text(member['position']!,
-                            style: GoogleFonts.cairo(fontSize: 10, color: mutedColor)),
+                            style: GoogleFonts.cairo(
+                                fontSize: 10, color: mutedColor)),
                       ],
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: roleColor.withOpacity(0.15),
+                        color: roleColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(_roleLabel(member['role']!),
-                          style: GoogleFonts.cairo(fontSize: 9, fontWeight: FontWeight.bold, color: roleColor)),
+                          style: GoogleFonts.cairo(
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                              color: roleColor)),
                     ),
                   ],
                 ),
@@ -399,7 +521,8 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
     );
   }
 
-  Widget _buildStatusFlowReference(Color cardColor, Color textColor, Color mutedColor, bool isDark) {
+  Widget _buildStatusFlowReference(
+      Color cardColor, Color textColor, Color mutedColor, bool isDark) {
     final statuses = NotificationService.getOrderStatuses();
 
     return ExpansionTile(
@@ -407,13 +530,15 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: AppTheme.infoBlue.withOpacity(0.15),
+          color: AppTheme.infoBlue.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(Icons.run_circle_outlined, color: AppTheme.infoBlue, size: 22),
+        child: const Icon(Icons.run_circle_outlined,
+            color: AppTheme.infoBlue, size: 22),
       ),
       title: Text('تدفق حالة الطلبية',
-          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+          style: GoogleFonts.cairo(
+              fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
@@ -431,7 +556,10 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     children: [
-                      Expanded(child: Container(height: 1, color: mutedColor.withOpacity(0.3))),
+                      Expanded(
+                          child: Container(
+                              height: 1,
+                              color: mutedColor.withValues(alpha: 0.3))),
                       const SizedBox(width: 4),
                       Icon(Icons.arrow_downward, size: 14, color: mutedColor),
                     ],
@@ -439,7 +567,8 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final status = statuses[index];
-                  final color = NotificationService.getStatusColor(status, isDark);
+                  final color =
+                      NotificationService.getStatusColor(status, isDark);
                   return Row(
                     children: [
                       Container(
@@ -447,17 +576,24 @@ class _TasksRolesScreenState extends State<TasksRolesScreen> {
                         height: 28,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: color.withOpacity(0.15),
+                          color: color.withValues(alpha: 0.15),
                           border: Border.all(color: color, width: 2),
                         ),
-                        child: Center(child: Text(NotificationService.getStatusIcon(status), style: GoogleFonts.cairo(fontSize: 10))),
+                        child: Center(
+                            child: Text(
+                                NotificationService.getStatusIcon(status),
+                                style: GoogleFonts.cairo(fontSize: 10))),
                       ),
                       const SizedBox(width: 10),
                       Text(status,
-                          style: GoogleFonts.cairo(fontSize: 11, color: textColor, fontWeight: FontWeight.w600)),
+                          style: GoogleFonts.cairo(
+                              fontSize: 11,
+                              color: textColor,
+                              fontWeight: FontWeight.w600)),
                       const SizedBox(width: 6),
                       Text(getStepDescription(index),
-                          style: GoogleFonts.cairo(fontSize: 10, color: mutedColor)),
+                          style: GoogleFonts.cairo(
+                              fontSize: 10, color: mutedColor)),
                     ],
                   );
                 },

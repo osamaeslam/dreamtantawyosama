@@ -226,7 +226,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
     final q = query.toLowerCase().trim();
     return _allProducts.where((p) {
       final name = p.name.toLowerCase();
-      final code = (p.code ?? '').toLowerCase();
+      final code = p.code.toLowerCase();
       final barcode = (p.barcode ?? '').toLowerCase();
       return name.contains(q) || code.contains(q) || barcode.contains(q);
     }).take(40).toList();
@@ -277,7 +277,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
       totalToday: totalToday,
       successfulVisits: successfulVisits,
       unsuccessfulVisits: unsuccessfulVisits,
-      coveragePercentage: coverage,
+      coveragePercentage: coverage.toDouble(),
       totalCollected: totalCollected,
       totalReturns: totalReturns,
     );
@@ -314,7 +314,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
         ),
       );
       final region = customer.region ?? customer.governorate ?? 'غير محدد';
-      visitedCustomersByRegion.putIfAbsent(region, () => Set()).add(visit.customerId);
+      visitedCustomersByRegion.putIfAbsent(region, () => {}).add(visit.customerId);
     }
 
     final stats = regionMap.entries.map((entry) {
@@ -330,7 +330,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
         totalCustomers: customers.length,
         visitedCustomers: visited,
         remainingCustomers: remaining > 0 ? remaining : 0,
-        coveragePercentage: coverage,
+        coveragePercentage: coverage.toDouble(),
       );
     }).toList();
 
@@ -583,14 +583,14 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
     final typeColor = _notificationTypeColor(notification.type);
     return Card(
       color: notification.isRead
-          ? AppTheme.cardSlate.withOpacity(0.5)
+          ? AppTheme.cardSlate.withValues(alpha: 0.5)
           : AppTheme.cardSlate,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: notification.isRead
               ? AppTheme.darkBorder
-              : typeColor.withOpacity(0.3),
+              : typeColor.withValues(alpha: 0.3),
           width: notification.isRead ? 1 : 2,
         ),
       ),
@@ -599,7 +599,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: typeColor.withOpacity(0.15),
+            color: typeColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(_notificationTypeIcon(notification.type),
@@ -627,7 +627,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
         ),
         trailing: notification.isRead
             ? null
-            : const Icon(Icons.fiber_smart_speaker,
+            : const Icon(Icons.campaign_outlined,
                 color: AppTheme.primaryGold, size: 12),
         onTap: () {
           setState(() {
@@ -724,7 +724,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           context,
           title: 'نسبة التغطية',
           value: '${kpis.coveragePercentage.toStringAsFixed(1)}%',
-          icon: Icons.coverage_high_outlined,
+          icon: Icons.visibility_outlined,
           color: AppTheme.primaryGold,
           showProgress: true,
           progressValue: kpis.coveragePercentage / 100,
@@ -787,7 +787,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.14),
+                    color: color.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: color, size: 20),
@@ -813,8 +813,8 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
                 style: GoogleFonts.cairo(fontSize: 11, color: colorScheme.onSurfaceVariant)),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
-              Text(subtitle!,
-                  style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant.withOpacity(0.7))),
+              Text(subtitle,
+                  style: GoogleFonts.cairo(fontSize: 10, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7))),
             ],
           ],
         ),
@@ -838,7 +838,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
                 selected: _selectedRegionFilter == null,
                 onSelected: (_) => setState(() => _selectedRegionFilter = null),
                 backgroundColor: AppTheme.darkBorder,
-                selectedColor: AppTheme.primaryGold.withOpacity(0.3),
+                selectedColor: AppTheme.primaryGold.withValues(alpha: 0.3),
                 showCheckmark: false,
               ),
               ...regions.map((region) => ChoiceChip(
@@ -857,48 +857,47 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           ),
         const SizedBox(height: 12),
         Container(
-          decoration: BoxDecoration(
-            color: AppTheme.cardSlate,
-            borderRadius: BorderRadius.circular(12),
-            border: const Border(side: BorderSide(color: AppTheme.darkBorder)),
-          ),
-          child: stats.isEmpty
+             decoration: BoxDecoration(
+              color: AppTheme.cardSlate,
+              borderRadius: BorderRadius.circular(12),
+               border: const Border.all(color: AppTheme.darkBorder),
+            ),
+            child: stats.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text('لا توجد بيانات مناطق',
                       style: GoogleFonts.cairo(color: Colors.grey.shade400)),
                 )
-              : DataTable(
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      child: Text('توزيع الزيارات حسب المنطقة',
+                          style: GoogleFonts.cairo(color: Colors.white70, fontSize: 13)),
+                    ),
+                    DataTable(
                   columnSpacing: 16,
-                  headingRowColor: MaterialStateProperty.all(AppTheme.darkBorder.withOpacity(0.5)),
-                  header: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text('توزيع الزيارات حسب المنطقة',
-                        style: GoogleFonts.cairo(color: Colors.white70, fontSize: 13)),
-                  ),
+                  headingRowColor: WidgetStateProperty.all(AppTheme.darkBorder.withValues(alpha: 0.5)),
                   columns: [
                     DataColumn(
                         label: Text('المنطقة',
                             style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11))),
                     DataColumn(
                         label: Text('العملاء',
-                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11)),
-                        numeric: true),
+                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11))),
                     DataColumn(
                         label: Text('تمت الزيارة',
-                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11)),
-                        numeric: true),
+                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11))),
                     DataColumn(
                         label: Text('المتبقي',
-                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11)),
-                        numeric: true),
+                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11))),
                     DataColumn(
                         label: Text('التغطية',
-                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11)),
-                        numeric: true),
+                            style: GoogleFonts.cairo(color: Colors.white70, fontSize: 11))),
                     DataColumn(
                         label: Text('', style: GoogleFonts.cairo(color: Colors.transparent, fontSize: 11)),
-                        numeric: true),
+                    ),
                   ],
                   rows: stats.asMap().entries.map((entry) {
                     final s = entry.value;
@@ -906,14 +905,11 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
                       DataCell(Text(s.regionName,
                           style: GoogleFonts.cairo(color: colorScheme.onSurface, fontSize: 12))),
                       DataCell(Text('${s.totalCustomers}',
-                          style: GoogleFonts.cairo(color: Colors.white70, fontSize: 12)),
-                          numeric: true),
+                          style: GoogleFonts.cairo(color: Colors.white70, fontSize: 12))),
                       DataCell(Text('${s.visitedCustomers}',
-                          style: GoogleFonts.cairo(color: AppTheme.emeraldGreen, fontSize: 12)),
-                          numeric: true),
+                          style: GoogleFonts.cairo(color: AppTheme.emeraldGreen, fontSize: 12))),
                       DataCell(Text('${s.remainingCustomers}',
-                          style: GoogleFonts.cairo(color: s.remainingCustomers > 0 ? Colors.orange : Colors.white70, fontSize: 12)),
-                          numeric: true),
+                          style: GoogleFonts.cairo(color: s.remainingCustomers > 0 ? Colors.orange : Colors.white70, fontSize: 12))),
                       DataCell(
                         Stack(
                           children: [
@@ -951,11 +947,14 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
                     ]);
                   }).toList(),
                 ),
-        ),
-      ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
-
+  
   Color _coverageColor(double percentage) {
     if (percentage >= 75) return AppTheme.emeraldGreen;
     if (percentage >= 50) return AppTheme.primaryGold;
@@ -963,15 +962,13 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
   }
 
   Widget _buildVisitsTable(List<CustomerVisit> visits) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (visits.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: AppTheme.cardSlate,
           borderRadius: BorderRadius.circular(12),
-          border: const Border(side: BorderSide(color: AppTheme.darkBorder)),
+          border: const Border.all(color: AppTheme.darkBorder),
         ),
         child: Center(
           child: Column(
@@ -1024,34 +1021,40 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           decoration: BoxDecoration(
             color: AppTheme.cardSlate,
             borderRadius: BorderRadius.circular(12),
-            border: const Border(side: BorderSide(color: AppTheme.darkBorder)),
+          border: const Border.all(color: AppTheme.darkBorder),
           ),
-          child: PaginatedDataTable(
-            columnSpacing: 16,
-            horizontalMargin: 16,
-            headingRowColor: MaterialStateProperty.all(AppTheme.darkBorder.withOpacity(0.5)),
-            rowsPerPage: 10,
-            header: Row(
-              children: [
-                Text('سجل الزيارات',
-                    style: GoogleFonts.cairo(color: Colors.white70, fontSize: 13)),
-                const Spacer(),
-                if (_selectedOutcomeFilter != null)
-                  TextButton.icon(
-                    onPressed: () => setState(() => _selectedOutcomeFilter = null),
-                    icon: const Icon(Icons.close, size: 14, color: Colors.grey),
-                    label: Text('إلغاء فلتر', style: GoogleFonts.cairo(color: Colors.grey, fontSize: 11)),
-                  ),
-              ],
-            ),
-            columns: const [
-              DataColumn(label: Text('العميل', style: TextStyle(color: Colors.white70, fontSize: 11))),
-              DataColumn(label: Text('المنطقة', style: TextStyle(color: Colors.white70, fontSize: 11))),
-              DataColumn(label: Text('الوقت', style: TextStyle(color: Colors.white70, fontSize: 11)), numeric: true),
-              DataColumn(label: Text('النتيجة', style: TextStyle(color: Colors.white70, fontSize: 11))),
-              DataColumn(label: Text('المبلغ', style: TextStyle(color: Colors.white70, fontSize: 11)), numeric: true),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('سجل الزيارات',
+                      style: GoogleFonts.cairo(color: Colors.white70, fontSize: 13)),
+                  const Spacer(),
+                  if (_selectedOutcomeFilter != null)
+                    TextButton.icon(
+                      onPressed: () => setState(() => _selectedOutcomeFilter = null),
+                      icon: const Icon(Icons.close, size: 14, color: Colors.grey),
+                      label: Text('إلغاء فلتر', style: GoogleFonts.cairo(color: Colors.grey, fontSize: 11)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              PaginatedDataTable(
+                columnSpacing: 16,
+                horizontalMargin: 16,
+                headingRowColor: WidgetStateProperty.all(AppTheme.darkBorder.withValues(alpha: 0.5)),
+                rowsPerPage: 10,
+                columns: const [
+                  DataColumn(label: Text('العميل', style: TextStyle(color: Colors.white70, fontSize: 11))),
+                  DataColumn(label: Text('المنطقة', style: TextStyle(color: Colors.white70, fontSize: 11))),
+                  DataColumn(label: Text('الوقت', style: TextStyle(color: Colors.white70, fontSize: 11))),
+                  DataColumn(label: Text('النتيجة', style: TextStyle(color: Colors.white70, fontSize: 11))),
+                  DataColumn(label: Text('المبلغ', style: TextStyle(color: Colors.white70, fontSize: 11))),
+                ],
+                source: VisitDataTableSource(visits, _customers, context),
+              ),
             ],
-            source: VisitDataTableSource(visits, _customers, context),
           ),
         ),
       ],
@@ -1104,14 +1107,14 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppTheme.primaryGold.withOpacity(0.1),
-            AppTheme.primaryGold.withOpacity(0.05),
+            AppTheme.primaryGold.withValues(alpha: 0.1),
+            AppTheme.primaryGold.withValues(alpha: 0.05),
           ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: const Border(side: BorderSide(color: AppTheme.darkBorder)),
+        border: const BorderSide(color: AppTheme.darkBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1134,7 +1137,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _tierColor(tier).withOpacity(0.2),
+                  color: _tierColor(tier).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(tier,
@@ -1206,7 +1209,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
       color: AppTheme.cardSlate,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: const Border(side: BorderSide(color: AppTheme.darkBorder)),
+        side: const BorderSide(color: AppTheme.darkBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -1319,7 +1322,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
 
   Widget _buildCustomerDropdown() {
     return DropdownButtonFormField<Customer>(
-      value: _formCustomer,
+      initialValue: _formCustomer,
       isExpanded: true,
       dropdownColor: AppTheme.cardSlate,
       style: GoogleFonts.cairo(color: Colors.white),
@@ -1398,8 +1401,8 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
             _visitOutcome = outcome;
             _selectedUnsuccessfulReason = null;
           }),
-          backgroundColor: AppTheme.darkBorder.withOpacity(0.5),
-          selectedColor: color.withOpacity(0.5),
+          backgroundColor: AppTheme.darkBorder.withValues(alpha: 0.5),
+          selectedColor: color.withValues(alpha: 0.5),
           showCheckmark: false,
         );
       }).toList(),
@@ -1501,7 +1504,6 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
               : null,
       returnReason: isReturn ? reason : (_selectedUnsuccessfulReason),
       createdBy: widget.currentUser.id,
-      region: customer.region ?? customer.governorate,
     );
 
     final success = await SupabaseService.instance.logVisit(newVisit);
@@ -1671,7 +1673,7 @@ class VisitDataTableSource extends DataTableSource {
       DataCell(Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: outcomeColor.withOpacity(0.2),
+          color: outcomeColor.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Text(v.outcome,
@@ -1698,3 +1700,5 @@ class VisitDataTableSource extends DataTableSource {
     return AppTheme.warningAmber;
   }
 }
+
+

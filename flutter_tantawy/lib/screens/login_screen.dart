@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
 import '../services/connectivity_service.dart';
-import '../models/models.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'adaptive_home_screen.dart';
@@ -50,8 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      if (user != null) {
+       if (user != null) {
         await AuthService.instance.persistSessionForLogin(user);
+        if (!mounted) return;
         setState(() => _isLoading = false);
         Navigator.pushReplacement(
           context,
@@ -60,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
       } else {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
           _errorMessage = 'بيانات الدخول غير صحيحة، يرجى التأكد من اسم المستخدم';
@@ -132,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: Border.all(color: borderColor, width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.18),
+                      color: Colors.black.withValues(alpha: 0.18),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -154,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryGold.withOpacity(0.35),
+                            color: AppTheme.primaryGold.withValues(alpha: 0.35),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
                           ),
@@ -236,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF450A0A),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFEF4444).withOpacity(0.4)),
+                          border: Border.all(color: const Color(0xFFEF4444).withValues(alpha: 0.4)),
                         ),
                         child: Row(
                           children: [
@@ -415,3 +416,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
+

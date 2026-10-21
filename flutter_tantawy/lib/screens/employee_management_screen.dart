@@ -40,7 +40,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     try {
       final branchName = rbac.isAdmin ? null : widget.currentUser.branchName;
       final employees = await SupabaseService.instance.fetchUsers(branchName: branchName);
-      final branches = rbac.isAdmin ? await SupabaseService.instance.fetchBranches() : [];
+      final branches = rbac.isAdmin ? await SupabaseService.instance.fetchBranches() : <Branch>[];
       final targetData = rbac.isAdmin
           ? await SupabaseService.instance.fetchRepPerformance()
           : await SupabaseService.instance.fetchRepPerformance(branchName: widget.currentUser.branchName);
@@ -150,6 +150,13 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     }
   }
 
+  Color _pctColor(num pct) {
+    if (pct >= 100) return AppTheme.emeraldGreen;
+    if (pct >= 80) return AppTheme.primaryGold;
+    if (pct >= 50) return AppTheme.warningAmber;
+    return AppTheme.errorRed;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -192,7 +199,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                       SizedBox(
                         width: 130,
                         child: DropdownButtonFormField<String>(
-                          value: _selectedBranch,
+                          initialValue: _selectedBranch,
                           decoration: InputDecoration(
                             labelText: 'الفرع',
                             labelStyle: GoogleFonts.cairo(fontSize: 10, color: Colors.white70),
@@ -384,11 +391,11 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   }
 
   Widget _buildHierarchyTree(Color textColor, Color mutedColor, Color borderColor, Color cardColor) {
-    final Map<String, List<AppUser>> _supervisorMap = {};
+    final Map<String, List<AppUser>> supervisorMap = {};
     for (final emp in _employees) {
       if (emp.supervisorName != null && emp.supervisorName!.isNotEmpty) {
-        _supervisorMap.putIfAbsent(emp.supervisorName!, () => []);
-        _supervisorMap[emp.supervisorName!]!.add(emp);
+      supervisorMap.putIfAbsent(emp.supervisorName!, () => []);
+      supervisorMap[emp.supervisorName!]!.add(emp);
       }
     }
 
@@ -398,16 +405,16 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: supervisors.map((sup) {
-        final subordinates = _supervisorMap[sup.name] ?? [];
+        final subordinates = supervisorMap[sup.name] ?? [];
         final hasSubordinates = subordinates.isNotEmpty;
         return Theme(
-          data: ThemeData().copyWith(expandableTileTheme: ExpandableTileThemeData(
+          data: ThemeData().copyWith(expansionTileTheme: ExpansionTileThemeData(
             headerPadding: const EdgeInsets.symmetric(horizontal: 8),
           )),
           child: ExpansionTile(
             leading: CircleAvatar(
               radius: 14,
-              backgroundColor: _roleColor(sup.role).withOpacity(0.15),
+              backgroundColor: _roleColor(sup.role).withValues(alpha: 0.15),
               child: Icon(_roleIcon(sup.role), size: 12, color: _roleColor(sup.role)),
             ),
             title: Text(sup.name, style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.w600, color: textColor)),
@@ -421,16 +428,16 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       leading: CircleAvatar(
                         radius: 10,
-                        backgroundColor: AppTheme.primaryGold.withOpacity(0.15),
+                        backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.15),
                         child: const Icon(Icons.person, size: 10, color: AppTheme.primaryGold),
                       ),
                       title: Text(rep.name, style: GoogleFonts.cairo(fontSize: 11, color: textColor)),
-                      subtitle: Text('${rep.branchName}', style: GoogleFonts.cairo(fontSize: 9, color: mutedColor)),
+                      subtitle: Text(rep.branchName, style: GoogleFonts.cairo(fontSize: 9, color: mutedColor)),
                       trailing: perf != null
                           ? Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _pctColor(salesPct).withOpacity(0.15),
+                                color: _pctColor(salesPct).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text('${salesPct.toStringAsFixed(0)}%',
@@ -466,7 +473,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: CircleAvatar(
           radius: 20,
-          backgroundColor: roleColor.withOpacity(0.15),
+          backgroundColor: roleColor.withValues(alpha: 0.15),
           backgroundImage: emp.avatar != null ? NetworkImage(emp.avatar!) : null,
           child: emp.avatar == null
               ? Icon(Icons.person, color: roleColor, size: 20)
@@ -479,7 +486,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
-                color: roleColor.withOpacity(0.15),
+                color: roleColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -559,10 +566,12 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         break;
       case 'deactivate':
         await SupabaseService.instance.updateUserStatus(emp.id, false);
+        if (!mounted) return;
         _loadData();
         break;
       case 'activate':
         await SupabaseService.instance.updateUserStatus(emp.id, true);
+        if (!mounted) return;
         _loadData();
         break;
       case 'reset_password':
@@ -636,7 +645,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedRole,
+                  initialValue: selectedRole,
                   decoration: InputDecoration(labelText: 'الدور', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                   items: const [
                     DropdownMenuItem(value: 'admin', child: Text('مدير عام')),
@@ -652,7 +661,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedBranch,
+                  initialValue: selectedBranch,
                   decoration: InputDecoration(labelText: 'الفرع', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                   items: _branches.map((b) => DropdownMenuItem(value: b.name, child: Text(b.name))).toList(),
                   onChanged: (v) => setState(() => selectedBranch = v ?? widget.currentUser.branchName),
@@ -662,7 +671,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 const SizedBox(height: 12),
                 if (selectedRole == 'sales_rep')
                   DropdownButtonFormField<String>(
-                    value: selectedSupervisor,
+                    initialValue: selectedSupervisor,
                     decoration: InputDecoration(labelText: 'المشرف', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('بدون مشرف')),
@@ -692,6 +701,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                   emailController.text.trim().isEmpty ? null : emailController.text.trim(),
                   selectedSupervisor,
                 );
+                if (!mounted) return;
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('تم إضافة الموظف', style: GoogleFonts.cairo()),
@@ -761,7 +771,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 const SizedBox(height: 12),
                 if (rbac.isAdmin)
                   DropdownButtonFormField<String>(
-                    value: selectedRole,
+                    initialValue: selectedRole,
                     decoration: InputDecoration(labelText: 'الدور', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                     items: const [
                       DropdownMenuItem(value: 'admin', child: Text('مدير عام')),
@@ -778,7 +788,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 const SizedBox(height: 12),
                 if (rbac.isAdmin)
                   DropdownButtonFormField<String>(
-                    value: selectedBranch,
+                    initialValue: selectedBranch,
                     decoration: InputDecoration(labelText: 'الفرع', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                     items: _branches.map((b) => DropdownMenuItem(value: b.name, child: Text(b.name))).toList(),
                     onChanged: (v) => setState(() => selectedBranch = v ?? emp.branchName),
@@ -788,7 +798,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 const SizedBox(height: 12),
                 if (selectedRole == 'sales_rep' && rbac.isAdmin)
                   DropdownButtonFormField<String>(
-                    value: selectedSupervisor,
+                    initialValue: selectedSupervisor,
                     decoration: InputDecoration(labelText: 'المشرف', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                     items: [
                       const DropdownMenuItem(value: null, child: Text('بدون مشرف')),
@@ -816,6 +826,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 }
               }
               await SupabaseService.instance.updateUserSupervisor(emp.id, selectedSupervisor);
+              if (!mounted) return;
 
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('تم تحديث بيانات الموظف', style: GoogleFonts.cairo()),
@@ -839,7 +850,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         backgroundColor: Theme.of(context).cardColor,
         title: Text('تغيير فرع ${emp.name}', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
         content: DropdownButtonFormField<String>(
-          value: selectedBranch,
+          initialValue: selectedBranch,
           items: _branches.map((b) => DropdownMenuItem(value: b.name, child: Text(b.name))).toList(),
           onChanged: (v) => setState(() => selectedBranch = v ?? emp.branchName),
           dropdownColor: Theme.of(context).cardColor,
@@ -850,6 +861,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
             onPressed: () async {
               Navigator.of(context).pop();
               await SupabaseService.instance.updateUserBranch(emp.id, selectedBranch);
+              if (!mounted) return;
               _loadData();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGold, foregroundColor: AppTheme.darkSlate),
@@ -868,7 +880,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         backgroundColor: Theme.of(context).cardColor,
         title: Text('تعيين مشرف لـ ${emp.name}', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
         content: DropdownButtonFormField<String>(
-          value: selectedSupervisor,
+          initialValue: selectedSupervisor,
           items: [
             const DropdownMenuItem(value: null, child: Text('بدون مشرف')),
             ..._employees.where((e) => (e.role == 'supervisor' || e.role == 'manager') && e.id != emp.id).map((s) => DropdownMenuItem(value: s.name, child: Text(s.name))),
@@ -882,6 +894,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
             onPressed: () async {
               Navigator.of(context).pop();
               await SupabaseService.instance.updateUserSupervisor(emp.id, selectedSupervisor);
+              if (!mounted) return;
               _loadData();
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryGold, foregroundColor: AppTheme.darkSlate),
@@ -914,6 +927,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
               if (controller.text.trim().isNotEmpty) {
                 Navigator.of(context).pop();
                 await SupabaseService.instance.updateUserPassword(emp.id, controller.text.trim());
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: Text('تم تحديث كلمة المرور', style: GoogleFonts.cairo()),
                   backgroundColor: AppTheme.infoBlue,
@@ -958,7 +972,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<String>(
-                  value: selectedRep.isEmpty ? null : selectedRep,
+                  initialValue: selectedRep.isEmpty ? null : selectedRep,
                   decoration: InputDecoration(labelText: 'المندوب', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                   items: repNames.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
                   onChanged: (v) => setState(() => selectedRep = v ?? ''),
@@ -967,7 +981,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedBranch,
+                  initialValue: selectedBranch,
                   decoration: InputDecoration(labelText: 'الفرع', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                   items: _branches.map((b) => DropdownMenuItem(value: b.name, child: Text(b.name))).toList(),
                   onChanged: (v) => setState(() => selectedBranch = v ?? widget.currentUser.branchName),
@@ -995,7 +1009,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        value: selectedMonth,
+                        initialValue: selectedMonth,
                         decoration: InputDecoration(labelText: 'الشهر', border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), isDense: true),
                         items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(value: m, child: Text(m.toString(), style: GoogleFonts.cairo()))).toList(),
                         onChanged: (v) => setState(() => selectedMonth = v ?? DateTime.now().month),
@@ -1043,6 +1057,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
                   remainingCollection: double.tryParse(collectionTargetController.text) ?? 0,
                 );
                 final success = await SupabaseService.instance.insertTarget(target);
+                if (!mounted) return;
                 if (success) {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Text('تم إضافة الهدف', style: GoogleFonts.cairo()),
@@ -1065,3 +1080,4 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
     );
   }
 }
+

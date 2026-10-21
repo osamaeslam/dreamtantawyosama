@@ -22,7 +22,6 @@ class _SyncQueueScreenState extends State<SyncQueueScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
     final cardColor = isDark ? AppTheme.darkCard : Colors.white;
     final borderColor = isDark ? AppTheme.darkBorder : AppTheme.borderColor;
 
@@ -128,7 +127,7 @@ return Scaffold(
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         leading: CircleAvatar(
-          backgroundColor: statusColor.withOpacity(0.2),
+          backgroundColor: statusColor.withValues(alpha: 0.2),
           child: Icon(
             _statusIcon(action.status),
             color: statusColor,
@@ -230,3 +229,5 @@ return Center(
     );
   }
 }
+
+

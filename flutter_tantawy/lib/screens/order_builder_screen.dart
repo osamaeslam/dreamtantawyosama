@@ -243,7 +243,7 @@ class _OrderBuilderScreenState extends State<OrderBuilderScreen> {
                                       ),
                                     )
                               : DropdownButtonFormField<Customer>(
-                                  value: cart.selectedCustomer,
+                                  initialValue: cart.selectedCustomer,
                                   isExpanded: true,
                                   decoration: InputDecoration(
                                     labelText: 'اختر العميل من القائمة',

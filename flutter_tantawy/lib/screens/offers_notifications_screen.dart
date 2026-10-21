@@ -104,7 +104,7 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
             child: Center(
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: AppTheme.primaryGold.withOpacity(0.2),
+                backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.2),
                 backgroundImage: widget.currentUser.avatar != null
                     ? NetworkImage(widget.currentUser.avatar!)
                     : null,
@@ -257,7 +257,7 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppTheme.roseRed.withOpacity(0.15),
+                        color: AppTheme.roseRed.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text('-${offer.discountPercentage.toInt()}%',
@@ -323,7 +323,7 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppTheme.infoBlue.withOpacity(0.1),
+            color: AppTheme.infoBlue.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child:
@@ -410,3 +410,5 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
     );
   }
 }
+
+

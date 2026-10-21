@@ -285,7 +285,7 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildSummaryRow(icon: Icons.people, title: 'عملاء', value: '${filtered.length}', color: AppTheme.infoBlue, isDark: isDark),
+                      _buildSummaryRow(icon: Icons.people, title: 'عملاء', value: filtered.length.toString(), color: AppTheme.infoBlue, isDark: isDark),
                       _buildSummaryRow(icon: Icons.trending_up, title: 'مبيعات', value: _currencyFmt.format(totalSales), color: AppTheme.primaryGold, isDark: isDark),
                       _buildSummaryRow(icon: Icons.account_balance_wallet, title: 'تحصيلات', value: _currencyFmt.format(totalCollections), color: AppTheme.emeraldGreen, isDark: isDark),
                       _buildSummaryRow(icon: Icons.warning, title: 'مستحقات', value: _currencyFmt.format(totalOverdue), color: AppTheme.errorRed, isDark: isDark),
@@ -358,7 +358,7 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
             child: FilterChip(
               label: Text('${seg['label']} (${seg['count']})',
                   style: GoogleFonts.cairo(fontSize: 10, color: Colors.white)),
-              backgroundColor: (seg['color'] as Color).withOpacity(0.15),
+              backgroundColor: (seg['color'] as Color).withValues(alpha: 0.15),
               selected: false,
               onSelected: (_) {
                 switch (seg['key']) {
@@ -391,7 +391,7 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
                     _applyFilters();
                 }
               },
-              shape: StadiumBorder(side: BorderSide(color: (seg['color'] as Color).withOpacity(0.3))),
+              shape: StadiumBorder(side: BorderSide(color: (seg['color'] as Color).withValues(alpha: 0.3))),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             ),
           );
@@ -498,7 +498,7 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: tierColor.withOpacity(0.15),
+          backgroundColor: tierColor.withValues(alpha: 0.15),
           child: Icon(Icons.storefront_outlined, color: tierColor, size: 18),
         ),
         title: Text(
@@ -578,3 +578,5 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
     );
   }
 }
+
+

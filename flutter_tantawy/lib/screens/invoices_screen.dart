@@ -83,7 +83,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                 height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   border: Border.all(color: color, width: 2),
                 ),
                 child: Center(
@@ -192,7 +192,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
              Container(
                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                decoration: BoxDecoration(
-                                 color: NotificationService.getStatusColor(inv.status, isDark).withOpacity(0.15),
+                                 color: NotificationService.getStatusColor(inv.status, isDark).withValues(alpha: 0.15),
                                  borderRadius: BorderRadius.circular(20),
                                ),
                                child: Row(
@@ -233,7 +233,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryGold.withOpacity( 0.14),
+                              color: AppTheme.primaryGold.withValues(alpha: 0.14),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -350,3 +350,6 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     );
   }
 }
+
+
+

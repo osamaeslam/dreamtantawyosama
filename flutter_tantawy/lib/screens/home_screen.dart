@@ -11,7 +11,6 @@ import '../widgets/connection_status_bar.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/role_dashboard_summary.dart';
 import 'about_screen.dart';
-import 'adaptive_home_screen.dart';
 import 'all_customers_analytics_view.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
@@ -46,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartService>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bool showProfilePhoto = _showUserProfilePhoto(widget.currentUser.role);
 
     return Scaffold(
@@ -70,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                      decoration: BoxDecoration(
                        color: Theme.of(context).brightness == Brightness.dark
-                           ? Colors.white.withOpacity(0.1)
-                           : AppTheme.darkSlate.withOpacity(0.1),
+                           ? Colors.white.withValues(alpha: 0.1)
+                           : AppTheme.darkSlate.withValues(alpha: 0.1),
                        borderRadius: BorderRadius.circular(12),
                      ),
                      child: Row(
@@ -188,9 +186,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeaderProfile(BuildContext context, int cartCount, bool showPhoto) {
-    final now = DateTime.now();
-    final dateLabel = DateFormat('yyyy/MM/dd').format(now);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
@@ -203,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                decoration: BoxDecoration(
                  shape: BoxShape.circle,
                  border: Border.all(
-                   color: AppTheme.primaryGold.withOpacity(0.4),
+                   color: AppTheme.primaryGold.withValues(alpha: 0.4),
                    width: 2,
                  ),
                  image: const DecorationImage(
@@ -270,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryGold.withOpacity(0.35),
+                    color: AppTheme.primaryGold.withValues(alpha: 0.35),
                     blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),
@@ -591,7 +586,7 @@ class _QuickActionCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: color.withOpacity(0.16)),
+        side: BorderSide(color: color.withValues(alpha: 0.16)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -607,7 +602,7 @@ class _QuickActionCard extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.13),
+                      color: color.withValues(alpha: 0.13),
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: Icon(icon, color: color, size: 22),
@@ -634,7 +629,7 @@ class _QuickActionCard extends StatelessWidget {
                     )
                   else
                     Icon(Icons.arrow_outward_rounded,
-                        size: 17, color: color.withOpacity(0.7)),
+                        size: 17, color: color.withValues(alpha: 0.7)),
                 ],
               ),
               const Spacer(),
@@ -665,3 +660,5 @@ class _QuickActionCard extends StatelessWidget {
     );
   }
 }
+
+

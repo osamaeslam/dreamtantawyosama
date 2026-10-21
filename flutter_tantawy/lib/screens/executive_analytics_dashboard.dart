@@ -577,7 +577,7 @@ class _ExecutiveAnalyticsDashboardState
         boxShadow: [
           BoxShadow(
             color:
-                (isDark ? Colors.black : Colors.grey).withOpacity(0.08),
+                (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -602,7 +602,7 @@ class _ExecutiveAnalyticsDashboardState
               isCurved: true,
               belowBarData: BarAreaData(
                 show: true,
-                color: AppTheme.primaryGold.withOpacity(0.15),
+                color: AppTheme.primaryGold.withValues(alpha: 0.15),
               ),
               dotData: FlDotData(
                 show: true,
@@ -668,7 +668,7 @@ class _ExecutiveAnalyticsDashboardState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.08),
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -693,7 +693,8 @@ class _ExecutiveAnalyticsDashboardState
         child: DataTable(
           columnSpacing: 18,
           headingRowHeight: 40,
-          dataRowHeight: 48,
+          dataRowMinHeight: 48,
+          dataRowMaxHeight: 48,
           columns: [
             _buildDataColumn('العميل', isDark),
             _buildDataColumn('المبلغ', isDark),
@@ -738,7 +739,7 @@ class _ExecutiveAnalyticsDashboardState
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2),
+                      color: statusColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -854,7 +855,7 @@ class _ExecutiveAnalyticsDashboardState
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? Colors.black : Colors.grey).withOpacity(0.08),
+            color: (isDark ? Colors.black : Colors.grey).withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1069,7 +1070,7 @@ class _KpiCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: data.color.withOpacity(0.15),
+                    color: data.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(
@@ -1082,7 +1083,7 @@ class _KpiCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: data.color.withOpacity(0.15),
+                    color: data.color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -1181,7 +1182,7 @@ class _SummaryCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(icon, color: color, size: 24),
@@ -1226,3 +1227,4 @@ class _SummaryCard extends StatelessWidget {
     );
   }
 }
+

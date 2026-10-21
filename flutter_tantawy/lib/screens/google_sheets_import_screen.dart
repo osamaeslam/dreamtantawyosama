@@ -162,7 +162,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryGold.withOpacity(0.15),
+                          color: AppTheme.primaryGold.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(Icons.smart_toy, color: AppTheme.primaryGold, size: 28),
@@ -273,7 +273,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
                         value: _progressTotal > 0 ? _progressCurrent / _progressTotal : 0,
-                        backgroundColor: mutedColor.withOpacity(0.2),
+                        backgroundColor: mutedColor.withValues(alpha: 0.2),
                         color: AppTheme.primaryGold,
                       ),
                       const SizedBox(height: 4),
@@ -329,7 +329,7 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGold.withOpacity(0.08),
+                      color: AppTheme.primaryGold.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -427,3 +427,4 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
     );
   }
 }
+

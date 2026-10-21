@@ -27,14 +27,16 @@ class _VisitsRedirectorState extends State<_VisitsRedirector> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => VisitsDashboardScreen(currentUser: currentUser ?? AppUser(
-            id: '',
-            name: '',
-            username: '',
-            role: 'sales_rep',
-            branchName: '',
-            phone: '',
-          )),
+          builder: (context) => VisitsDashboardScreen(
+              currentUser: currentUser ??
+                  AppUser(
+                    id: '',
+                    name: '',
+                    username: '',
+                    role: 'sales_rep',
+                    branchName: '',
+                    phone: '',
+                  )),
         ),
       );
     });
@@ -49,5 +51,4 @@ class _VisitsRedirectorState extends State<_VisitsRedirector> {
       ),
     );
   }
-}
 }

@@ -328,7 +328,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Padding(
@@ -342,7 +342,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGold.withOpacity(0.18),
+                    color: AppTheme.primaryGold.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(13),
                   ),
                   child: const Icon(
@@ -501,7 +501,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
                     contentPadding: EdgeInsets.zero,
                     leading: CircleAvatar(
                       radius: 16,
-                      backgroundColor: AppTheme.primaryGold.withOpacity(0.2),
+                      backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.2),
                       child: Text(
                         '$rank',
                         style: const TextStyle(
@@ -586,9 +586,9 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
         constraints: const BoxConstraints(minHeight: 112),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.18)),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,7 +636,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 4,
-                  backgroundColor: color.withOpacity(0.14),
+                  backgroundColor: color.withValues(alpha: 0.14),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
@@ -653,7 +653,7 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: (isError ? AppTheme.errorRed : AppTheme.infoBlue)
-            .withOpacity(0.08),
+            .withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -666,3 +666,5 @@ class _RoleDashboardSummaryState extends State<RoleDashboardSummary> {
     );
   }
 }
+
+

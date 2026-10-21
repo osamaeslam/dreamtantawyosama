@@ -407,10 +407,10 @@ String _roleLabel() => switch (currentUser.role) {
           colors: [AppTheme.darkSlate, AppTheme.cardSlate],
         ),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppTheme.borderSlate.withOpacity(0.8)),
+        border: Border.all(color: AppTheme.borderSlate.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.darkSlate.withOpacity(0.15),
+            color: AppTheme.darkSlate.withValues(alpha: 0.15),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -469,9 +469,9 @@ String _roleLabel() => switch (currentUser.role) {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -498,9 +498,9 @@ String _roleLabel() => switch (currentUser.role) {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: AppTheme.primaryGold.withOpacity(0.14),
+              color: AppTheme.primaryGold.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: AppTheme.primaryGold.withOpacity(0.35)),
+              border: Border.all(color: AppTheme.primaryGold.withValues(alpha: 0.35)),
             ),
             child: const Icon(
               Icons.space_dashboard_rounded,
@@ -529,7 +529,7 @@ String _roleLabel() => switch (currentUser.role) {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: color.withOpacity(0.16)),
+        side: BorderSide(color: color.withValues(alpha: 0.16)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -545,7 +545,7 @@ String _roleLabel() => switch (currentUser.role) {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.13),
+                      color: color.withValues(alpha: 0.13),
                       borderRadius: BorderRadius.circular(13),
                     ),
                     child: Icon(icon, color: color, size: 22),
@@ -572,7 +572,7 @@ String _roleLabel() => switch (currentUser.role) {
                     )
                   else
                     Icon(Icons.arrow_outward_rounded,
-                        size: 17, color: color.withOpacity(0.7)),
+                        size: 17, color: color.withValues(alpha: 0.7)),
                 ],
               ),
               const Spacer(),
@@ -607,3 +607,5 @@ String _roleLabel() => switch (currentUser.role) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
   }
 }
+
+

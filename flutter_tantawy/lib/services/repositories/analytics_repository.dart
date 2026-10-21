@@ -66,7 +66,7 @@ class AnalyticsRepository extends BaseRepository {
       final data =
           await client.from('company_info').select().maybeSingle();
       if (data == null) return null;
-      return CompanyInfo.fromJson(data as Map<String, dynamic>);
+      return CompanyInfo.fromJson(data);
     } catch (e) {
       logError('fetchCompanyInfo', e);
       return null;
@@ -79,7 +79,7 @@ class AnalyticsRepository extends BaseRepository {
       final data =
           await client.from('cloudinary_config').select().maybeSingle();
       if (data == null) return null;
-      return CloudinaryConfig.fromJson(data as Map<String, dynamic>);
+      return CloudinaryConfig.fromJson(data);
     } catch (e) {
       logError('fetchCloudinaryConfig', e);
       return null;

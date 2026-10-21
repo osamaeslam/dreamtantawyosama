@@ -57,7 +57,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
   }
 
   List<InventoryTransaction> _generateMockTransactions() {
-    final now = DateTime.now();
     return [
       InventoryTransaction(
         id: 'tx1',
@@ -273,7 +272,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: color.withOpacity(0.15),
+                                            color: color.withValues(alpha: 0.15),
                                             borderRadius: BorderRadius.circular(6),
                                           ),
                                           child: Text(
@@ -335,3 +334,5 @@ class _InventoryScreenState extends State<InventoryScreen> {
     });
   }
 }
+
+

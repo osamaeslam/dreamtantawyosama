@@ -45,7 +45,7 @@ class AboutScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.primaryGold.withOpacity(0.4),
+                          color: AppTheme.primaryGold.withValues(alpha: 0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -119,7 +119,7 @@ class AboutScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.emeraldGreen.withOpacity(0.14),
+                          color: AppTheme.emeraldGreen.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(12),
                         ),
                          child: Icon(Icons.star_outline,
@@ -184,7 +184,7 @@ class AboutScreen extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.14),
+            color: iconColor.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: iconColor, size: 22),
@@ -215,3 +215,5 @@ class AboutScreen extends StatelessWidget {
     );
   }
 }
+
+

@@ -103,7 +103,7 @@ class _BranchStockPlanningScreenState extends State<BranchStockPlanningScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: DropdownButtonFormField<Branch>(
-                        value: _selectedBranch,
+                        initialValue: _selectedBranch,
                         isExpanded: true,
                         decoration: const InputDecoration(
                           labelText: 'الفرع المطلوب تجهيزه',
@@ -135,7 +135,7 @@ class _BranchStockPlanningScreenState extends State<BranchStockPlanningScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryGold.withOpacity( 0.14),
+                            color: AppTheme.primaryGold.withValues(alpha: 0.14),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -291,7 +291,7 @@ class _BranchStockPlanningScreenState extends State<BranchStockPlanningScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity( 0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -305,3 +305,6 @@ class _BranchStockPlanningScreenState extends State<BranchStockPlanningScreen> {
     );
   }
 }
+
+
+

@@ -22,7 +22,7 @@ void main() async {
   try {
     await SupabaseService.initialize(
       supabaseUrl: AppConfig.supabaseUrl,
-      anonKey: AppConfig.supabaseAnonKey,
+      publishableKey: AppConfig.supabaseAnonKey,
     );
   } catch (e) {
     debugPrint('Supabase offline or initialized in mock mode: $e');

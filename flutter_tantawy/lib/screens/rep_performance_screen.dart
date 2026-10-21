@@ -214,10 +214,10 @@ class _RepPerformanceScreenState extends State<RepPerformanceScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: salesPct >= 90
-                        ? AppTheme.emeraldGreen.withOpacity(0.15)
+                        ? AppTheme.emeraldGreen.withValues(alpha: 0.15)
                         : salesPct >= 80
-                            ? AppTheme.primaryGold.withOpacity(0.15)
-                            : AppTheme.roseRed.withOpacity(0.15),
+                            ? AppTheme.primaryGold.withValues(alpha: 0.15)
+                            : AppTheme.roseRed.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -376,3 +376,5 @@ class LinearPercentIndicator extends StatelessWidget {
     );
   }
 }
+
+

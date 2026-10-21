@@ -79,15 +79,16 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         sorted.sort((a, b) => compare(a.salesAchieved, b.salesAchieved));
         break;
       case 2: // التحصيلات
-        sorted.sort((a, b) => compare(a.collectionAchieved, b.collectionAchieved));
+        sorted.sort(
+            (a, b) => compare(a.collectionAchieved, b.collectionAchieved));
         break;
       case 3: // المصروفات (inferred from collections vs sales variance)
-        sorted.sort((a, b) =>
-            compare(a.collections2026 - a.sales2026, b.collections2026 - b.sales2026));
+        sorted.sort((a, b) => compare(
+            a.collections2026 - a.sales2026, b.collections2026 - b.sales2026));
         break;
       case 4: // الديون (targets not yet achieved)
-        sorted.sort((a, b) =>
-            compare(a.salesTarget - a.salesAchieved, b.salesTarget - b.salesAchieved));
+        sorted.sort((a, b) => compare(
+            a.salesTarget - a.salesAchieved, b.salesTarget - b.salesAchieved));
         break;
       case 5: // عدد الزيارات
         sorted.sort((a, b) => a.visitsCount.compareTo(b.visitsCount));
@@ -111,7 +112,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
       appBar: AppBar(
         title: Text('لوحة فريق المناديب', style: GoogleFonts.cairo()),
         bottom: AppBar(
-          backgroundColor: isDark ? AppTheme.cardSlate : AppTheme.backgroundLight,
+          backgroundColor:
+              isDark ? AppTheme.cardSlate : AppTheme.backgroundLight,
           title: const ConnectionStatusBar(),
           automaticallyImplyLeading: false,
           toolbarHeight: 32,
@@ -161,7 +163,8 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               children: [
                 _buildHeaderRow(headerColor, borderColor),
                 ..._reps.asMap().entries.map(
-                      (e) => _buildDataRow(e.value, e.key, cardColor, borderColor),
+                      (e) =>
+                          _buildDataRow(e.value, e.key, cardColor, borderColor),
                     ),
               ],
             ),
@@ -171,7 +174,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
     );
   }
 
-Widget _buildSalesChart() {
+  Widget _buildSalesChart() {
     if (_reps.isEmpty) return const SizedBox.shrink();
 
     final spots = _reps.asMap().entries.map((e) {
@@ -190,14 +193,17 @@ Widget _buildSalesChart() {
           borderData: FlBorderData(show: false),
           gridData: const FlGridData(show: false),
           titlesData: FlTitlesData(
-            topTitles: AxisTitles(sideTitles: const SideTitles(showTitles: false)),
-            rightTitles: AxisTitles(sideTitles: const SideTitles(showTitles: false)),
+            topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
                   final idx = value.toInt();
-                  if (idx < 0 || idx >= _reps.length) return const SizedBox.shrink();
+                  if (idx < 0 || idx >= _reps.length)
+                    return const SizedBox.shrink();
                   final name = _reps[idx].repName.split(' ').first;
                   return SideTitleWidget(
                     axisSide: AxisSide.bottom,
@@ -207,13 +213,17 @@ Widget _buildSalesChart() {
               ),
             ),
             leftTitles: AxisTitles(
-              sideTitles: SideTitles(showTitles: true, getTitlesWidget: _currencyTitle),
+              sideTitles:
+                  SideTitles(showTitles: true, getTitlesWidget: _currencyTitle),
             ),
           ),
           barGroups: spots.asMap().entries.map((e) {
             return BarChartGroupData(
               x: e.key,
-              barRods: [BarChartRodData(toY: e.value.y, color: AppTheme.infoBlue, width: 22)],
+              barRods: [
+                BarChartRodData(
+                    toY: e.value.y, color: AppTheme.infoBlue, width: 22)
+              ],
             );
           }).toList(),
           barTouchData: BarTouchData(enabled: true),
@@ -246,7 +256,8 @@ Widget _buildSalesChart() {
     );
   }
 
-  Widget _buildHeaderCell(String label, int column, bool? ascending, Color borderColor) {
+  Widget _buildHeaderCell(
+      String label, int column, bool? ascending, Color borderColor) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppTheme.darkText : AppTheme.textDark;
 
@@ -265,7 +276,11 @@ Widget _buildSalesChart() {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: GoogleFonts.cairo(fontSize: 11, color: textColor, fontWeight: FontWeight.w600)),
+            Text(label,
+                style: GoogleFonts.cairo(
+                    fontSize: 11,
+                    color: textColor,
+                    fontWeight: FontWeight.w600)),
             const SizedBox(width: 4),
             Icon(icon, size: 14, color: textColor),
           ],
@@ -281,11 +296,12 @@ Widget _buildSalesChart() {
     Color borderColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final rate = rep.salesTarget > 0 ? (rep.salesAchieved / rep.salesTarget) * 100 : 0;
+    final rate =
+        rep.salesTarget > 0 ? (rep.salesAchieved / rep.salesTarget) * 100 : 0;
 
     return TableRow(
       decoration: BoxDecoration(
-        color: cardColor.withOpacity(index.isEven ? 0.02 : 0.0),
+        color: cardColor.withValues(alpha: index.isEven ? 0.02 : 0.0),
         border: index < _reps.length - 1
             ? Border(top: BorderSide(color: borderColor, width: 0.5))
             : null,
@@ -294,8 +310,12 @@ Widget _buildSalesChart() {
         _cell(rep.repName, isDark),
         _cell('${rep.salesAchieved.toInt()} ${_formatCurrency()}', isDark),
         _cell('${rep.collectionAchieved.toInt()} ${_formatCurrency()}', isDark),
-        _cell('${(rep.collections2026 - rep.sales2026).toInt()} ${_formatCurrency()}', isDark),
-        _cell('${(rep.salesTarget - rep.salesAchieved).toInt()} ${_formatCurrency()}', isDark),
+        _cell(
+            '${(rep.collections2026 - rep.sales2026).toInt()} ${_formatCurrency()}',
+            isDark),
+        _cell(
+            '${(rep.salesTarget - rep.salesAchieved).toInt()} ${_formatCurrency()}',
+            isDark),
         _cell('${rep.visitsCount}', isDark),
         _cell('${rate.toStringAsFixed(1)}%', isDark,
             valueColor: rate >= 100

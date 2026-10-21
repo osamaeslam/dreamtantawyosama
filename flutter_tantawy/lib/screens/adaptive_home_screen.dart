@@ -107,7 +107,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
                   ? 0
                   : selectedVisibleIndex,
           backgroundColor: colorScheme.surface,
-          indicatorColor: AppTheme.primaryGold.withOpacity(0.22),
+          indicatorColor: AppTheme.primaryGold.withValues(alpha: 0.22),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           onDestinationSelected: (index) => setState(() {
             _selectedIndex = index == visibleMobileDestinationIndices.length
@@ -311,7 +311,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryGold.withOpacity(0.14),
+                    color: AppTheme.primaryGold.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(item.icon, color: AppTheme.darkSlate),
@@ -331,3 +331,5 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
     );
   }
 }
+
+

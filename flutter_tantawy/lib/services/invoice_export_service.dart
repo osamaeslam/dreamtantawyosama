@@ -1,6 +1,3 @@
-import 'dart:typed_data';
-
-import 'package:cross_file/cross_file.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -31,11 +28,11 @@ class InvoiceExportService {
     ]);
     sheet.appendRow([
       TextCellValue('المندوب'),
-      TextCellValue(invoice.repName ?? ''),
+      TextCellValue(invoice.repName),
     ]);
     sheet.appendRow([
       TextCellValue('الفرع'),
-      TextCellValue(invoice.branchName ?? ''),
+      TextCellValue(invoice.branchName),
     ]);
     sheet.appendRow([
       TextCellValue('طريقة الدفع'),

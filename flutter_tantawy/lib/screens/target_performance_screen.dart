@@ -95,8 +95,8 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
       final salesAchieved = records.fold<double>(0, (s, r) => s + r.salesAchieved);
       final collectionTarget = records.fold<double>(0, (s, r) => s + r.collectionTarget);
       final collectionAchieved = records.fold<double>(0, (s, r) => s + r.collectionAchieved);
-      final salesPct = salesTarget > 0 ? (salesAchieved / salesTarget) * 100 : 0;
-      final collectionPct = collectionTarget > 0 ? (collectionAchieved / collectionTarget) * 100 : 0;
+      final salesPct = salesTarget > 0 ? (salesAchieved / salesTarget) * 100 : 0.0;
+      final collectionPct = collectionTarget > 0 ? (collectionAchieved / collectionTarget) * 100 : 0.0;
       return TargetRecord(
         id: 'branch_${branch}',
         branch: branch,
@@ -219,6 +219,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
       runSpacing: 12,
       children: [
         _buildSummaryCard(
+          isDark: isDark,
           cardColor: cardColor,
           borderColor: borderColor,
           textColor: textColor,
@@ -232,6 +233,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           progressColor: _pctColor(salesPct),
         ),
         _buildSummaryCard(
+          isDark: isDark,
           cardColor: cardColor,
           borderColor: borderColor,
           textColor: textColor,
@@ -245,6 +247,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           progressColor: _pctColor(collectionPct),
         ),
         _buildSummaryCard(
+          isDark: isDark,
           cardColor: cardColor,
           borderColor: borderColor,
           textColor: textColor,
@@ -257,6 +260,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           showProgress: false,
         ),
         _buildSummaryCard(
+          isDark: isDark,
           cardColor: cardColor,
           borderColor: borderColor,
           textColor: textColor,
@@ -273,6 +277,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
   }
 
   Widget _buildSummaryCard({
+    required bool isDark,
     required Color cardColor,
     required Color borderColor,
     required Color textColor,
@@ -517,16 +522,15 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           borderData: FlBorderData(show: false),
           barGroups: barGroups,
           titlesData: FlTitlesData(
-            show: true,
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
-                show: true,
                 getTitlesWidget: (value, meta) {
                   if (value.toInt() >= 0 && value.toInt() < branchAgg.length) {
                     final label = branchAgg[value.toInt()].branch.length > 8
                         ? branchAgg[value.toInt()].branch.substring(0, 8) + '...'
                         : branchAgg[value.toInt()].branch;
                     return SideTitleWidget(
+                      axisSide: meta.axisSide,
                       child: Text(label, style: GoogleFonts.cairo(fontSize: 8, color: textColor)),
                     );
                   }
@@ -536,7 +540,6 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
             ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
-                show: true,
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
                   return Text('${value.toInt()}k', style: GoogleFonts.cairo(fontSize: 8, color: textColor));
@@ -571,7 +574,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
             return PieChartSectionData(
               title: percentageStr,
               titleStyle: GoogleFonts.cairo(fontSize: 9, color: Colors.white),
-              titlePadding: EdgeInsets.zero,
+              // titlePadding removed in fl_chart 0.68
               color: sectionColors[index % sectionColors.length],
               value: t.salesAchieved.isNaN ? 0 : t.salesAchieved,
             );
@@ -597,7 +600,6 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              alignItems: Center,
               children: [
                 Text(
                   'تفاصيل الأهداف',
@@ -622,10 +624,11 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
               child: DataTable(
                 columnSpacing: 16,
                 headingRowHeight: 36,
-                dataRowHeight: 44,
+                dataRowMinHeight: 44,
+                dataRowMaxHeight: 44,
                 headingTextStyle: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: textColor),
                 dataTextStyle: GoogleFonts.cairo(fontSize: 12, color: textColor),
-                decorator: BoxDecoration(color: cardColor),
+                decoration: BoxDecoration(color: cardColor),
                 columns: [
                   DataColumn(label: Text('الموظف', style: GoogleFonts.cairo(fontSize: 11, color: mutedColor))),
                   DataColumn(label: Text('الفرع', style: GoogleFonts.cairo(fontSize: 11, color: mutedColor))),
@@ -664,7 +667,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text('${pct.toStringAsFixed(1)}%',
@@ -678,3 +681,5 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
     return AppTheme.errorRed;
   }
 }
+
+
