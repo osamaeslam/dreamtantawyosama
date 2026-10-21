@@ -10,6 +10,7 @@ import 'about_screen.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
 import 'all_customers_analytics_view.dart';
+import 'executive_analytics_dashboard.dart';
 import 'home_screen.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
@@ -52,6 +53,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       OffersNotificationsScreen(currentUser: widget.currentUser),
       TasksRolesScreen(currentUser: widget.currentUser),
       UsersManagementScreen(currentUser: widget.currentUser),
+      ExecutiveAnalyticsDashboard(currentUser: widget.currentUser),
       AboutScreen(currentUser: widget.currentUser),
     ];
   }
@@ -269,7 +271,8 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 9, title: 'الإشعارات', subtitle: 'الإشعارات والتنبيهات', icon: Icons.notifications_outlined),
       (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
       (index: 11, title: 'إدارة الموظفين', subtitle: 'إدارة حسابات وأدوار الموظفين', icon: Icons.people_outline),
-      (index: 12, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
+      (index: 12, title: 'لوحة التحليلات', subtitle: 'تحليل البيانات ولوحة الإدارة', icon: Icons.analytics_outlined),
+      (index: 13, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(
