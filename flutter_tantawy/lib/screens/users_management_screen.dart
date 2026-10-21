@@ -439,7 +439,6 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppTheme.darkCard : Colors.white;
     final textColor = isDark ? AppTheme.darkText : AppTheme.textDark;
     final mutedColor = isDark ? AppTheme.darkTextMuted : AppTheme.textMuted;
     final borderColor = isDark ? AppTheme.darkBorder : AppTheme.borderColor;

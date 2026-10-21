@@ -61,17 +61,18 @@ class _HomeScreenState extends State<HomeScreen> {
             toolbarHeight: 140,
             title: _buildHeaderProfile(context, cart.items.length, showProfilePhoto),
             actions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: IconButton(
-                  icon: Icon(
-                    context.watch<ThemeModeProvider>().isDark
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                  ),
-                  onPressed: () => context.read<ThemeModeProvider>().toggleTheme(),
-                  tooltip: 'تبديل الوضع الليلي',
-                ),
+               Padding(
+                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                 child: IconButton(
+                   icon: Icon(
+                     context.watch<ThemeModeProvider>().isDark
+                         ? Icons.light_mode_outlined
+                         : Icons.dark_mode_outlined,
+                     color: AppTheme.primaryGold,
+                   ),
+                   onPressed: () => context.read<ThemeModeProvider>().toggleTheme(),
+                   tooltip: 'تبديل الوضع الليلي',
+                 ),
               ),
               // زر الطلبات مع البِج
               Padding(

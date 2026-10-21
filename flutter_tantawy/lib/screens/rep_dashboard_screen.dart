@@ -296,6 +296,7 @@ String _roleLabel() => switch (currentUser.role) {
               context.watch<ThemeModeProvider>().isDark
                   ? Icons.light_mode_outlined
                   : Icons.dark_mode_outlined,
+              color: AppTheme.primaryGold,
             ),
             onPressed: () => context.read<ThemeModeProvider>().toggleTheme(),
             tooltip: 'تبديل الوضع الليلي',
