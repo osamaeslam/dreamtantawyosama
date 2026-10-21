@@ -507,14 +507,6 @@ class _HomeScreenState extends State<HomeScreen> {
         allowedRoles: allRoles,
         buildScreen: () => AboutScreen(currentUser: widget.currentUser),
       ),
-      HomeMenuItem(
-        title: 'المهام والأدوار',
-        subtitle: 'دليل الاستخدام والصلاحيات',
-        icon: Icons.menu_book_outlined,
-        color: AppTheme.infoBlue,
-        allowedRoles: allRoles,
-        buildScreen: () => TasksRolesScreen(currentUser: widget.currentUser),
-      ),
     ];
   }
 }

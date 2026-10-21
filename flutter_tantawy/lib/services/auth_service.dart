@@ -88,8 +88,9 @@ class AuthService {
   // ============================================================
 
   /// Returns the cached session user if still valid, otherwise null.
-  /// Validity is determined by a max session age (24h by default).
-  Future<AppUser?> getCachedUser({Duration maxAge = const Duration(hours: 24)}) async {
+  /// Validity is determined by a max session age (7 days by default for
+  /// better UX — sessions expire after 7 days of inactivity).
+  Future<AppUser?> getCachedUser({Duration maxAge = const Duration(days: 7)}) async {
     final raw = await _secureStorage.read(key: _sessionKey);
     if (raw == null) return null;
 

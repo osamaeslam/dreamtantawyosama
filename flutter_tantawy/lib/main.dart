@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'screens/adaptive_home_screen.dart';
 import 'screens/login_screen.dart';
+import 'services/auth_service.dart';
 import 'services/cart_service.dart';
 import 'services/config.dart';
 import 'services/connectivity_service.dart';
@@ -76,8 +77,30 @@ class TantawyGroupApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: const LoginScreen(),
+          home: const SessionGate(),
         );
+      },
+    );
+  }
+}
+
+class SessionGate extends StatelessWidget {
+  const SessionGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<AppUser?>(
+      future: AuthService.instance.refreshOrReauth(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData && snapshot.data != null) {
+          return AdaptiveHomeScreen(currentUser: snapshot.data!);
+        }
+        return const LoginScreen();
       },
     );
   }
