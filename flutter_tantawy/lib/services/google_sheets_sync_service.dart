@@ -485,21 +485,21 @@ class GoogleSheetsSyncService {
     if (value is double) return value.toInt();
     return int.tryParse(value.toString().replaceAll(RegExp(r'[^\d]'), '')) ?? 0;
   }
+}
 
-  /// Sync result summary
-  class SyncResult {
-    final int added;
-    final int updated;
-    final int skipped;
-    final int errors;
-    final String message;
+/// Sync result summary
+class SyncResult {
+  final int added;
+  final int updated;
+  final int skipped;
+  final int errors;
+  final String message;
 
-    SyncResult({
-      this.added = 0,
-      this.updated = 0,
-      this.skipped = 0,
-      this.errors = 0,
-      this.message = '',
-    });
-  }
+  SyncResult({
+    this.added = 0,
+    this.updated = 0,
+    this.skipped = 0,
+    this.errors = 0,
+    this.message = '',
+  });
 }

@@ -281,7 +281,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CircleAvatar(
-                  backgroundColor: AppTheme.primaryGold.withValues(alpha: 0.15),
+                  backgroundColor: AppTheme.primaryGold.withOpacity( 0.15),
                   child:
                       Icon(Icons.person, color: AppTheme.primaryGold, size: 20),
                 ),
@@ -309,7 +309,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: salesColor.withValues(alpha: 0.15),
+                    color: salesColor.withOpacity( 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(

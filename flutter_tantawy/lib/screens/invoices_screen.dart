@@ -233,7 +233,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryGold.withValues(alpha: 0.14),
+                              color: AppTheme.primaryGold.withOpacity( 0.14),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(

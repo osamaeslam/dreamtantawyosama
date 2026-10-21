@@ -570,7 +570,7 @@ class _CatalogViewState extends State<CatalogScreen>
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.85),
+                              color: color.withOpacity( 0.85),
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text(
@@ -1029,7 +1029,7 @@ class _CatalogViewState extends State<CatalogScreen>
                 data: ToggleButtonsThemeData(
                   borderColor: Colors.grey.shade600,
                  selectedBorderColor: AppTheme.primaryGold,
-                 fillColor: AppTheme.primaryGold.withValues(alpha: 0.2),
+                 fillColor: AppTheme.primaryGold.withOpacity( 0.2),
                  borderRadius: BorderRadius.circular(8),
                ),
                child: ToggleButtons(
@@ -1219,7 +1219,7 @@ class _CatalogViewState extends State<CatalogScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryGold.withValues(alpha: 0.15),
+                      color: AppTheme.primaryGold.withOpacity( 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1273,7 +1273,7 @@ class _CatalogViewState extends State<CatalogScreen>
                 color: controlSurface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.08),
+                    color: Colors.black.withOpacity( isDark ? 0.22 : 0.08),
                     blurRadius: 10,
                     offset: const Offset(0, -3),
                   ),
