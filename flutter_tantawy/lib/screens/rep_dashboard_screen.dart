@@ -10,9 +10,11 @@ import '../widgets/role_dashboard_summary.dart';
 import 'all_customers_analytics_view.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
+import 'employee_management_screen.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'management_dashboard.dart';
+import 'offers_notifications_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_performance_screen.dart';
 import 'returns_screen.dart';
@@ -63,6 +65,10 @@ class RepDashboardScreen extends StatelessWidget {
   }
 
   List<_DashboardMenuItem> _dashboardMenuItems(int cartCount) {
+    const adminRoles = [
+      UserRole.admin,
+      UserRole.developer,
+    ];
     const managementRoles = [
       UserRole.admin,
       UserRole.manager,
@@ -168,6 +174,22 @@ class RepDashboardScreen extends StatelessWidget {
         color: AppTheme.infoBlue,
         allowedRoles: managementRoles,
         buildScreen: () => AllCustomersAnalyticsView(currentUser: currentUser),
+      ),
+      _DashboardMenuItem(
+        title: 'العروض والإشعارات',
+        subtitle: 'العروض الترويجية والإشعارات',
+        icon: Icons.local_offer_outlined,
+        color: AppTheme.roseRed,
+        allowedRoles: allRoles,
+        buildScreen: () => OffersNotificationsScreen(currentUser: currentUser),
+      ),
+      _DashboardMenuItem(
+        title: 'إدارة الموظفين',
+        subtitle: 'إدارة حسابات وأدوار الموظفين',
+        icon: Icons.manage_accounts_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: adminRoles,
+        buildScreen: () => EmployeeManagementScreen(currentUser: currentUser),
       ),
     ];
   }

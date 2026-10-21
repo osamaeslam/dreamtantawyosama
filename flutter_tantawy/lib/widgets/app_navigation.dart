@@ -70,10 +70,28 @@ class AppNavigation {
       allowedRoles: ['sales_rep', 'supervisor', 'branch_manager', 'admin', 'developer'],
     ),
     AppDestination(
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long,
-      label: 'الموردين',
-      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'],
+      icon: Icons.local_offer_outlined,
+      selectedIcon: Icons.local_offer,
+      label: 'العروض',
+      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+    ),
+    AppDestination(
+      icon: Icons.notifications_outlined,
+      selectedIcon: Icons.notifications,
+      label: 'الإشعارات',
+      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+    ),
+    AppDestination(
+      icon: Icons.menu_book_outlined,
+      selectedIcon: Icons.menu_book,
+      label: 'المهام',
+      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
+    ),
+    AppDestination(
+      icon: Icons.info_outlined,
+      selectedIcon: Icons.info,
+      label: 'عن البرنامج',
+      allowedRoles: ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'],
     ),
   ];
 
@@ -81,10 +99,10 @@ class AppNavigation {
   static const List<int> mobileTabIndices = [0, 1, 2];
 
   /// Indices collected inside the mobile "More" overflow screen.
-  static const List<int> overflowIndices = [3, 4, 5, 6, 7, 8];
+  static const List<int> overflowIndices = [3, 4, 5, 6, 7, 8, 9, 10, 11];
 
   /// Index reserved for the "More" overflow entry on mobile.
-  static const int moreIndex = 9;
+  static const int moreIndex = 12;
 
   static List<int> visibleDestinationIndices(String role) => [
         for (var i = 0; i < destinations.length; i++)
@@ -184,7 +202,7 @@ class AppNavigationRail extends StatelessWidget {
     required this.onSelected,
   });
 
-  @override
+@override
   Widget build(BuildContext context) {
     final selectedVisibleIndex = visibleDestinationIndices.indexOf(selectedIndex);
     return NavigationRail(
@@ -209,7 +227,7 @@ class AppNavigationRail extends StatelessWidget {
           ),
         ),
       ),
-        onDestinationSelected: (index) =>
+      onDestinationSelected: (index) =>
           onSelected(visibleDestinationIndices[index]),
       selectedLabelTextStyle: GoogleFonts.cairo(
         fontWeight: FontWeight.bold,

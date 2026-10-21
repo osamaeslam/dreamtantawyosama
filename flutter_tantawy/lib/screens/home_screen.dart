@@ -9,18 +9,22 @@ import '../services/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
 import '../widgets/role_dashboard_summary.dart';
+import 'about_screen.dart';
 import 'adaptive_home_screen.dart';
 import 'all_customers_analytics_view.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
+import 'employee_management_screen.dart';
 import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'management_dashboard.dart';
+import 'offers_notifications_screen.dart';
 import 'order_builder_screen.dart';
 import 'rep_performance_screen.dart';
 import 'returns_screen.dart';
 import 'sync_queue_screen.dart';
 import 'target_performance_screen.dart';
+import 'tasks_roles_screen.dart';
 import 'visits_screen.dart';
 
 /// HomeScreen موحدة - الصفحة الرئيسية لكل الأدوار
@@ -352,6 +356,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<HomeMenuItem> _getMenuItems(int cartCount) {
+    final adminRoles = ['admin', 'developer'];
     final managementRoles = ['admin', 'manager', 'branch_manager', 'supervisor', 'developer'];
     final allRoles = ['admin', 'manager', 'branch_manager', 'supervisor', 'sales_rep', 'developer'];
 
@@ -460,6 +465,54 @@ class _HomeScreenState extends State<HomeScreen> {
         color: AppTheme.emeraldGreen,
         allowedRoles: managementRoles,
         buildScreen: () => const GoogleSheetsImportScreen(),
+      ),
+      HomeMenuItem(
+        title: 'إدارة الموظفين',
+        subtitle: 'إدارة حسابات وأدوار الموظفين',
+        icon: Icons.manage_accounts_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: adminRoles,
+        buildScreen: () => EmployeeManagementScreen(currentUser: widget.currentUser),
+      ),
+      HomeMenuItem(
+        title: 'العروض',
+        subtitle: 'العروض الترويجية والخصومات',
+        icon: Icons.local_offer_outlined,
+        color: AppTheme.roseRed,
+        allowedRoles: allRoles,
+        buildScreen: () => OffersNotificationsScreen(currentUser: widget.currentUser),
+      ),
+      HomeMenuItem(
+        title: 'الإشعارات',
+        subtitle: 'التنبيهات والإشعارات',
+        icon: Icons.notifications_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: allRoles,
+        buildScreen: () => OffersNotificationsScreen(currentUser: widget.currentUser),
+      ),
+      HomeMenuItem(
+        title: 'المهام والأدوار',
+        subtitle: 'دليل الاستخدام والصلاحيات',
+        icon: Icons.menu_book_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: allRoles,
+        buildScreen: () => TasksRolesScreen(currentUser: widget.currentUser),
+      ),
+      HomeMenuItem(
+        title: 'نبذة عن البرنامج',
+        subtitle: 'معلومات عن التطبيق والشركة',
+        icon: Icons.info_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: allRoles,
+        buildScreen: () => AboutScreen(currentUser: widget.currentUser),
+      ),
+      HomeMenuItem(
+        title: 'المهام والأدوار',
+        subtitle: 'دليل الاستخدام والصلاحيات',
+        icon: Icons.menu_book_outlined,
+        color: AppTheme.infoBlue,
+        allowedRoles: allRoles,
+        buildScreen: () => TasksRolesScreen(currentUser: widget.currentUser),
       ),
     ];
   }

@@ -6,6 +6,7 @@ import '../services/invoice_export_service.dart';
 import '../services/pdf_invoice_service.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
+import '../services/notification_service.dart';
 import '../theme/app_theme.dart';
 import 'returns_screen.dart';
 
@@ -41,6 +42,69 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  Widget _buildStatusStepper(OrderInvoice inv, bool isDark) {
+    final statuses = NotificationService.getOrderStatuses();
+    final currentStep = NotificationService.getStatusStep(inv.status);
+
+    return SizedBox(
+      height: 56,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: statuses.length,
+        separatorBuilder: (_, i) => Container(
+          width: 16,
+          alignment: Alignment.center,
+          child: Container(
+            width: 8,
+            height: 2,
+            color: (currentStep > 0 && currentStep > i + 1) || (currentStep < 0 && i == 0)
+                ? NotificationService.getStatusColor(inv.status, isDark)
+                : Colors.grey.shade300,
+          ),
+        ),
+        itemBuilder: (context, i) {
+          final status = statuses[i];
+          final isCompleted = currentStep > 0 && (i + 1) < currentStep;
+          final isActive = currentStep > 0 && (i + 1) == currentStep;
+          final color = isActive
+              ? NotificationService.getStatusColor(inv.status, isDark)
+              : isCompleted
+                  ? NotificationService.getStatusColor(status, isDark)
+                  : isDark
+                      ? Colors.grey.shade600
+                      : Colors.grey.shade400;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withOpacity(0.15),
+                  border: Border.all(color: color, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    NotificationService.getStatusIcon(status),
+                    style: GoogleFonts.cairo(fontSize: 10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                status,
+                style: GoogleFonts.cairo(fontSize: 8, color: color, fontWeight: isActive ? FontWeight.bold : FontWeight.normal),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _shareExcel(OrderInvoice invoice) async {
     try {
       await InvoiceExportService.shareExcel(invoice);
@@ -65,6 +129,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -124,35 +189,45 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                                 ),
                               ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: inv.status == 'تم الصرف'
-                                    ? const Color(0xFFECFDF5)
-                                    : const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                inv.status,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: inv.status == 'تم الصرف' ? const Color(0xFF059669) : const Color(0xFF2563EB),
-                                ),
-                              ),
-                            ),
+             Container(
+                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                               decoration: BoxDecoration(
+                                 color: NotificationService.getStatusColor(inv.status, isDark).withOpacity(0.15),
+                                 borderRadius: BorderRadius.circular(20),
+                               ),
+                               child: Row(
+                                 mainAxisSize: MainAxisSize.min,
+                                 children: [
+                                   Text(
+                                     NotificationService.getStatusIcon(inv.status),
+                                     style: GoogleFonts.cairo(fontSize: 12),
+                                   ),
+                                   const SizedBox(width: 4),
+                                   Text(
+                                     NotificationService.getStatusLabel(inv.status),
+                                     style: GoogleFonts.cairo(
+                                       fontSize: 11,
+                                       fontWeight: FontWeight.bold,
+                                       color: NotificationService.getStatusColor(inv.status, isDark),
+                                     ),
+                                   ),
+                                 ],
+                               ),
+                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          inv.customerName,
-                          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        Text(
-                          '${inv.items.length} أصناف | الدفع: ${inv.paymentType}',
-                          style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade600),
-                        ),
-                        if (itemsForStockReview.isNotEmpty) ...[
+                         const SizedBox(height: 8),
+                         Text(
+                           inv.customerName,
+                           style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15),
+                         ),
+                         Text(
+                           '${inv.items.length} أصناف | الدفع: ${inv.paymentType}',
+                           style: GoogleFonts.cairo(fontSize: 12, color: Colors.grey.shade600),
+                         ),
+                         const SizedBox(height: 8),
+                         _buildStatusStepper(inv, isDark),
+                         if (itemsForStockReview.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Container(
                             width: double.infinity,

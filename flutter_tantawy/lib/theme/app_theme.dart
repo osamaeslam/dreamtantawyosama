@@ -33,7 +33,11 @@ class AppTheme {
   static ThemeData lightTheme() {
     final textTheme = GoogleFonts.cairoTextTheme(
       ThemeData.light().textTheme,
+    ).copyWith(
+      bodyMedium: GoogleFonts.cairo(fontSize: 14, color: textDark),
+      bodySmall: GoogleFonts.cairo(fontSize: 12, color: textMuted),
     );
+
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primaryGold,
       brightness: Brightness.light,
@@ -42,6 +46,8 @@ class AppTheme {
       secondary: secondaryGold,
       surface: Colors.white,
       error: errorRed,
+      onSurface: textDark,
+      onSurfaceVariant: textMuted,
     );
 
     return ThemeData(
@@ -61,44 +67,46 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 1,
+        elevation: 2,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: borderColor, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: borderColor),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: primaryGold, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryGold, width: 2),
         ),
+        labelStyle: GoogleFonts.cairo(color: textMuted),
+        hintStyle: GoogleFonts.cairo(color: textMuted.withOpacity(0.7)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGold,
           foregroundColor: darkSlate,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          elevation: 3,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: GoogleFonts.cairo(
             fontWeight: FontWeight.bold,
@@ -109,9 +117,9 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: darkSlate,
-          side: const BorderSide(color: borderColor),
+          side: BorderSide(color: borderColor),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: GoogleFonts.cairo(fontWeight: FontWeight.w600),
         ),
@@ -123,7 +131,11 @@ class AppTheme {
   static ThemeData darkTheme() {
     final textTheme = GoogleFonts.cairoTextTheme(
       ThemeData.dark().textTheme,
+    ).copyWith(
+      bodyMedium: GoogleFonts.cairo(fontSize: 14, color: darkText),
+      bodySmall: GoogleFonts.cairo(fontSize: 12, color: darkTextMuted),
     );
+
     final colorScheme = ColorScheme.fromSeed(
       seedColor: primaryGold,
       brightness: Brightness.dark,
@@ -132,6 +144,7 @@ class AppTheme {
       secondary: secondaryGold,
       surface: darkCard,
       onSurface: darkText,
+      onSurfaceVariant: darkTextMuted,
       error: errorRed,
     );
 
@@ -155,41 +168,42 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: darkCard,
-        elevation: 1,
+        elevation: 2,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: darkBorder),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: darkBorder, width: 1),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkBackground,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 12,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: darkBorder),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: darkBorder),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: darkBorder),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: darkBorder),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: primaryGold, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: primaryGold, width: 2),
         ),
+        labelStyle: GoogleFonts.cairo(color: darkTextMuted),
+        hintStyle: GoogleFonts.cairo(color: darkTextMuted.withOpacity(0.7)),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryGold,
           foregroundColor: darkSlate,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          elevation: 3,
+          padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: GoogleFonts.cairo(
             fontWeight: FontWeight.bold,
@@ -200,9 +214,9 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: darkText,
-          side: const BorderSide(color: darkBorder),
+          side: BorderSide(color: darkBorder),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           textStyle: GoogleFonts.cairo(fontWeight: FontWeight.w600),
         ),
@@ -212,9 +226,13 @@ class AppTheme {
         backgroundColor: primaryGold,
         foregroundColor: darkSlate,
       ),
-      focusColor: primaryGold.withValues(alpha: 0.2),
-      hoverColor: primaryGold.withValues(alpha: 0.1),
-      tabBarTheme: TabBarThemeData(indicatorColor: primaryGold),
+      focusColor: primaryGold.withOpacity(0.3),
+      hoverColor: primaryGold.withOpacity(0.2),
+      tabBarTheme: TabBarThemeData(
+        indicatorColor: primaryGold,
+        labelColor: primaryGold,
+        unselectedLabelColor: darkTextMuted,
+      ),
     );
   }
 }

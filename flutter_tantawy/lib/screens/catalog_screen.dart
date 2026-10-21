@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';
 import '../services/supabase_service.dart';
+import '../services/pdf_catalog_service.dart';
+import '../services/excel_catalog_service.dart';
 import '../theme/app_theme.dart';
 import 'order_builder_screen.dart';
 
@@ -69,6 +71,16 @@ class _CatalogViewState extends State<CatalogScreen>
     _allProducts = data;
     _applyFilter();
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _exportToExcel() async {
+    try {
+      await ExcelCatalogService.shareCatalog(_filteredProducts);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ في تصدير الإكسل: $e', style: GoogleFonts.cairo())),
+      );
+    }
   }
 
   String _normalizeSearchText(String value) {
@@ -1072,6 +1084,51 @@ class _CatalogViewState extends State<CatalogScreen>
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _loadProducts,
             tooltip: 'تحديث الكتالوج',
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'share') {
+                PdfCatalogService.shareCatalog(_filteredProducts);
+              } else if (value == 'print') {
+                PdfCatalogService.printCatalog(_filteredProducts);
+              } else if (value == 'excel') {
+                _exportToExcel();
+              }
+            },
+            icon: const Icon(Icons.share_rounded, size: 22, color: Colors.white70),
+            tooltip: 'تصدير الكتالوج',
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'excel',
+                child: Row(
+                  children: [
+                    Icon(Icons.table_chart, size: 18, color: Colors.white70),
+                    SizedBox(width: 8),
+                    Text('تصدير إكسل', style: GoogleFonts.cairo()),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'print',
+                child: Row(
+                  children: [
+                    Icon(Icons.print, size: 18, color: Colors.white70),
+                    SizedBox(width: 8),
+                    Text('طباعة الكتالوج PDF', style: GoogleFonts.cairo()),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    Icon(Icons.share, size: 18, color: Colors.white70),
+                    SizedBox(width: 8),
+                    Text('مشاركة الكتالوج PDF', style: GoogleFonts.cairo()),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -3,19 +3,40 @@ import '../models/models.dart';
 /// Centralized Role-Based Access Control (RBAC) for the Flutter app
 /// Enforces data isolation: sales_rep -> own data only,
 /// supervisor -> team data, branch_manager -> branch data, admin/developer -> all data.
+///
+/// Role separation:
+/// - Admin (admin/developer): Can review reports, approve forecasts, manage month plans
+/// - Management (manager/branch_manager): Sees numbers only (no payroll details, no report finalization)
+/// - Supervisor: Periodic review of reps in their branch
+/// - SalesRep: Own data only
 class RoleAccessController {
   final AppUser currentUser;
 
   RoleAccessController(this.currentUser);
 
   // === Role checkers ===
+  /// Admin can review reports, approve forecasts, and manage month plans
   bool get isAdmin =>
-      currentUser.role == 'admin' ||
-      currentUser.role == 'manager' ||
-      currentUser.role == 'developer';
+      currentUser.role == 'admin' || currentUser.role == 'developer';
+
+  /// Management role: sees numbers only, no report review or payroll details
+  bool get isManagement =>
+      currentUser.role == 'manager' || currentUser.role == 'branch_manager';
+
   bool get isBranchManager => currentUser.role == 'branch_manager';
   bool get isSupervisor => currentUser.role == 'supervisor';
   bool get isSalesRep => currentUser.role == 'sales_rep';
+
+  /// Can this user review/approve reports and forecasts?
+  /// Only admin and developer can do this
+  bool get canReviewReports => isAdmin;
+
+  /// Can this user see detailed payroll/commission info?
+  /// Only admin can see payroll details, management sees numbers only
+  bool get canViewPayroll => isAdmin;
+
+  /// Can this user manage employee/user records (System Admin page)?
+  bool get canManageEmployees => isAdmin;
 
   // === Visibility helpers ===
   // Can this user see data for the given rep/branch/supervisor?

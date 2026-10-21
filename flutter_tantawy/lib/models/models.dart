@@ -2131,6 +2131,10 @@ class TargetRecord {
   final double remainingCollection;
   final String? updatedAt;
   final String? notes;
+  final String? supervisorName;
+  final String? salesRepName;
+  final String? salesPriority;
+  final String? repAvatar;
 
   TargetRecord({
     required this.id,
@@ -2150,6 +2154,10 @@ class TargetRecord {
     this.remainingCollection = 0,
     this.updatedAt,
     this.notes,
+    this.supervisorName,
+    this.salesRepName,
+    this.salesPriority,
+    this.repAvatar,
   });
 
   factory TargetRecord.fromJson(Map<String, dynamic> json) {
@@ -2171,6 +2179,10 @@ class TargetRecord {
       remainingCollection: _toDouble(json['remaining_collection'] ?? json['remainingCollection']) ?? 0,
       updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
       notes: json['notes']?.toString(),
+      supervisorName: json['supervisor_name']?.toString() ?? json['supervisorName']?.toString(),
+      salesRepName: json['sales_rep_name']?.toString() ?? json['salesRepName']?.toString(),
+      salesPriority: json['sales_priority']?.toString() ?? json['salesPriority']?.toString(),
+      repAvatar: json['rep_avatar']?.toString() ?? json['repAvatar']?.toString(),
     );
   }
 
@@ -2192,6 +2204,10 @@ class TargetRecord {
     'remaining_collection': remainingCollection,
     'updated_at': updatedAt,
     'notes': notes,
+    'supervisor_name': supervisorName,
+    'sales_rep_name': salesRepName,
+    'sales_priority': salesPriority,
+    'rep_avatar': repAvatar,
   };
 }
 
@@ -2802,6 +2818,16 @@ class RepPerformance {
     'credit_limit_exceeded_count': creditLimitExceededCount,
     'performance_grade': performanceGrade,
   };
+
+  double get salesPercentage {
+    if (salesTarget <= 0) return 0;
+    return (salesAchieved / salesTarget) * 100;
+  }
+
+  double get collectionPercentage {
+    if (collectionTarget <= 0) return 0;
+    return (collectionAchieved / collectionTarget) * 100;
+  }
 }
 
 // ============================================================
@@ -3024,6 +3050,7 @@ class Supplier {
   final bool isActive;
   final String? createdAt;
   final String? deletedAt;
+  final String? branchName;
 
   Supplier({
     required this.id,
@@ -3038,6 +3065,7 @@ class Supplier {
     this.isActive = true,
     this.createdAt,
     this.deletedAt,
+    this.branchName,
   });
 
   factory Supplier.fromJson(Map<String, dynamic> json) {
@@ -3054,6 +3082,7 @@ class Supplier {
       isActive: json['is_active'] as bool? ?? true,
       createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
       deletedAt: json['deleted_at']?.toString() ?? json['deletedAt']?.toString(),
+      branchName: json['branch_name']?.toString() ?? json['branchName']?.toString(),
     );
   }
 
@@ -3070,6 +3099,7 @@ class Supplier {
         'is_active': isActive,
         'created_at': createdAt,
         'deleted_at': deletedAt,
+        'branch_name': branchName,
       };
 }
 

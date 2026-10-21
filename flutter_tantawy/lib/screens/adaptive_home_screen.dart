@@ -5,6 +5,7 @@ import '../services/cart_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_navigation.dart';
 import '../widgets/responsive_layout.dart';
+import 'about_screen.dart';
 import 'catalog_screen.dart';
 import 'collection_forecast_view.dart';
 import 'all_customers_analytics_view.dart';
@@ -13,7 +14,9 @@ import 'invoices_screen.dart';
 import 'inventory_screen.dart';
 import 'order_builder_screen.dart';
 import 'sync_queue_screen.dart';
+import 'tasks_roles_screen.dart';
 import 'visits_screen.dart';
+import 'offers_notifications_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -41,10 +44,14 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       InvoicesScreen(currentUser: widget.currentUser),
       VisitsScreen(currentUser: widget.currentUser),
       InventoryScreen(currentUser: widget.currentUser),
-      CollectionForecastView(currentUser: widget.currentUser),
-      const SyncQueueScreen(),
-    ];
-  }
+        CollectionForecastView(currentUser: widget.currentUser),
+        const SyncQueueScreen(),
+        OffersNotificationsScreen(currentUser: widget.currentUser),
+        OffersNotificationsScreen(currentUser: widget.currentUser),
+        TasksRolesScreen(currentUser: widget.currentUser),
+        AboutScreen(currentUser: widget.currentUser),
+      ];
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +134,10 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 5, title: 'حركة المخزون', subtitle: 'الأرصدة والمعاملات اليومية', icon: Icons.warehouse_outlined),
       (index: 6, title: 'توقعات التحصيل', subtitle: 'متابعة التوقعات الأسبوعية', icon: Icons.energy_savings_leaf_outlined),
       (index: 7, title: 'طابور المزامنة', subtitle: 'العناصر المعلقة والمعالجة غير المتصلة', icon: Icons.cloud_sync_outlined),
-      (index: 8, title: 'الموردين والمصروفات', subtitle: 'إدارة المشتريات والمصروفات', icon: Icons.receipt_long_outlined),
+      (index: 8, title: 'العروض', subtitle: 'العروض الترويجية والخصومات', icon: Icons.local_offer_outlined),
+      (index: 9, title: 'الإشعارات', subtitle: 'الإشعارات والتنبيهات', icon: Icons.notifications_outlined),
+      (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
+      (index: 11, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(

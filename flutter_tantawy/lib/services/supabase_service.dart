@@ -9,35 +9,22 @@ import '../models/models.dart';
 import 'connectivity_service.dart';
 import 'repositories/repositories.dart';
 
-/// Facade المحافظ على واجهة برمجة SupabaseService القديمة (للتوافق العكسي)
-/// لكنه يفوض كل عملية إلى Repository متخصص حسب المجال.
-///
-/// Migration path: screens and services should migrate to calling the
-/// repository directly, e.g. `ProductRepository().fetchProducts(...)`.
 class SupabaseService {
   static final SupabaseService instance = SupabaseService._internal();
   SupabaseService._internal();
 
   final ConnectivityService _connectivity = ConnectivityService.instance;
 
-  /// Gatekeeper for financially-sensitive operations.
-  ///
-  /// Creating invoices, collecting payments, and transferring inventory
-  /// **must** happen online to prevent concurrent-write conflicts
-  /// (e.g. two reps exceeding a shared credit limit).
-  /// This performs a *real* server probe — not just a network signal.
   Future<void> requireOnline() async {
     final status = _connectivity.currentStatus;
     if (status == ConnectionStatus.online) return;
 
-    // Force a fresh real probe.
     final reachable = await _connectivity.pingServer();
     if (!reachable) {
       throw const SocketException('غير متصل بالخادم — العمليات المالية تتطلب اتصالاً نشطاً');
     }
   }
 
-  // Repository instances (lazy-initialized singletons per concern).
   static final ProductRepository _products = const ProductRepository();
   static final CustomerRepository _customers = const CustomerRepository();
   static final InvoiceRepository _invoices = const InvoiceRepository();
@@ -45,9 +32,9 @@ class SupabaseService {
   static final ForecastRepository _forecasts = const ForecastRepository();
   static final AnalyticsRepository _analytics = const AnalyticsRepository();
   static final ReturnsRepository _returns = const ReturnsRepository();
+  static final ExpenseRepository _expenses = const ExpenseRepository();
 
   SupabaseService._();
-  // instance defined elsewhere
 
   ReturnsRepository get returnsRepo => _returns;
   AnalyticsRepository get analyticsRepo => _analytics;
@@ -337,6 +324,46 @@ class SupabaseService {
 
   Future<bool> saveForecast(CollectionForecastRecord record) => _forecasts.saveForecast(record);
 
+  // ===================== إدارة أسابيع الشهر (Month Plan Week Config) =====================
+  Future<bool> saveForecastMonthPlan(ForecastMonthPlan monthPlan) =>
+      _forecasts.saveForecastMonthPlan(monthPlan);
+
+  Future<bool> updateMonthPlanWeeks(String monthKey, List<ForecastWeek> weeks) =>
+      _forecasts.updateMonthPlanWeeks(monthKey, weeks);
+
+  Future<bool> closeMonthPlan(String monthKey, String closedBy) =>
+      _forecasts.closeMonthPlan(monthKey, closedBy);
+
+  Future<bool> createMonthPlan({
+    required String monthKey,
+    required int year,
+    required int month,
+    required String monthStart,
+    required String monthEnd,
+    required List<ForecastWeek> weeks,
+    required String createdBy,
+  }) =>
+      _forecasts.createMonthPlan(
+        monthKey: monthKey,
+        year: year,
+        month: month,
+        monthStart: monthStart,
+        monthEnd: monthEnd,
+        weeks: weeks,
+        createdBy: createdBy,
+      );
+
+  List<ForecastWeek> generateCustomWeeks({
+    required DateTime monthStart,
+    required DateTime monthEnd,
+    required int weekStartWeekday,
+  }) =>
+      ForecastRepository.generateCustomWeeks(
+        monthStart: monthStart,
+        monthEnd: monthEnd,
+        weekStartWeekday: weekStartWeekday,
+      );
+
   // ===================== سجلات التدقيق (Audit Logs) =====================
   Future<List<AuditLog>> fetchAuditLogs({String? userName, AuditActionType? action, String? invoiceId}) {
     return _analytics.fetchAuditLogs(userName: userName, action: action, invoiceId: invoiceId);
@@ -355,34 +382,85 @@ class SupabaseService {
   // ===================== إعدادات Cloudinary =====================
   Future<CloudinaryConfig?> fetchCloudinaryConfig() => _analytics.fetchCloudinaryConfig();
 
-  // ===================== المصروفات العامة (Expenses) =====================
+  // ===================== المصروفات (Expenses) =====================
   Future<List<Expense>> fetchExpenses({
     String? branchName,
     String? repName,
     DateTime? startDate,
     DateTime? endDateExclusive,
-  }) async {
-    await requireOnline();
-    // TODO: Implement if needed
-    return [];
-  }
-
-  Future<bool> logExpense(Expense expense) async {
-    await requireOnline();
-    return false;
-  }
-
-  Future<bool> softDeleteExpense(String id) async {
-    await requireOnline();
-    return false;
+  }) {
+    return _expenses.fetchExpenses(
+        branchName: branchName,
+        repName: repName,
+        startDate: startDate,
+        endDateExclusive: endDateExclusive);
   }
 
   Future<double> sumExpenses({
     String? branchName,
     DateTime? startDate,
     DateTime? endDate,
-  }) async {
-    await requireOnline();
-    return 0.0;
+  }) {
+    return _expenses.sumExpenses(
+        branchName: branchName, startDate: startDate, endDate: endDate);
+  }
+
+  // ===================== إدارة الموظفين (Employee Management) =====================
+  Future<List<AppUser>> fetchUsers({String? branchName, String? role}) async {
+    try {
+      var query = client.from('app_users').select();
+      if (branchName != null && branchName.isNotEmpty) {
+        query = query.eq('branch_name', branchName);
+      }
+      if (role != null && role.isNotEmpty) {
+        query = query.eq('role', role);
+      }
+      final data = await query.order('name', ascending: true);
+      return (data as List<dynamic>)
+          .map((e) => AppUser.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('SupabaseService Error in fetchUsers: $e');
+      return [];
+    }
+  }
+
+  Future<bool> updateUserStatus(String userId, bool isActive) async {
+    try {
+      await client
+          .from('app_users')
+          .update({'is_active': isActive})
+          .eq('id', userId);
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in updateUserStatus: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateUserRole(String userId, String newRole) async {
+    try {
+      await client
+          .from('app_users')
+          .update({'role': newRole})
+          .eq('id', userId);
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in updateUserRole: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateUserPassword(String userId, String newPassword) async {
+    try {
+      await client.rpc('update_user_password', params: {
+        'p_user_id': userId,
+        'p_new_password': newPassword,
+      });
+      return true;
+    } catch (e) {
+      debugPrint('SupabaseService Error in updateUserPassword: $e');
+      return false;
+    }
   }
 }
