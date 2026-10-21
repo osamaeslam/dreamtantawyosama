@@ -459,7 +459,6 @@ class _ExecutiveAnalyticsDashboardState
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      saveroute: ThemeData.dark(),
       initialDateRange: DateTimeRange(start: _startDate, end: _endDate),
     );
     if (result != null) {
@@ -586,7 +585,7 @@ class _ExecutiveAnalyticsDashboardState
       ),
       child: LineChart(
         LineChartData(
-          gridEnable: false,
+          gridData: const FlGridData(show: false),
           borderData: FlBorderData(show: false),
           minX: 0,
           maxX: (spots.length - 1).toDouble(),
@@ -595,13 +594,13 @@ class _ExecutiveAnalyticsDashboardState
               .map((e) => e.y)
               .reduce((a, b) => a > b ? a : b) *
               1.2,
-          lineChartBarData: [
+          lineBarsData: [
             LineChartBarData(
               spots: spots,
               color: AppTheme.primaryGold,
               barWidth: 3,
               isCurved: true,
-              belowBarData: BelowBarData(
+              belowBarData: BarAreaData(
                 show: true,
                 color: AppTheme.primaryGold.withOpacity(0.15),
               ),
@@ -619,17 +618,22 @@ class _ExecutiveAnalyticsDashboardState
             show: true,
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
-                show: false,
+                showTitles: false,
                 getTitlesWidget: (value, meta) => const SizedBox.shrink(),
               ),
             ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
-                show: true,
-                getTitlesStyle: (value) => GoogleFonts.cairo(
-                  fontSize: 10,
-                  color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
-                ),
+                showTitles: true,
+                getTitlesWidget: (double value, meta) {
+                  return Text(
+                    value.toStringAsFixed(0),
+                    style: GoogleFonts.cairo(
+                      fontSize: 10,
+                      color: isDark ? Colors.grey.shade500 : Colors.grey.shade600,
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -684,9 +688,6 @@ class _ExecutiveAnalyticsDashboardState
             dataRowColor: MaterialStateColor.resolveWith(
               (states) => isDark ? const Color(0xFF2B2B40) : Colors.white,
             ),
-            dividerColor: isDark
-                ? const Color(0xFF3A3A55)
-                : const Color(0xFFE2E8F0),
           ),
         ),
         child: DataTable(
@@ -837,7 +838,7 @@ class _ExecutiveAnalyticsDashboardState
           color: Colors.white,
         ),
         radius: 48,
-        border: BorderSide(
+        borderSide: BorderSide(
           color: isDark ? const Color(0xFF2B2B40) : Colors.white,
           width: 2,
         ),
@@ -859,24 +860,42 @@ class _ExecutiveAnalyticsDashboardState
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          Expanded(
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 3,
-                centerText: 'المبيعات',
-                centerTextStyle: GoogleFonts.cairo(
+          PieChart(
+            PieChartData(
+              sectionsSpace: 3,
+              sections: sections,
+            ),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'المبيعات',
+                style: GoogleFonts.cairo(
                   color: isDark ? Colors.white70 : AppTheme.textMuted,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
-                sections: sections,
               ),
-            ),
+              Text(
+                _currencyFmt.format(totalSales),
+                style: GoogleFonts.cairo(
+                  color: isDark ? Colors.white : AppTheme.darkSlate,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
-          _buildChartLegend(data, colors),
+          // Legend on the right
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Center(child: _buildChartLegend(data, colors)),
+          ),
         ],
       ),
     );
@@ -925,7 +944,7 @@ class _ExecutiveAnalyticsDashboardState
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '$_percentage%',
+                      '$percentage%',
                       style: GoogleFonts.cairo(
                         fontSize: 10,
                         color: Colors.grey.shade500,
