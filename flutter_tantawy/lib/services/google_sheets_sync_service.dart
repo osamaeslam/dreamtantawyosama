@@ -73,10 +73,21 @@ class GoogleSheetsSyncService {
     return result;
   }
 
+  /// Convert Google Sheets edit link to CSV export URL
+  String _convertToCsvUrl(String url) {
+    if (url.contains('/edit')) {
+      final sheetId = url.split('/d/')[1].split('/')[0];
+      return 'https://docs.google.com/spreadsheets/d/$sheetId/export?format=csv';
+    }
+    return url;
+  }
+
   /// Fetch CSV from published Google Sheet
   Future<List<Map<String, String>>> _fetchSheetCsv(String publishedUrl) async {
     try {
-      final uri = Uri.parse(publishedUrl);
+      final csvUrl = _convertToCsvUrl(publishedUrl);
+      debugPrint('Fetching CSV from: $csvUrl');
+      final uri = Uri.parse(csvUrl);
       final response = await http.get(uri);
       if (response.statusCode == 200) {
         return _parseCsv(utf8.decode(response.bodyBytes));
@@ -91,7 +102,8 @@ class GoogleSheetsSyncService {
   /// Fetch and parse CSV, returning rows
   Future<List<Map<String, String>>> _fetchAndParseSheet(String publishedUrl, String context) async {
     try {
-      debugPrint('[$context] Fetching sheet: $publishedUrl');
+      final csvUrl = _convertToCsvUrl(publishedUrl);
+      debugPrint('[$context] Fetching sheet: $csvUrl');
       final rows = await _fetchSheetCsv(publishedUrl);
       debugPrint('[$context] Parsed ${rows.length} rows');
       return rows;
@@ -170,11 +182,15 @@ class GoogleSheetsSyncService {
             .maybeSingle();
 
         if (existing == null) {
-          await _client.from('products').insert(productData);
+          debugPrint('Adding new product with code: $code');
+          final result = await _client.from('products').insert(productData);
+          debugPrint('Insert result: $result');
           added++;
         } else {
+          debugPrint('Updating product with code: $code, id: ${existing['id']}');
           productData['id'] = existing['id'];
-          await _client.from('products').upsert(productData, onConflict: 'id');
+          final result = await _client.from('products').upsert(productData, onConflict: 'id');
+          debugPrint('Update result: $result');
           updated++;
         }
       } catch (e) {

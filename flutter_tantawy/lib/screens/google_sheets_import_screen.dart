@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/connection_status_bar.dart';
@@ -29,6 +30,30 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
   int _errors = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _loadSavedUrls();
+  }
+
+  Future<void> _loadSavedUrls() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _customersUrlController.text = prefs.getString('gsheet_customers_url') ?? '';
+      _productsUrlController.text = prefs.getString('gsheet_products_url') ?? '';
+      _targetsUrlController.text = prefs.getString('gsheet_targets_url') ?? '';
+      _offersUrlController.text = prefs.getString('gsheet_offers_url') ?? '';
+    });
+  }
+
+  Future<void> _saveUrls() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('gsheet_customers_url', _customersUrlController.text);
+    await prefs.setString('gsheet_products_url', _productsUrlController.text);
+    await prefs.setString('gsheet_targets_url', _targetsUrlController.text);
+    await prefs.setString('gsheet_offers_url', _offersUrlController.text);
+  }
+
+  @override
   void dispose() {
     _customersUrlController.dispose();
     _productsUrlController.dispose();
@@ -44,13 +69,16 @@ class _GoogleSheetsImportScreenState extends State<GoogleSheetsImportScreen> {
         _offersUrlController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('يرجى إدخول رابط شيت واحد على الأقل',
+          content: Text('يرجى إدخال رابط شيت واحد على الأقل',
               style: GoogleFonts.cairo()),
           backgroundColor: AppTheme.primaryGold,
         ),
       );
       return;
     }
+
+    // Save URLs before syncing
+    await _saveUrls();
 
     setState(() {
       _isSyncing = true;

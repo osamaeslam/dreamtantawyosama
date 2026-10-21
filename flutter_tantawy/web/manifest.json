@@ -1,13 +1,14 @@
 {
-    "name": "tantawy_group",
-    "short_name": "tantawy_group",
+    "name": "مجموعة الطنطاوي للتجارة والتوزيع",
+    "short_name": "طنطاوي",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F172A",
+    "theme_color": "#F59E0B",
+    "description": "مجموعة الطنطاوي للتجارة والتوزيع - بوابة ERP متكاملة",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
+    "lang": "ar",
     "icons": [
         {
             "src": "icons/Icon-192.png",
