@@ -17,6 +17,7 @@ import 'sync_queue_screen.dart';
 import 'tasks_roles_screen.dart';
 import 'visits_screen.dart';
 import 'offers_notifications_screen.dart';
+import 'users_management_screen.dart';
 
 class AdaptiveHomeScreen extends StatefulWidget {
   final AppUser currentUser;
@@ -49,6 +50,7 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
         OffersNotificationsScreen(currentUser: widget.currentUser),
         OffersNotificationsScreen(currentUser: widget.currentUser),
         TasksRolesScreen(currentUser: widget.currentUser),
+        UsersManagementScreen(currentUser: widget.currentUser),
         AboutScreen(currentUser: widget.currentUser),
       ];
     }
@@ -136,8 +138,9 @@ class _AdaptiveHomeScreenState extends State<AdaptiveHomeScreen> {
       (index: 7, title: 'طابور المزامنة', subtitle: 'العناصر المعلقة والمعالجة غير المتصلة', icon: Icons.cloud_sync_outlined),
       (index: 8, title: 'العروض', subtitle: 'العروض الترويجية والخصومات', icon: Icons.local_offer_outlined),
       (index: 9, title: 'الإشعارات', subtitle: 'الإشعارات والتنبيهات', icon: Icons.notifications_outlined),
-      (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
-      (index: 11, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
+       (index: 10, title: 'المهام والأدوار', subtitle: 'دليل الاستخدام والصلاحيات', icon: Icons.menu_book_outlined),
+       (index: 11, title: 'إدارة الموظفين', subtitle: 'إدارة حسابات وأدوار الموظفين', icon: Icons.people_outline),
+       (index: 12, title: 'عن البرنامج', subtitle: 'معلومات عن التطبيق والشركة', icon: Icons.info_outlined),
     ].where((item) => visibleDestinationIndices.contains(item.index)).toList();
 
     return Scaffold(
