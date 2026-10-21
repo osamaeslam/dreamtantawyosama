@@ -4,7 +4,7 @@
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
 int? _toInt(dynamic v) => v == null ? null : (v is int ? v : int.tryParse(v.toString()));
 
-enum UserRole { admin, manager, branchManager, supervisor, salesRep, developer }
+enum UserRole { admin, administration, branchManager, supervisor, salesRep, developer }
 
 class AppUser {
   final String id;
@@ -22,6 +22,7 @@ class AppUser {
   final String? code;
   final double? commissionRate;
   final String? registrationDate;
+  final Map<String, dynamic> permissions;
 
   AppUser({
     required this.id,
@@ -39,16 +40,19 @@ class AppUser {
     this.code,
     this.commissionRate,
     this.registrationDate,
+    this.permissions = const {},
   });
 
   static String normalizeUserRole(String? raw) {
     if (raw == null) return 'sales_rep';
     final lower = raw.trim().toLowerCase();
-    if (lower == 'ادمن' || lower.contains('admin') || lower == 'مدير عام') return 'admin';
+    if (lower == 'ادمن' || lower == 'أدمن' || lower.contains('admin') || lower == 'مدير عام') return 'admin';
+    if (lower == 'developer' || lower == 'مطور') return 'developer';
     if (lower.contains('مشرف') || lower.contains('supervisor')) return 'supervisor';
-    if (lower.contains('مدير فرع') || lower.contains('manager')) return 'branch_manager';
-    if (lower.contains('مندوب') || lower.contains('rep')) return 'sales_rep';
-    return raw;
+    if (lower.contains('مدير فرع') || lower == 'branch_manager') return 'branch_manager';
+    if (lower.contains('الإدارة') || lower.contains('الادارة') || lower == 'manager' || lower == 'administration') return 'administration';
+    if (lower.contains('مندوب') || lower == 'rep' || lower == 'sales_rep') return 'sales_rep';
+    return 'sales_rep';
   }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
@@ -70,6 +74,9 @@ class AppUser {
       code: json['code']?.toString() ?? json['id']?.toString(),
       commissionRate: _toDouble(json['commissionRate'] ?? json['commission_rate']),
       registrationDate: json['registrationDate']?.toString() ?? json['registration_date']?.toString(),
+        permissions: json['permissions'] is Map
+          ? Map<String, dynamic>.from(json['permissions'] as Map)
+          : const {},
     );
   }
 
@@ -89,6 +96,7 @@ class AppUser {
         'code': code,
         'commission_rate': commissionRate,
         'registration_date': registrationDate,
+        'permissions': permissions,
       };
 }
 

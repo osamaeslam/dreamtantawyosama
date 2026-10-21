@@ -16,12 +16,14 @@ class RoleAccessController {
 
   // === Role checkers ===
   /// Admin can review reports, approve forecasts, and manage month plans
-  bool get isAdmin =>
-      currentUser.role == 'admin' || currentUser.role == 'developer';
+  bool get isAdmin => currentUser.role == 'admin';
+
+  bool get isDeveloper => currentUser.role == 'developer';
+
+  bool get isAdministration => currentUser.role == 'administration';
 
   /// Management role: sees numbers only, no report review or payroll details
-  bool get isManagement =>
-      currentUser.role == 'manager' || currentUser.role == 'branch_manager';
+  bool get isManagement => isAdministration || isBranchManager;
 
   bool get isBranchManager => currentUser.role == 'branch_manager';
   bool get isSupervisor => currentUser.role == 'supervisor';
@@ -29,7 +31,10 @@ class RoleAccessController {
 
   /// Can this user review/approve reports and forecasts?
   /// Only admin and developer can do this
-  bool get canReviewReports => isAdmin;
+  bool get canReviewReports => canPerformAction(
+        'reports.review',
+        roleDefaults: {'administration', 'branch_manager'},
+      );
 
   /// Can this user see detailed payroll/commission info?
   /// Only admin can see payroll details, management sees numbers only
@@ -37,6 +42,28 @@ class RoleAccessController {
 
   /// Can this user manage employee/user records (System Admin page)?
   bool get canManageEmployees => isAdmin;
+
+  bool get canManageSheets => isAdmin;
+
+  bool get canDeleteData => isAdmin;
+
+  bool canAccessPage(String pageKey, {Set<String> roleDefaults = const {}}) {
+    if (isAdmin) return true;
+    final pagePermissions = currentUser.permissions['pages'];
+    if (pagePermissions is Map && pagePermissions.containsKey(pageKey)) {
+      return pagePermissions[pageKey] == true;
+    }
+    return roleDefaults.contains(currentUser.role);
+  }
+
+  bool canPerformAction(String actionKey, {Set<String> roleDefaults = const {}}) {
+    if (isAdmin) return true;
+    final actionPermissions = currentUser.permissions['actions'];
+    if (actionPermissions is Map && actionPermissions.containsKey(actionKey)) {
+      return actionPermissions[actionKey] == true;
+    }
+    return roleDefaults.contains(currentUser.role);
+  }
 
   // === Visibility helpers ===
   // Can this user see data for the given rep/branch/supervisor?
