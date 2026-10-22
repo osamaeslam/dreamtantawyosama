@@ -22,9 +22,6 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
   List<CustomerCommentRecord> _notifications = [];
   bool _isLoading = true;
 
-  final NumberFormat _currencyFmt =
-      NumberFormat.currency(locale: 'ar_EG', decimalDigits: 0);
-
   @override
   void initState() {
     super.initState();
@@ -335,7 +332,7 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
             maxLines: 2,
             overflow: TextOverflow.ellipsis),
         subtitle: Text(
-            '${record.createdAt ?? ''} • ${record.customerName}',
+            '${record.createdAt} • ${record.customerName}',
             style: GoogleFonts.cairo(fontSize: 10, color: mutedColor)),
         trailing: const Icon(Icons.chevron_left, size: 18),
         onTap: () {
@@ -356,7 +353,7 @@ class _OffersNotificationsScreenState extends State<OffersNotificationsScreen>
                   _buildDetailRow(
                       'الفرع', record.branchName, mutedColor),
                   _buildDetailRow('الوقت',
-                      '${record.createdAt ?? ''}', mutedColor),
+                      '${record.createdAt}', mutedColor),
                   _buildDetailRow('المحتوى', record.body, mutedColor),
                 ],
               ),

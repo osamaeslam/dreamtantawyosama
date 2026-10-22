@@ -859,10 +859,10 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
         Container(
              decoration: BoxDecoration(
               color: AppTheme.cardSlate,
-              borderRadius: BorderRadius.circular(12),
-               border: const Border.all(color: AppTheme.darkBorder),
-            ),
-            child: stats.isEmpty
+               borderRadius: BorderRadius.circular(12),
+               border: Border.all(color: AppTheme.darkBorder),
+             ),
+             child: stats.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text('لا توجد بيانات مناطق',
@@ -951,8 +951,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
             ),
           ),
         ],
-      ),
-    );
+      );
   }
   
   Color _coverageColor(double percentage) {
@@ -968,7 +967,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
         decoration: BoxDecoration(
           color: AppTheme.cardSlate,
           borderRadius: BorderRadius.circular(12),
-          border: const Border.all(color: AppTheme.darkBorder),
+          border: Border.all(color: AppTheme.darkBorder),
         ),
         child: Center(
           child: Column(
@@ -1021,7 +1020,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           decoration: BoxDecoration(
             color: AppTheme.cardSlate,
             borderRadius: BorderRadius.circular(12),
-          border: const Border.all(color: AppTheme.darkBorder),
+            border: Border.all(color: AppTheme.darkBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1114,7 +1113,7 @@ class _VisitsDashboardScreenState extends State<VisitsDashboardScreen> {
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: const BorderSide(color: AppTheme.darkBorder),
+        border: Border.all(color: AppTheme.darkBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -21,7 +21,6 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
   List<RepPerformance> _targetData = [];
   Map<String, RepPerformance> _performanceMap = {};
   bool _isLoading = true;
-  bool _isFiltersLoading = true;
   String _errorMessage = '';
   String _searchQuery = '';
   String _selectedBranch = 'الكل';
@@ -53,13 +52,11 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         _performanceMap = {for (final p in targetData) p.repName: p};
         _errorMessage = '';
         _isLoading = false;
-        _isFiltersLoading = false;
       });
     } catch (e) {
       setState(() {
         _errorMessage = 'فشل تحميل بيانات الموظفين: $e';
         _isLoading = false;
-        _isFiltersLoading = false;
       });
     }
   }
@@ -409,7 +406,7 @@ class _EmployeeManagementScreenState extends State<EmployeeManagementScreen> {
         final hasSubordinates = subordinates.isNotEmpty;
         return Theme(
           data: ThemeData().copyWith(expansionTileTheme: ExpansionTileThemeData(
-            headerPadding: const EdgeInsets.symmetric(horizontal: 8),
+            tilePadding: const EdgeInsets.symmetric(horizontal: 8),
           )),
           child: ExpansionTile(
             leading: CircleAvatar(

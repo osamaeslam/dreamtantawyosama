@@ -50,7 +50,7 @@ class RepDashboardScreen extends StatelessWidget {
       case 'admin':
         return UserRole.admin;
       case 'manager':
-        return UserRole.manager;
+        return UserRole.administration;
       case 'branch_manager':
         return UserRole.branchManager;
       case 'supervisor':
@@ -71,14 +71,14 @@ class RepDashboardScreen extends StatelessWidget {
     ];
     const managementRoles = [
       UserRole.admin,
-      UserRole.manager,
+      UserRole.administration,
       UserRole.branchManager,
       UserRole.supervisor,
       UserRole.developer,
     ];
     const allRoles = [
       UserRole.admin,
-      UserRole.manager,
+      UserRole.administration,
       UserRole.branchManager,
       UserRole.supervisor,
       UserRole.salesRep,

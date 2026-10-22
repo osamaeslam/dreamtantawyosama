@@ -111,12 +111,12 @@ class RoleAccessController {
       if (isAdmin) return true;
 
       if (isSalesRep) {
-        final isSelf = inv.repName != null && _matchesName(inv.repName!, currentUser.name);
+        final isSelf = _matchesName(inv.repName, currentUser.name);
         return isSelf;
       }
 
       if (isSupervisor) {
-        final isSelf = inv.repName != null && _matchesName(inv.repName!, currentUser.name);
+        final isSelf = _matchesName(inv.repName, currentUser.name);
         return isSelf || _isSupervisedRep(inv.repName);
       }
 
@@ -188,16 +188,16 @@ class RoleAccessController {
       if (isAdmin) return true;
 
       if (isSalesRep) {
-        return t.repName != null && _matchesName(t.repName!, currentUser.name);
+        return _matchesName(t.repName, currentUser.name);
       }
 
       if (isSupervisor) {
-        final isSelf = t.repName != null && _matchesName(t.repName!, currentUser.name);
+        final isSelf = _matchesName(t.repName, currentUser.name);
         return isSelf || _isSupervisedRep(t.repName);
       }
 
       if (isBranchManager) {
-        return _matchesBranch(t.branch ?? '');
+        return _matchesBranch(t.branch);
       }
 
       return false;
@@ -210,12 +210,11 @@ class RoleAccessController {
       if (isAdmin) return true;
 
       if (isSalesRep) {
-        return f.repId == currentUser.id ||
-               (f.repName != null && _matchesName(f.repName!, currentUser.name));
+        return f.repId == currentUser.id || _matchesName(f.repName, currentUser.name);
       }
 
       if (isSupervisor) {
-        final isSelf = f.repName != null && _matchesName(f.repName!, currentUser.name);
+        final isSelf = _matchesName(f.repName, currentUser.name);
         return isSelf || _isSupervisedRep(f.repName);
       }
 
@@ -232,7 +231,7 @@ class RoleAccessController {
     return transactions.where((tx) {
       if (isAdmin) return true;
       if (isBranchManager || isSupervisor || isSalesRep) {
-        return _matchesBranch(tx.branchName ?? '');
+        return _matchesBranch(tx.branchName);
       }
       return false;
     }).toList();

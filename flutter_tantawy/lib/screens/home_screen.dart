@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'google_sheets_import_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/cart_service.dart';

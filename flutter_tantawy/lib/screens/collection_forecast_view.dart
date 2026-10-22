@@ -6,7 +6,6 @@ import '../services/supabase_service.dart';
 import '../services/repositories/forecast_repository.dart';
 import '../services/role_access_controller.dart';
 import '../theme/app_theme.dart';
-import 'visits_dashboard_screen.dart';
 import 'returns_screen.dart';
 
 class CollectionForecastView extends StatefulWidget {

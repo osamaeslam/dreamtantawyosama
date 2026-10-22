@@ -38,7 +38,7 @@ class ExpenseRepository extends BaseRepository {
     try {
       final data = await client.from('expenses').select().eq('id', id).maybeSingle();
       if (data == null) return null;
-      return Expense.fromJson(data as Map<String, dynamic>);
+      return Expense.fromJson(data);
     } catch (e) {
       logError('fetchExpenseById', e);
       return null;

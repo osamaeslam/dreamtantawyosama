@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import '../services/connectivity_service.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
 import 'adaptive_home_screen.dart';
@@ -217,12 +216,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'متصل بقاعدة بيانات Supabase',
-                            style: GoogleFonts.cairo(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF10B981),
+                          Flexible(
+                            child: Text(
+                              'متصل بقاعدة بيانات Supabase',
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.cairo(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF10B981),
+                              ),
                             ),
                           ),
                         ],
@@ -368,20 +370,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0F172A)),
                                  ),
                                )
-                             : Row(
-                                 mainAxisAlignment: MainAxisAlignment.center,
-                                 children: [
-                                   Text(
-                                     'تسجيل الدخول إلى النظام',
-                                     style: GoogleFonts.cairo(
-                                       fontSize: 14,
-                                       fontWeight: FontWeight.w900,
-                                     ),
-                                   ),
-                                   const SizedBox(width: 8),
-                                   const Icon(Icons.arrow_back, size: 18),
-                                 ],
-                               ),
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        'تسجيل الدخول إلى النظام',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: GoogleFonts.cairo(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.arrow_back, size: 18),
+                                  ],
+                                ),
                        ),
                      ),
 

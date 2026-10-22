@@ -187,9 +187,9 @@ class GoogleSheetsSyncService {
     
     // Debug: Log the actual headers and first few rows
     if (rows.isNotEmpty) {
-      debugPrint('[$context] CSV Headers: ${rows.first.keys.toList()}');
+      debugPrint('[Products] CSV Headers: ${rows.first.keys.toList()}');
       if (rows.length > 1) {
-        debugPrint('[$context] First row sample: ${rows[1]}');
+        debugPrint('[Products] First row sample: ${rows[1]}');
       }
     }
     

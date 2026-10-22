@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../models/models.dart';
-import '../services/cart_service.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
@@ -24,7 +22,6 @@ class _ExecutiveAnalyticsDashboardState
     with SingleTickerProviderStateMixin {
   List<OrderInvoice> _invoices = [];
   List<CustomerVisit> _visits = [];
-  List<CustomerAnalytics> _customers = [];
   bool _isLoading = true;
   String? _error;
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
@@ -32,7 +29,6 @@ class _ExecutiveAnalyticsDashboardState
 
   late AnimationController _animationController;
   late Animation<double> _fadeInAnimation;
-  late Animation<double> _slideInAnimation;
 
   final NumberFormat _currencyFmt =
       NumberFormat.currency(locale: 'ar_EG', decimalDigits: 0);
@@ -48,11 +44,6 @@ class _ExecutiveAnalyticsDashboardState
     );
     _fadeInAnimation =
         CurvedAnimation(parent: _animationController, curve: Curves.easeOut);
-    _slideInAnimation =
-        Tween<double>(begin: 50, end: 0).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutBack),
-    ));
 
     _loadData();
   }
@@ -86,19 +77,12 @@ class _ExecutiveAnalyticsDashboardState
           startDate: _startDate,
           endDateExclusive: endDateExclusive,
         ),
-        if (_rbac.isAdmin || _rbac.isManagement || _rbac.isSupervisor)
-          service.fetchCustomerAnalytics(
-              branchName: branchName,
-              repName: repName),
       ]);
 
       if (!mounted) return;
       setState(() {
         _invoices = results[0] as List<OrderInvoice>;
         _visits = results[1] as List<CustomerVisit>;
-        _customers = _rbac.isAdmin || _rbac.isManagement || _rbac.isSupervisor
-            ? (results[2] as List<CustomerAnalytics>)
-            : [];
       });
       _animationController.forward(from: 0);
     } catch (e) {
@@ -127,10 +111,6 @@ class _ExecutiveAnalyticsDashboardState
         (sum, e) => sum + ((e.customerBalanceAfter ?? 0) - (e.totalAmount)));
   }
 
-  double _totalExpenses(List<OrderInvoice> invoices) {
-    return invoices.fold(0.0, (sum, e) => sum + (e.totalAmount - (e.customerBalanceAfter ?? 0) - (e.totalRefundedAmount ?? 0)));
-  }
-
   double _collectionRate() {
     final sales = _totalSales(_invoices);
     final collections = _totalCollections(_visits);
@@ -155,17 +135,8 @@ class _ExecutiveAnalyticsDashboardState
   Map<String, double> _salesByBranch(List<OrderInvoice> invoices) {
     final Map<String, double> result = {};
     for (final inv in invoices) {
-      final branch = inv.branchName ?? 'غير محدد';
-      result[branch] = (result[branch] ?? 0) + (inv.totalAmount ?? 0);
-    }
-    return result;
-  }
-
-  Map<String, double> _salesByCustomer(List<OrderInvoice> invoices) {
-    final Map<String, double> result = {};
-    for (final inv in invoices) {
-      final customer = inv.customerName ?? 'غير محدد';
-      result[customer] = (result[customer] ?? 0) + (inv.totalAmount ?? 0);
+      final branch = inv.branchName;
+      result[branch] = (result[branch] ?? 0) + inv.totalAmount;
     }
     return result;
   }
@@ -173,11 +144,8 @@ class _ExecutiveAnalyticsDashboardState
   List<FlSpot> _dailySalesTrend(List<OrderInvoice> invoices) {
     final Map<String, double> dailyTotals = {};
     for (final inv in invoices) {
-      if (inv.date != null) {
-        final dayKey = DateFormat('yyyy-MM-dd').format(inv.date!);
-        dailyTotals[dayKey] =
-            (dailyTotals[dayKey] ?? 0) + (inv.totalAmount ?? 0);
-      }
+      final dayKey = DateFormat('yyyy-MM-dd').format(inv.date);
+      dailyTotals[dayKey] = (dailyTotals[dayKey] ?? 0) + inv.totalAmount;
     }
     final sortedKeys = dailyTotals.keys.toList()..sort();
     return List<FlSpot>.generate(sortedKeys.length, (i) {
@@ -486,7 +454,6 @@ class _ExecutiveAnalyticsDashboardState
     final totalSales = _totalSales(_invoices);
     final totalCollections = _totalCollections(_visits);
     final totalBalances = _totalBalances(_invoices);
-    final totalExpenses = _totalExpenses(_invoices);
     final collectionRate = _collectionRate();
     final returnRate = _returnRate();
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -658,8 +625,7 @@ class _ExecutiveAnalyticsDashboardState
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sortedInvoices = List.of(_invoices)
-      ..sort((a, b) => (b.date ?? DateTime.now())
-          .compareTo(a.date ?? DateTime.now()));
+      ..sort((a, b) => b.date.compareTo(a.date));
     final recentInvoices = sortedInvoices.take(8).toList();
 
     return Container(
@@ -702,7 +668,7 @@ class _ExecutiveAnalyticsDashboardState
             _buildDataColumn('الحالة', isDark),
           ],
           rows: recentInvoices.map((inv) {
-            final status = inv.status ?? 'pending';
+            final status = inv.status;
             final statusColor = status == 'paid'
                 ? AppTheme.emeraldGreen
                 : status == 'cancelled'
@@ -711,14 +677,14 @@ class _ExecutiveAnalyticsDashboardState
             return DataRow(
               cells: [
                 DataCell(Text(
-                  inv.customerName ?? inv.branchName ?? 'غير محدد',
+                  inv.customerName.isNotEmpty ? inv.customerName : inv.branchName,
                   style: GoogleFonts.cairo(
                     fontSize: 13,
                     color: isDark ? Colors.white70 : AppTheme.darkSlate,
                   ),
                 )),
                 DataCell(Text(
-                  _currencyFmt.format(inv.totalAmount ?? 0),
+                  _currencyFmt.format(inv.totalAmount),
                   style: GoogleFonts.cairo(
                     fontSize: 13,
                     color: AppTheme.primaryGold,
@@ -726,9 +692,7 @@ class _ExecutiveAnalyticsDashboardState
                   ),
                 )),
                 DataCell(Text(
-                  inv.date != null
-                      ? DateFormat('yyyy/MM/dd').format(inv.date!)
-                      : '-',
+                  DateFormat('yyyy/MM/dd').format(inv.date),
                   style: GoogleFonts.cairo(
                     fontSize: 13,
                     color: isDark ? Colors.grey.shade400 : AppTheme.textMuted,
@@ -962,14 +926,12 @@ class _ExecutiveAnalyticsDashboardState
   }
 
   Widget _buildSummaryCards() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final totalInvoices = _invoices.length;
     final totalVisits = _visits.length;
     final avgInvoice =
         totalInvoices > 0 ? _totalSales(_invoices) / totalInvoices : 0;
     final avgVisit = totalVisits > 0 ? _totalCollections(_visits) / totalVisits : 0;
-    final paidInvoices = _invoices.where((e) =>
-        (e.status ?? '') == 'paid').length;
+    final paidInvoices = _invoices.where((e) => e.status == 'paid').length;
     final visitRate = totalInvoices > 0 ? paidInvoices / totalInvoices : 0;
 
     final cards = [

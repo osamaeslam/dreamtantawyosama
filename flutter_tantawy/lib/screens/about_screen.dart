@@ -192,7 +192,7 @@ class AboutScreen extends StatelessWidget {
         title: Text(title,
             style: GoogleFonts.cairo(fontSize: 11, color: mutedColor)),
         subtitle: subtitle != null
-            ? Text(subtitle!,
+            ? Text(subtitle,
                 style: GoogleFonts.cairo(fontSize: 11, color: mutedColor, height: 1.3),
                 maxLines: 2)
             : null,

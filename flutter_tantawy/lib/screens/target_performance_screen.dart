@@ -258,6 +258,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           icon: Icons.store,
           iconColor: AppTheme.primaryGold,
           showProgress: false,
+          progressColor: AppTheme.primaryGold,
         ),
         _buildSummaryCard(
           isDark: isDark,
@@ -271,6 +272,7 @@ class _TargetPerformanceScreenState extends State<TargetPerformanceScreen> {
           icon: Icons.people,
           iconColor: AppTheme.infoBlue,
           showProgress: false,
+          progressColor: AppTheme.infoBlue,
         ),
       ],
     );

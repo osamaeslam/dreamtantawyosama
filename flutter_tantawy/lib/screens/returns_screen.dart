@@ -59,7 +59,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
     if (records == null) return map;
 
     for (final rec in records) {
-      final record = ReturnRecord.fromJson(rec as Map<String, dynamic>);
+              final record = ReturnRecord.fromJson(rec);
 
       for (final it in record.returnedItems) {
         final existing = map[it.productId];
@@ -514,7 +514,7 @@ class _ReturnsScreenState extends State<ReturnsScreen> {
           ),
           if (_showHistory)
             ...invoice.returnRecords!.map((rec) {
-              final record = ReturnRecord.fromJson(rec as Map<String, dynamic>);
+      final record = ReturnRecord.fromJson(rec);
               return Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Column(

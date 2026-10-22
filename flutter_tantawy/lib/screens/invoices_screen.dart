@@ -21,7 +21,6 @@ class InvoicesScreen extends StatefulWidget {
 class _InvoicesScreenState extends State<InvoicesScreen> {
   List<OrderInvoice> _invoices = [];
   bool _isLoading = true;
-  String _selectedStatus = 'الكل';
 
   RoleAccessController get rbac => RoleAccessController(widget.currentUser);
 

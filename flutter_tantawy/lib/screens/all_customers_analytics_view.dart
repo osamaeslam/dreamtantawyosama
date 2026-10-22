@@ -5,7 +5,6 @@ import '../models/models.dart';
 import '../services/role_access_controller.dart';
 import '../services/supabase_service.dart';
 import '../theme/app_theme.dart';
-import 'visits_dashboard_screen.dart';
 import 'customer_detail_dialog.dart';
 
 class AllCustomersAnalyticsView extends StatefulWidget {
@@ -22,7 +21,6 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
   List<AppUser> _allReps = [];
   List<Branch> _allBranches = [];
   bool _isLoading = true;
-  bool _isFiltersLoading = true;
   String _searchQuery = '';
   String _selectedBranch = 'الكل';
   String _selectedRep = 'الكل';
@@ -60,7 +58,6 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
     _allReps = await SupabaseService.instance.fetchUsers(
       branchName: rbac.isAdmin ? null : widget.currentUser.branchName,
     );
-    if (mounted) setState(() => _isFiltersLoading = false);
   }
 
   String _normalizeSearchText(String value) {
@@ -208,7 +205,6 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
 
     final totalSales = filtered.fold<double>(0, (s, c) => s + c.totalSales);
     final totalCollections = filtered.fold<double>(0, (s, c) => s + c.totalCollections);
-    final totalBalance = filtered.fold<double>(0, (s, c) => s + c.balance);
     final totalOverdue = filtered.fold<double>(0, (s, c) => s + c.overdueBalance);
 
     return Scaffold(
@@ -352,7 +348,6 @@ class _AllCustomersAnalyticsViewState extends State<AllCustomersAnalyticsView> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: segments.map((seg) {
-          final isSelected = _selectedTier == 'الكل' && _selectedBranch == 'الكل' && _selectedRep == 'الكل';
           return Padding(
             padding: const EdgeInsets.only(left: 6),
             child: FilterChip(
