@@ -53,41 +53,31 @@
         --font-mono: 'JetBrains Mono', 'Cairo', monospace;
       }
       
-      html.dark {
-        --bg-main: #080c16;
-        --bg-surface: #0e1526;
-        --bg-surface-hover: #141e34;
-        --bg-card: rgba(14, 21, 38, 0.92);
-        --border-color: #1a253c;
+      html.dark, html {
+        --bg-main: #070b14;
+        --bg-surface: #0f172a;
+        --bg-surface-hover: #1e293b;
+        --bg-card: rgba(16, 24, 42, 0.96);
+        --border-color: rgba(255, 255, 255, 0.12);
         --border-highlight: #f59e0b;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-      }
-
-      html.light {
-        --bg-main: #f4f6fa;
-        --bg-surface: #ffffff;
-        --bg-surface-hover: #f8fafc;
-        --bg-card: rgba(255, 255, 255, 0.96);
-        --border-color: #e2e8f0;
-        --border-highlight: #d97706;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
+        --text-primary: #ffffff;
+        --text-secondary: #cbd5e1;
+        --text-muted: #94a3b8;
       }
 
       * { box-sizing: border-box; }
       body {
         font-family: var(--font-sans);
         background-color: var(--bg-main);
+        background-image: 
+          radial-gradient(ellipse 90% 45% at 50% -15%, rgba(245, 158, 11, 0.08), transparent 70%),
+          radial-gradient(ellipse 70% 35% at 100% 100%, rgba(30, 58, 138, 0.07), transparent 60%);
         color: var(--text-primary);
         direction: rtl;
         margin: 0;
         padding: 0;
         min-height: 100vh;
         -webkit-font-smoothing: antialiased;
-        transition: background-color 0.25s ease, color 0.25s ease;
       }
       .font-mono-numbers {
         font-family: var(--font-mono);
@@ -111,13 +101,62 @@
         min-width: 44px;
       }
       .glass-card {
-        background: var(--bg-card);
-        backdrop-filter: blur(16px);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(180deg, rgba(21, 31, 54, 0.92) 0%, rgba(13, 20, 36, 0.96) 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
       }
       .glass-card:hover {
-        border-color: rgba(245, 158, 11, 0.4);
+        border-color: rgba(245, 158, 11, 0.35);
+      }
+      .field-surface {
+        background-color: #162238;
+        border: 1.5px solid #2d3e5e;
+      }
+      .field-surface:focus-within {
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        background-color: #192742;
+      }
+
+      /* High-Contrast Universal Form Elements - Crystal Clear & Legible */
+      input[type="text"], 
+      input[type="password"], 
+      input[type="number"], 
+      input[type="search"], 
+      select, 
+      textarea {
+        background-color: #142138 !important;
+        color: #ffffff !important;
+        border: 1.5px solid #2d4265 !important;
+      }
+      input[type="text"]:focus, 
+      input[type="password"]:focus, 
+      input[type="number"]:focus, 
+      input[type="search"]:focus, 
+      select:focus, 
+      textarea:focus {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+        background-color: #182844 !important;
+        outline: none !important;
+      }
+      input::placeholder, 
+      textarea::placeholder {
+        color: #8da2c0 !important;
+        opacity: 1 !important;
+      }
+      select option {
+        background-color: #0f172a;
+        color: #ffffff;
+      }
+
+      /* Gold Glow Accent utilities */
+      .gold-glow {
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+      }
+      .gold-glow-lg {
+        box-shadow: 0 10px 40px -10px rgba(245, 158, 11, 0.4);
       }
       @media print {
         body * { visibility: hidden !important; }
@@ -390,16 +429,8 @@
         proposalPillar: 'rep'
       };
 
-      // Set initial theme
-      document.documentElement.className = state.theme;
-
-      window.toggleTheme = () => {
-        state.theme = state.theme === 'dark' ? 'light' : 'dark';
-        document.documentElement.className = state.theme;
-        localStorage.setItem('tantawy_theme', state.theme);
-        showToast(state.theme === 'dark' ? 'تم تفعيل الوضع الليلي الفاخر' : 'تم تفعيل الوضع النهاري المنسق', 'info');
-        render();
-      };
+      // Permanent Luxury Dark Theme
+      document.documentElement.className = 'dark';
 
       // Offline Event Listeners
       window.addEventListener('online', () => {
@@ -907,116 +938,19 @@
         }
       };
 
-      // Load instant verified Tantawy Catalog demo template with 1 click
-      window.loadEnterpriseTemplate = () => {
-        state.products = [
-          {
-            id: 'p-1',
-            code: 'TNT-GLS-01',
-            name: 'طقم كاسات عصير كريستال مذهب (6 قطع) فاخر',
-            dept: 'زجاج وكريستال',
-            cartonPrice: 850,
-            piecePrice: 145,
-            cartonQty: 6,
-            branchStock: 120,
-            octoberStock: 480,
-            promoPrice: null,
-            image: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80',
-            badge: 'الأعلى طلباً ⭐'
-          },
-          {
-            id: 'p-2',
-            code: 'TNT-COOK-02',
-            name: 'طقم حلل جرانيت إيطالي تركي 9 قطع غير لاصق',
-            dept: 'أواني طهي',
-            cartonPrice: 3850,
-            piecePrice: 3850,
-            cartonQty: 1,
-            branchStock: 35,
-            octoberStock: 140,
-            promoPrice: 3600,
-            image: 'https://images.unsplash.com/photo-1584990347449-3998b47b2c95?auto=format&fit=crop&w=600&q=80',
-            badge: 'خصم خاص 🔥'
-          },
-          {
-            id: 'p-3',
-            code: 'TNT-DIN-03',
-            name: 'طقم سفرة بورسلين ملكي 68 قطعة مذهب نقوش خاصة',
-            dept: 'أطقم سفرة',
-            cartonPrice: 5600,
-            piecePrice: 5600,
-            cartonQty: 1,
-            branchStock: 22,
-            octoberStock: 95,
-            promoPrice: null,
-            image: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=600&q=80',
-            badge: 'عرائس فاخر 👑'
-          },
-          {
-            id: 'p-4',
-            code: 'TNT-CUT-04',
-            name: 'شنطة ملاعق وسكاكين ستانلس ستيل 86 قطعة ألماني',
-            dept: 'أدوات مائدة',
-            cartonPrice: 2450,
-            piecePrice: 2450,
-            cartonQty: 1,
-            branchStock: 45,
-            octoberStock: 190,
-            promoPrice: 2250,
-            image: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=600&q=80',
-            badge: 'متوفر فوري'
-          }
-        ];
-
-        state.clients = [
-          {
-            client_code: 'CL-CA-01',
-            client_name: 'شركة الصفا والمروة التجارية - الموسكي القاهرة',
-            mandoub_name: 'أحمد طنطاوي',
-            branch: 'القاهرة',
-            debt: 38400,
-            credit_limit: 80000,
-            expected_collection: 18000,
-            collection_due: 'الأربعاء القادم',
-            phone: '01234567890',
-            is_legal: false,
-            legal_status: null,
-            legal_notes: []
-          },
-          {
-            client_code: 'CL-MN-02',
-            client_name: 'معرض الأهرام للأدوات المنزلية - المنيا',
-            mandoub_name: 'إسلام محمود',
-            branch: 'المنيا',
-            debt: 52000,
-            credit_limit: 50000,
-            expected_collection: 25000,
-            collection_due: 'غداً',
-            phone: '01012345678',
-            is_legal: false,
-            legal_status: null,
-            legal_notes: []
-          },
-          {
-            client_code: 'CL-FY-03',
-            client_name: 'سنتر النور والبركة - الفيوم',
-            mandoub_name: 'أحمد طنطاوي',
-            branch: 'الفيوم',
-            debt: 68000,
-            credit_limit: 60000,
-            expected_collection: 30000,
-            collection_due: 'الخميس القادم',
-            phone: '01123456789',
-            is_legal: false,
-            legal_status: null,
-            legal_notes: []
-          }
-        ];
-
-        localStorage.setItem('tantawy_cache_products', JSON.stringify(state.products));
-        localStorage.setItem('tantawy_cache_clients', JSON.stringify(state.clients));
-        showToast('تم تحميل نموذج الأصناف والعملاء القياسي بنجاح!', 'success');
-        render();
+      // Copy CSV Header format for easy Google Sheets setup (Zero Mock Data)
+      window.copyGoogleSheetsTemplate = (type) => {
+        let headersText = '';
+        if (type === 'products') {
+          headersText = 'code,name,category,carton_price,piece_price,carton_qty,branch_stock,october_stock';
+        } else {
+          headersText = 'client_code,client_name,mandoub_name,branch,debt,credit_limit,expected_collection,collection_due,phone';
+        }
+        navigator.clipboard.writeText(headersText).then(() => {
+          showToast(`تم نسخ أسماء أعمدة شيت جوجل (${type === 'products' ? 'الأصناف' : 'العملاء'}) للحافظة بنجاح!`, 'success');
+        }).catch(() => {
+          showToast(headersText, 'info');
+        });
       };
 
       // Handle CSV File Upload
@@ -1524,110 +1458,131 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
       // ------------------------------------------
       // VIEW A: AUTHENTICATION / LOGIN SCREEN
       // ------------------------------------------
+      window.togglePasswordVisibility = () => {
+        const passInput = document.getElementById('login-password');
+        const icon = document.getElementById('pass-toggle-icon');
+        if (!passInput) return;
+        if (passInput.type === 'password') {
+          passInput.type = 'text';
+          if (icon) icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+          passInput.type = 'password';
+          if (icon) icon.setAttribute('data-lucide', 'eye');
+        }
+        safeCreateIcons();
+      };
+
       function renderLogin() {
         appContainer.innerHTML = `
-          <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#05080f] via-[#080d19] to-[#0d1629]">
+          <div class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-[#04070e] via-[#070c18] to-[#0c1424]">
             <div class="w-full max-w-md space-y-6">
               
               <!-- Brand Header -->
-              <div class="text-center space-y-2">
-                <div class="inline-flex w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-600 items-center justify-center text-gray-950 text-3xl font-black shadow-xl shadow-amber-500/25">
+              <div class="text-center space-y-3">
+                <div class="inline-flex w-18 h-18 rounded-3xl bg-gradient-to-tr from-amber-500 via-amber-400 to-amber-600 items-center justify-center text-gray-950 text-4xl font-black shadow-2xl shadow-amber-500/30 border border-amber-300/40 transform hover:scale-105 transition-transform duration-300">
                   ط
                 </div>
-                <h1 class="text-2xl font-black text-white tracking-wide">مجموعة الطنطاوي</h1>
-                <p class="text-xs text-slate-400">منظومة مبيعات المناديب وإدارة الفواتير والتحصيل الميداني</p>
+                <div>
+                  <h1 class="text-2xl font-black text-white tracking-wide flex items-center justify-center gap-1.5">
+                    <span>مجموعة الطنطاوي</span>
+                    <span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+                  </h1>
+                  <p class="text-xs text-slate-300 font-medium mt-1">منظومة مبيعات المناديب وإدارة الفواتير والتحصيل الميداني</p>
+                </div>
               </div>
 
-              <!-- Login Glass Card -->
-              <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border-slate-700/80 shadow-2xl">
+              <!-- Login Luxury Glass Card -->
+              <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border-amber-500/25 shadow-2xl relative overflow-hidden">
+                <!-- Golden Accent Top Glow -->
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent"></div>
+
                 <div>
-                  <h2 class="text-base font-bold text-white">تسجيل الدخول للمنظومة</h2>
-                  <p class="text-xs text-slate-400 mt-1">أدخل بيانات الحساب الوظيفي المصرح لك بالدخول به</p>
+                  <h2 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4 text-amber-400"></i>
+                    <span>تسجيل الدخول للمنظومة</span>
+                  </h2>
+                  <p class="text-xs text-slate-300 mt-1">أدخل بيانات الحساب الوظيفي المصرح لك بالدخول به</p>
                 </div>
 
                 ${state.authError ? `
-                  <div class="p-3.5 rounded-2xl bg-rose-950/70 border border-rose-500/50 text-rose-200 text-xs flex items-center gap-2.5">
+                  <div class="p-3.5 rounded-2xl bg-rose-950/80 border border-rose-500/60 text-rose-200 text-xs flex items-center gap-2.5 shadow-lg">
                     <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400 shrink-0"></i>
-                    <span class="font-medium">${state.authError}</span>
+                    <span class="font-bold">${state.authError}</span>
                   </div>
                 ` : ''}
 
-                <!-- Quick Presets -->
-                <div class="p-3 rounded-2xl bg-[#080d19] border border-slate-800 text-[11px] text-slate-400 space-y-2">
-                  <div class="text-amber-400 font-bold flex items-center justify-between">
-                    <span class="flex items-center gap-1.5">
-                      <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-                      <span>اختر حساباً للدخول السريع:</span>
-                    </span>
-                    <span class="text-[9px] text-slate-500 font-mono">كلمة المرور: 123456</span>
-                  </div>
-                  <div class="grid grid-cols-2 gap-1.5 text-[10px]">
-                    <button onclick="fillLogin('ahmed_rep')" class="text-right p-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 transition cursor-pointer">
-                      • مندوب: <strong class="text-amber-400">أحمد طنطاوي</strong>
-                    </button>
-                    <button onclick="fillLogin('khaled_sup')" class="text-right p-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 transition cursor-pointer">
-                      • مشرف: <strong class="text-amber-400">م. خالد</strong>
-                    </button>
-                    <button onclick="fillLogin('exec_manager')" class="text-right p-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 transition cursor-pointer">
-                      • مدير إدارة: <strong class="text-amber-400">د. مصطفى</strong>
-                    </button>
-                    <button onclick="fillLogin('admin')" class="text-right p-1.5 rounded-xl bg-slate-900 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 transition cursor-pointer">
-                      • مدير عام: <strong class="text-amber-400">الحاج طنطاوي</strong>
-                    </button>
-                    <button onclick="fillLogin('legal_1')" class="col-span-2 text-right p-1.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/50 text-purple-200 transition cursor-pointer">
-                      • شؤون قانونية: <strong class="text-purple-300">أ. سامح عبد الفتاح</strong>
-                    </button>
-                  </div>
-                </div>
-
-                <form id="login-form" class="space-y-3.5 text-xs">
+                <form id="login-form" class="space-y-4 text-xs pt-1">
+                  <!-- Username Field -->
                   <div>
-                    <label class="text-slate-200 font-bold block mb-1">اسم المستخدم:</label>
-                    <input 
-                      type="text" 
-                      id="login-username" 
-                      required 
-                      placeholder="اسم المندوب أو المشرف..."
-                      class="w-full bg-[#080d19] border border-slate-700/80 focus:border-amber-500 rounded-2xl px-4 py-3 text-white outline-none transition text-xs font-sans placeholder:text-slate-600"
-                    />
+                    <label for="login-username" class="text-slate-200 font-bold block mb-1.5 flex items-center justify-between">
+                      <span>اسم المستخدم أو البريد الوظيفي:</span>
+                      <span class="text-[10px] text-amber-400 font-normal">مطلوب *</span>
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="text" 
+                        id="login-username" 
+                        required 
+                        placeholder="أدخل اسم المستخدم أو البريد الوظيفي..."
+                        class="w-full bg-[#142138] border border-[#2d4265] focus:border-amber-500 rounded-2xl pr-11 pl-4 py-3.5 text-white outline-none transition text-xs font-sans placeholder:text-slate-400 shadow-inner"
+                      />
+                      <i data-lucide="user" class="w-4 h-4 text-amber-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    </div>
                   </div>
 
+                  <!-- Password Field -->
                   <div>
-                    <label class="text-slate-200 font-bold block mb-1">كلمة المرور:</label>
-                    <input 
-                      type="password" 
-                      id="login-password" 
-                      required 
-                      value="123456"
-                      placeholder="••••••••"
-                      class="w-full bg-[#080d19] border border-slate-700/80 focus:border-amber-500 rounded-2xl px-4 py-3 text-white outline-none transition text-xs font-mono placeholder:text-slate-600"
-                    />
+                    <label for="login-password" class="text-slate-200 font-bold block mb-1.5 flex items-center justify-between">
+                      <span>كلمة المرور:</span>
+                      <span class="text-[10px] text-amber-400 font-normal">مطلوب *</span>
+                    </label>
+                    <div class="relative">
+                      <input 
+                        type="password" 
+                        id="login-password" 
+                        required 
+                        placeholder="أدخل كلمة المرور الخاصة بحسابك..."
+                        class="w-full bg-[#142138] border border-[#2d4265] focus:border-amber-500 rounded-2xl pr-11 pl-11 py-3.5 text-white outline-none transition text-xs font-sans placeholder:text-slate-400 shadow-inner tracking-wider"
+                      />
+                      <i data-lucide="key-round" class="w-4 h-4 text-amber-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                      <button 
+                        type="button" 
+                        onclick="togglePasswordVisibility()" 
+                        class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 cursor-pointer p-1 transition"
+                        title="إظهار / إخفاء كلمة المرور"
+                      >
+                        <i id="pass-toggle-icon" data-lucide="eye" class="w-4 h-4"></i>
+                      </button>
+                    </div>
                   </div>
 
+                  <!-- Submit Button -->
                   <button 
                     type="submit" 
                     id="login-btn"
-                    class="w-full touch-target py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-gray-950 font-black text-sm transition shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                    class="w-full touch-target py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-black text-sm transition-all shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer mt-4 active:scale-95"
                   >
-                    <span>دخول المنظومة</span>
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>تسجيل الدخول إلى حسابي</span>
+                    <i data-lucide="arrow-left" class="w-4 h-4 text-gray-950"></i>
                   </button>
+
+                  <!-- Security Assurance Badge -->
+                  <div class="pt-3 border-t border-slate-800/80 flex items-center justify-center gap-2 text-[11px] text-slate-300">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                    <span>اتصال سحابي آمن ومشفر 256-bit</span>
+                  </div>
                 </form>
 
               </div>
 
-              <div class="text-center text-[11px] text-slate-500">
-                <p>مجموعة الطنطاوي للتجارة والتوزيع © 2026 • المنظومة السحابية الذكية</p>
+              <!-- Footer -->
+              <div class="text-center text-[11px] text-slate-400">
+                <p>مجموعة الطنطاوي للتجارة والتوزيع © 2026 • المنظومة السحابية الموحدة</p>
               </div>
 
             </div>
           </div>
         `;
-
-        window.fillLogin = (username) => {
-          document.getElementById('login-username').value = username;
-          document.getElementById('login-password').value = '123456';
-        };
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -1749,14 +1704,6 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
                   ${state.isNotificationsOpen ? renderNotificationsDropdown() : ''}
                 </div>
 
-                <!-- Theme Toggle -->
-                <button 
-                  onclick="toggleTheme()" 
-                  class="touch-target p-2.5 rounded-2xl bg-[#0e1526] hover:bg-[#141e34] border border-slate-800 text-slate-300 hover:text-amber-400 transition cursor-pointer flex items-center justify-center"
-                  title="تبديل الوضع الليلي والنهاري"
-                >
-                  <i data-lucide="${state.theme === 'dark' ? 'sun' : 'moon'}" class="w-4 h-4"></i>
-                </button>
 
                 <!-- Cart Button -->
                 ${hasScreenAccess('catalog') ? `
@@ -1947,11 +1894,11 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
                     <i data-lucide="plus" class="w-4 h-4"></i>
                     <span>فاتورة جديدة</span>
                   </button>
-                  <button onclick="openVisitModal()" class="touch-target px-4 py-2 rounded-2xl bg-[#080d19] hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
+                  <button onclick="openVisitModal()" class="touch-target px-4 py-2 rounded-2xl bg-[#131f36] hover:bg-[#1c2e4e] text-white border border-[#2b3e5e] font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
                     <span>تسجيل زيارة</span>
                   </button>
-                  <button onclick="openReturnModal()" class="touch-target px-4 py-2 rounded-2xl bg-[#080d19] hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5">
+                  <button onclick="openReturnModal()" class="touch-target px-4 py-2 rounded-2xl bg-[#131f36] hover:bg-[#1c2e4e] text-white border border-[#2b3e5e] font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400"></i>
                     <span>طلب مرتجع</span>
                   </button>
@@ -2241,7 +2188,7 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
                 ${depts.map(d => `
                   <button 
                     onclick="setDept('${d}')" 
-                    class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${state.selectedDept === d ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#080d19] text-slate-300 hover:text-white border border-slate-800'}"
+                    class="px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${state.selectedDept === d ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#131f36] text-slate-200 hover:text-white border border-[#263753]'}"
                   >
                     ${d}
                   </button>
@@ -2264,14 +2211,14 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
               ${filtered.length === 0 ? `
                 <div class="col-span-full glass-card rounded-3xl p-12 text-center text-slate-400 space-y-3">
                   <i data-lucide="inbox" class="w-10 h-10 text-slate-500 mx-auto"></i>
-                  <p class="text-sm font-bold text-white">لا توجد أصناف في الكتالوج حالياً</p>
-                  <p class="text-xs text-slate-400">يمكنك استيراد الكتالوج الحقيقي لمجموعتك فوراً من شيت جوجل أو اختيار النموذج القياسي</p>
+                  <p class="text-sm font-bold text-white">قاعدة بيانات الأصناف فارغة (Clean Data)</p>
+                  <p class="text-xs text-slate-400">النظام جاهز لاستيراد أصنافك وأسعارك الحقيقية مباشرة من شيت جوجل بنقرة واحدة</p>
                   <div class="flex items-center justify-center gap-3 pt-2">
-                    <button onclick="setTab('data_sync')" class="px-4 py-2 rounded-xl bg-amber-500 text-gray-950 font-bold text-xs cursor-pointer">
-                      مزامنة شيت جوجل
+                    <button onclick="setTab('data_sync')" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-950 font-black text-xs cursor-pointer shadow-md shadow-amber-500/20">
+                      مزامنة شيت جوجل الآن ⚡
                     </button>
-                    <button onclick="loadEnterpriseTemplate()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer border border-slate-700">
-                      تحميل نموذج الأصناف القياسي
+                    <button onclick="copyGoogleSheetsTemplate('products')" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer border border-slate-700">
+                      نسخ ترويسة الأعمدة لشيت جوجل
                     </button>
                   </div>
                 </div>
@@ -2376,10 +2323,10 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
 
               <!-- Status Filters -->
               <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full md:w-auto">
-                <button onclick="setOrdersFilter('الكل')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'الكل' ? 'bg-amber-500 text-gray-950 font-black' : 'bg-[#080d19] text-slate-300'}">الكل</button>
-                <button onclick="setOrdersFilter('معلق')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'معلق' ? 'bg-amber-500 text-gray-950 font-black' : 'bg-[#080d19] text-slate-300'}">معلقة</button>
-                <button onclick="setOrdersFilter('خرج للتسليم')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'خرج للتسليم' ? 'bg-amber-500 text-gray-950 font-black' : 'bg-[#080d19] text-slate-300'}">خرجت للتسليم 🚚</button>
-                <button onclick="setOrdersFilter('مسلم')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'مسلم' ? 'bg-amber-500 text-gray-950 font-black' : 'bg-[#080d19] text-slate-300'}">مسلّمة ✅</button>
+                <button onclick="setOrdersFilter('الكل')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'الكل' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#131f36] text-slate-200 border border-[#263753] hover:text-white'}">الكل</button>
+                <button onclick="setOrdersFilter('معلق')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'معلق' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#131f36] text-slate-200 border border-[#263753] hover:text-white'}">معلقة</button>
+                <button onclick="setOrdersFilter('خرج للتسليم')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'خرج للتسليم' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#131f36] text-slate-200 border border-[#263753] hover:text-white'}">خرجت للتسليم 🚚</button>
+                <button onclick="setOrdersFilter('مسلم')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${state.ordersFilter === 'مسلم' ? 'bg-amber-500 text-gray-950 font-black shadow-md' : 'bg-[#131f36] text-slate-200 border border-[#263753] hover:text-white'}">مسلّمة ✅</button>
               </div>
             </div>
 
@@ -2656,7 +2603,7 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
                   type="url" 
                   id="google-sheet-url" 
                   placeholder="https://docs.google.com/spreadsheets/d/.../pub?output=csv" 
-                  class="w-full bg-[#080d19] border border-slate-700 rounded-2xl p-3.5 text-xs text-white outline-none focus:border-amber-500 font-mono"
+                  class="w-full bg-[#142138] border border-[#2d4265] rounded-2xl p-3.5 text-xs text-white outline-none focus:border-amber-500 font-mono"
                 />
                 <p class="text-[11px] text-slate-400">
                   من شيت جوجل: اختر (ملف File ➔ مشاركة Share ➔ نشر على الويب Publish to web ➔ اختر CSV).
@@ -2666,7 +2613,7 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
                   <label class="text-xs text-slate-300 font-bold block mb-1">نوع البيانات المراد استيرادها:</label>
-                  <select id="sheet-data-type" class="w-full bg-[#080d19] border border-slate-700 rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
+                  <select id="sheet-data-type" class="w-full bg-[#142138] border border-[#2d4265] rounded-2xl p-3 text-xs text-white outline-none focus:border-amber-500 font-sans">
                     <option value="auto">التعرف التلقائي الذكي على الأعمدة</option>
                     <option value="products">كتالوج الأصناف والأسعار (Products)</option>
                     <option value="clients">دليل العملاء والمديونيات ومتوقع التحصيل (Clients)</option>
@@ -2720,12 +2667,15 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
                 <p class="text-xs text-slate-400">
                   مسح كافة البيانات المؤقتة والبدء بقاعدة بيانات حقيقية نظيفة
                 </p>
-                <div class="flex items-center gap-2 pt-1">
+                <div class="flex flex-wrap items-center gap-2 pt-1">
                   <button onclick="clearAllData()" class="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold transition cursor-pointer">
-                    مسح كافة البيانات التجريبية
+                    تصفير وقفل البيانات التجريبية
                   </button>
-                  <button onclick="loadEnterpriseTemplate()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer border border-slate-700">
-                    تحميل النموذج القياسي
+                  <button onclick="copyGoogleSheetsTemplate('products')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer border border-slate-700">
+                    نسخ أعمدة الأصناف
+                  </button>
+                  <button onclick="copyGoogleSheetsTemplate('clients')" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition cursor-pointer border border-slate-700">
+                    نسخ أعمدة العملاء
                   </button>
                 </div>
               </div>
@@ -3620,6 +3570,24 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
       // ==========================================
       async function init() {
         try {
+          // 1. ENFORCE 100% CLEAN DATA STATE (PURGE ANY OLD TEST CACHES)
+          const cleanVersion = 'tantawy_clean_v3_zero_mock';
+          if (localStorage.getItem('tantawy_data_version') !== cleanVersion) {
+            localStorage.removeItem('tantawy_cache_products');
+            localStorage.removeItem('tantawy_cache_clients');
+            localStorage.removeItem('tantawy_cache_orders');
+            localStorage.removeItem('tantawy_cache_visits');
+            localStorage.removeItem('tantawy_cache_returns');
+            localStorage.removeItem('tantawy_cache_escalations');
+            localStorage.setItem('tantawy_data_version', cleanVersion);
+            state.products = [];
+            state.clients = [];
+            state.orders = [];
+            state.visits = [];
+            state.returns = [];
+            state.escalations = [];
+          }
+
           // Instant load from storage
           const saved = localStorage.getItem('tantawy_auth_user');
           if (saved) {
@@ -3635,25 +3603,27 @@ ${visit.notes || 'سداد دفعة نقدية على الحساب'}
 
           const cachedProducts = localStorage.getItem('tantawy_cache_products');
           if (cachedProducts) {
-            try { state.products = JSON.parse(cachedProducts); } catch(e){}
+            try { state.products = JSON.parse(cachedProducts); } catch(e){ state.products = []; }
           }
-          if (!state.products) state.products = DEFAULT_PRODUCTS;
+          if (!state.products) state.products = [];
 
           const cachedClients = localStorage.getItem('tantawy_cache_clients');
           if (cachedClients) {
-            try { state.clients = JSON.parse(cachedClients); } catch(e){}
+            try { state.clients = JSON.parse(cachedClients); } catch(e){ state.clients = []; }
           }
-          if (!state.clients) state.clients = DEFAULT_CLIENTS;
+          if (!state.clients) state.clients = [];
 
           const cachedVisits = localStorage.getItem('tantawy_cache_visits');
           if (cachedVisits) {
-            try { state.visits = JSON.parse(cachedVisits); } catch(e){}
+            try { state.visits = JSON.parse(cachedVisits); } catch(e){ state.visits = []; }
           }
+          if (!state.visits) state.visits = [];
 
           const cachedOrders = localStorage.getItem('tantawy_cache_orders');
           if (cachedOrders) {
-            try { state.orders = JSON.parse(cachedOrders); } catch(e){}
+            try { state.orders = JSON.parse(cachedOrders); } catch(e){ state.orders = []; }
           }
+          if (!state.orders) state.orders = [];
 
           render();
 

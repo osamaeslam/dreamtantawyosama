@@ -1,5 +1,5 @@
 // نماذج البيانات لمجموعة الطنطاوي للتجارة والتوزيع - متوافقة 100% مع Supabase
-// ومطابقة types.ts (React) — توحيد البنية المشتركة بين Flutter وWeb
+// بنية النماذج الرسمية الموحدة لتطبيق Flutter Multiplatform (Web, Android, iOS)
 
 double? _toDouble(dynamic v) => v == null ? null : (v is num ? v.toDouble() : double.tryParse(v.toString()));
 int? _toInt(dynamic v) => v == null ? null : (v is int ? v : int.tryParse(v.toString()));
@@ -117,7 +117,7 @@ class Product {
   final String status;
   final String salesPriority;
 
-  // === الحقول الموسعة لتطابق types.ts (React) — جميعها اختيارية للـ backward compatibility ===
+  // === الحقول الموسعة لمنظومة الطنطاوي المتقدمة — اختيارية للتوافقية الكاملة ===
   final String? size;                    // الحجم
   final String? color;                   // اللون الأساسي للصنف
   final int? mainWarehouseReserved;      // رصيد مخزن أكتوبر - متاح للطلب
@@ -282,7 +282,7 @@ class Customer {
   final double overdueBalance;
   final String tier;
 
-  // === الحقول الموسعة لتطابق types.ts (React) ===
+  // === الحقول الموسعة لبيانات العملاء في منظومة الطنطاوي ===
   final String? governorate;
   final String? region;
   final String? salesRepName;
@@ -328,7 +328,7 @@ class Customer {
     required this.creditLimit,
     required this.overdueBalance,
     required this.tier,
-    // === الحقول الموسعة لتطابق types.ts (React) — اختيارية ===
+    // === الحقول الموسعة لبيانات العملاء — اختيارية ===
     this.governorate,
     this.region,
     this.salesRepName,
@@ -925,7 +925,7 @@ class CustomerVisit {
   final double? latitude;
   final double? longitude;
 
-  // === الحقول المتقدمة من types.ts (React) — اختيارية ===
+  // === الحقول المتقدمة للزيارات الميدانية والتحصيل ===
   final String? customerCode;
   final String? repId;
   final String? branchName;
@@ -1143,7 +1143,7 @@ class CustomerVisit {
 }
 
 // ============================================================
-// === نماذج جديدة تطابق types.ts (React) ===
+// === نماذج منظومة الطنطاوي للتجارة المتقدمة (Flutter Enterprise) ===
 // ============================================================
 
 /// نموذج متغير/شباك المنتج (ProductVariant في types.ts)

@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Offline read-cache for **reference data** (customers, pending invoices,
 /// products, etc.).
 ///
-/// Unlike the write-queue ([OfflineQueueService], this service caches the
+/// Unlike the write-queue ([OfflineQueueService]), this service caches the
 /// *last known good server responses* so the UI can render while offline.
 /// Each cache entry stores:
 ///   - the JSON payload
